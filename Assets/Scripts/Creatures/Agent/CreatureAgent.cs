@@ -1,42 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using rak.world;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace rak.creatures
 {
     public class CreatureAgent
     {
-        public static bool DEBUG = false;
+        public static bool DEBUG = World.ISDEBUGSCENE;
         private bool initialized = false;
-        public void Initialize(BASE_SPECIES baseSpecies)
-        {
-            rigidbody = creature.GetComponent<Rigidbody>();
-            CreatureConstants.CreatureAgentInitialize(baseSpecies, this);
-            if (rigidbody == null)
-            {
-                rigidbody = creature.GetComponentInParent<Rigidbody>();
-                if (rigidbody == null)
-                {
-                    rigidbody = creature.GetComponentInChildren<Rigidbody>();
-                    if (rigidbody == null)
-                        Debug.LogError("Can't find rigid body on " + creature.name);
-                }
-            }
-            rigidbody.constraints = RigidbodyConstraints.None;
-            if (baseSpecies == BASE_SPECIES.Gnat)
-                locomotionType = CreatureLocomotionType.Flight;
-            else if (baseSpecies == BASE_SPECIES.Gagk)
-                locomotionType = CreatureLocomotionType.StandardForwardBack;
-            foreach (Part part in allParts)
-            {
-                if(part is EnginePart)
-                {
-                    EnginePart movePart = (EnginePart)part;
-                    movePart.InitializeMovementPart();
-                }
-            }
-            ignoreIncomingCollisions = false;
-            initialized = true;
-        }
+        
 
         // Movement destination //
         public Vector3 Destination { get; private set; }
@@ -46,10 +18,8 @@ namespace rak.creatures
         public float ExploreRadiusModifier { get; private set; }
         // Creature object being controlled //
         public Creature creature { get; private set; }
-        // If creature is close to target on X and Z axis //
-        public bool OverTarget { get; private set; }
-        // Amount of brake applied this update //
-        public int currentBrakeAmount { get; private set; }
+        // Amount of brake requested to any BrakeParts //
+        public Vector3 CurrentBrakeAmountRequest { get; private set; }
         // Maximium total velocity before brakes kick in //
         public float maxVelocityMagnitude { get; private set; }
         // Maximum force that can be applied to the ConstantForce componenet //
@@ -66,36 +36,37 @@ namespace rak.creatures
         public List<Transform> touchingBodies { get; private set; }
         // Throttle will back off when this is reached //
         public Vector3 CruisingSpeed { get; private set; }
-        public bool MaintainPosition { get; private set; }
         public bool ignoreIncomingCollisions { get; private set; }
         // Type of turning this creature uses //
         public CreatureTurnType creatureTurnType { get; private set; }
         public CreatureLocomotionType locomotionType { get; private set; }
+        public CreatureGrabType grabType { get; private set; }
 
         private Rigidbody rigidbody;
         // All body parts in agent //
         private List<Part> allParts;
-        // How often to run the Turn update //
-        private float updateMainAgentEvery = .1f;
-        private float sinceLastTurnUpdate = 0;
+        private float lastUpdate = 0;
         // Height creature tries to keep from ground if flying //
         private float sustainHeight = 3;
         // If a flyer, whether he is landing or not //
         private bool landing = false;
-        // If enabled the flyer will orbit around the target destination //
-        private bool orbitTarget = false;
-        // Whether the brake has been activate this update //
-        private bool braking = false;
-        private float distanceMovedInLastFiveSeconds { get; set; }
-        private float distanceMovedLastUpdate { get; set; }
         // Creatures position last Update //
         private Vector3 positionLastUpdate { get; set; }
         // For tracking distance movement each update //
-        private float lastTimeDistanceChecked { get; set; }
+        public float DistanceMovedLastUpdate { get; private set; }
+        private Dictionary<float, float> distancesMoved = new Dictionary<float, float>();
         private Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables;
         
 
         #region GETTERS/SETTERS
+        public Thing GetCurrentActionTarget()
+        {
+            return creature.GetCurrentActionTarget();
+        }
+        public Vector3 GetCurrentActionDestination()
+        {
+            return creature.GetCurrentActionTargetDestination();
+        }
         public void SetCruisingSpeed(Vector3 cruisingSpeed)
         {
             this.CruisingSpeed = cruisingSpeed;
@@ -128,6 +99,10 @@ namespace rak.creatures
         {
             this.ExploreRadiusModifier = exploreRadiusModifier;
         }
+        public void SetGrabType(CreatureGrabType grabType)
+        {
+            this.grabType = grabType;
+        }
         public float GetSustainHeight() { return sustainHeight; }
         public Rigidbody GetRigidBody() { return rigidbody; }
         public void setParts(List<Part> allParts)
@@ -143,19 +118,11 @@ namespace rak.creatures
         {
             this.sustainHeight = sustainHeight;
         }
-        public void SetUpdateAgentEvery(float updateTurnEvery)
-        {
-            this.updateMainAgentEvery = updateTurnEvery;
-        }
         public ConstantForce GetConstantForceComponent() { return rigidbody.GetComponent<ConstantForce>(); }
-        public void SetCurrentlyBrakingToFalse()
+        public void SetBrakeRequestToZero()
         {
-            braking = false;
-
-        }
-        public bool IsBraking()
-        {
-            return braking;
+            if(CurrentBrakeAmountRequest != Vector3.zero)
+                CurrentBrakeAmountRequest = Vector3.zero;
         }
         public void SetMaxAngularVel(float maxAngularVel)
         {
@@ -165,17 +132,20 @@ namespace rak.creatures
         {
             this.Destination = destination;
         }
-        public void SetOrbitTarget(bool orbit)
-        {
-            orbitTarget = orbit;
-        }
-        public bool IsOrbitingTarget()
-        {
-            return orbitTarget;
-        }
+        
         public void SetIgnoreCollisions(bool ignore)
         {
             ignoreIncomingCollisions = ignore;
+        }
+        public int IsKinematic()
+        {
+            if (rigidbody.isKinematic)
+                return 1;
+            return 0;
+        }
+        public Part[] GetAllParts()
+        {
+            return allParts.ToArray();
         }
         #endregion
 
@@ -195,7 +165,7 @@ namespace rak.creatures
         {
             foreach(Part part in allParts)
             {
-                destroyAll(part.PartTransform.gameObject);
+                destroyAll(part.GetPartTransform().gameObject);
             }
             
         }
@@ -210,7 +180,6 @@ namespace rak.creatures
                 }
             }
             landing = true;
-            OverTarget = false;
         }
         public void EnableAgent()
         {
@@ -233,8 +202,7 @@ namespace rak.creatures
                     part.Disable();
                 }
                 rigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                MaintainPosition = false;
-                OverTarget = false;
+                //ActivateAntiGravity(false);
                 landing = false;
                 Active = false;
             }
@@ -245,35 +213,9 @@ namespace rak.creatures
         {
             creature.ChangeState(Creature.CREATURE_STATE.SLEEP);
         }
-        
         public void ApplyBrake(Vector3 percentToBrake,bool angular)
         {
-            //Debug.LogWarning("Applying brake - " + percentToBrake);
-            if (percentToBrake.x < 0) percentToBrake.x = 0;
-            else if (percentToBrake.x > 100) percentToBrake.x = 100;
-            if (percentToBrake.y < 0) percentToBrake.y = 0;
-            else if (percentToBrake.y > 100) percentToBrake.y = 100;
-            if (percentToBrake.z < 0) percentToBrake.z = 0;
-            else if (percentToBrake.z > 100) percentToBrake.z = 100;
-
-            float x = percentToBrake.x * .01f;
-            float y = percentToBrake.y * .01f;
-            float z = percentToBrake.z * .01f;
-
-            Vector3 currentVelocity;
-            if (!angular)
-                currentVelocity = rigidbody.velocity;
-            else
-                currentVelocity = rigidbody.angularVelocity;
-            currentVelocity.x = currentVelocity.x * (1f - x);
-            currentVelocity.y = currentVelocity.y * (1f - y);
-            currentVelocity.z = currentVelocity.z * (1f - z);
-            if (!angular)
-                rigidbody.velocity = currentVelocity;
-            else
-                rigidbody.angularVelocity = currentVelocity;
-            braking = true;
-            currentBrakeAmount = (int)percentToBrake.magnitude;
+            CurrentBrakeAmountRequest = percentToBrake;
         }
         private Quaternion CorrectRotation()
         {
@@ -294,12 +236,6 @@ namespace rak.creatures
         #endregion MISC METHODS
 
         #region CALCULATION METHODS
-        private bool isStuck()
-        {
-            if (landing) return false;
-            return distanceMovedInLastFiveSeconds < 
-                miscVariables[MiscVariables.AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_Five_Secs];
-        }
         public bool HasCompletedLanding()
         {
             if (touchingBodies.Count > 0)
@@ -343,23 +279,12 @@ namespace rak.creatures
             else
                 return zCollision;
         }
-        public bool IsOnSolidGround()
-        {
-            if (GetDistanceFromGround() < 
-                    miscVariables[MiscVariables.AgentMiscVariables.Agent_OnSolidGround_If_Dist_From_Ground_Less_Than]
-                && distanceMovedLastUpdate < 
-                    miscVariables[MiscVariables.AgentMiscVariables.Agent_OnSolidGround_If_Dist_Moved_Last_Update_Less_Than])
-                return true;
-            else
-                return false;
-        }
         public float GetDistanceYFromDestination()
         {
             return (creature.transform.position - Destination).y;
         }
         public float GetDistanceZFromDestination()
         {
-            //Debug.LogWarning("Distance from z - " + (creature.transform.position - Destination).z);
             return (creature.transform.position - Destination).z;
         }
         public float GetDistanceXFromDestination()
@@ -378,7 +303,20 @@ namespace rak.creatures
                 float hitY = hit.point.y;
                 return creature.transform.position.y - hitY;
             }
-            return sustainHeight;
+            return Mathf.Infinity;
+        }
+        public float GetDistanceFromFirstZHit()
+        {
+            RaycastHit hit;
+            if(Physics.Raycast(creature.transform.position,creature.transform.forward,out hit, 20))
+            {
+                float hitZ = hit.point.z;
+                return Mathf.Abs(creature.transform.position.z - hitZ);
+            }
+            else
+            {
+                return Mathf.Infinity;
+            }
         }
         public Vector3 GetNextDownYCollisionPoint()
         {
@@ -394,18 +332,49 @@ namespace rak.creatures
                 return dontMoveKeepSustainHeight;
             }
         }
-        private Vector3 GetBeforeCollision(bool _inTime)
+
+        public Vector2 GetDistanceFromCollisionLeftRight()
+        {
+            Vector2 returnPoints = new Vector2();
+            Transform creaturePosition = creature.transform;
+            RaycastHit hit;
+            float distanceLeft = float.MaxValue, distanceRight = float.MaxValue;
+            float rayLength = 2;
+            if (Physics.Raycast(creaturePosition.position, -creature.transform.right, out hit, rayLength))
+            {
+                if (DEBUG)
+                    Debug.DrawLine(creaturePosition.position, hit.point, Color.white, .5f);
+                distanceLeft = Vector3.Distance(creaturePosition.position, hit.point);
+            }
+            else
+            {
+                return new Vector2(Mathf.Infinity, 0);
+            }
+            if (Physics.Raycast(creaturePosition.position, creature.transform.right, out hit, rayLength))
+            {
+                if (DEBUG)
+                    Debug.DrawLine(creaturePosition.position, hit.point, Color.white, .5f);
+                distanceRight = Vector3.Distance(creaturePosition.position, hit.point);
+            }
+            returnPoints.x = distanceLeft;
+            returnPoints.y = distanceRight;
+            return returnPoints;
+        }
+        private Vector3 GetBeforeCollision(bool _inTime,bool justGetZDistance)
         {
             Transform worldOrigin = creature.transform;
-            Vector3 relativeVel = rigidbody.transform.InverseTransformDirection(rigidbody.velocity);
+            Vector3 relativeVel =
+                rigidbody.transform.InverseTransformDirection(rigidbody.velocity);
             RaycastHit hit;
             float distanceZ = float.MaxValue, distanceX = float.MaxValue;
             float rayLength = miscVariables[MiscVariables.AgentMiscVariables.Agent_Detect_Collision_Z_Distance];
-            if (Physics.Raycast(worldOrigin.position, creature.transform.forward, out hit, rayLength))
+            if (Physics.Raycast(worldOrigin.position, rigidbody.velocity, out hit, rayLength))
             {
                 if(DEBUG)
                     Debug.DrawLine(worldOrigin.position, hit.point, Color.black, .5f);
                 distanceZ = Vector3.Distance(worldOrigin.position, hit.point);
+                if (!justGetZDistance)
+                    return new Vector3(0,0,distanceZ);
             }
             Vector3 direction;
             if (relativeVel.x > 0)
@@ -426,29 +395,59 @@ namespace rak.creatures
             else
                 return new Vector3(distanceX, -1, distanceZ);
         }
-        public Vector3 GetDistanceBeforeCollision()
+        public Vector3 GetDistanceBeforeCollision(bool justGetZDistance)
         {
-            return GetBeforeCollision(false);
+            if (!justGetZDistance)
+                return GetBeforeCollision(false,false);
+            else
+                return GetBeforeCollision(false, true);
         }
         public Vector3 GetTimeBeforeCollision()
         {
-            return GetBeforeCollision(true);
+            return GetBeforeCollision(true,false);
         }
         #endregion CALCULATION METHODS
 
-    // CONSTRUCTOR //
-    public CreatureAgent(Creature creature)
+        // CONSTRUCTOR //
+        public CreatureAgent(Creature creature)
         {
             this.creature = creature;
-
             positionLastUpdate = Vector3.zero;
-            lastTimeDistanceChecked = 0;
-            distanceMovedInLastFiveSeconds = 0;
-            distanceMovedLastUpdate = 0;
+            DistanceMovedLastUpdate = 0;
             touchingBodies = new List<Transform>();
-            MaintainPosition = false;
             miscVariables = MiscVariables.GetAgentMiscVariables(creature);
             Active = true;
+        }
+
+        public void Initialize(BASE_SPECIES baseSpecies)
+        {
+            rigidbody = creature.GetComponent<Rigidbody>();
+            CreatureConstants.CreatureAgentInitialize(baseSpecies, this);
+            if (rigidbody == null)
+            {
+                rigidbody = creature.GetComponentInParent<Rigidbody>();
+                if (rigidbody == null)
+                {
+                    rigidbody = creature.GetComponentInChildren<Rigidbody>();
+                    if (rigidbody == null)
+                        Debug.LogError("Can't find rigid body on " + creature.name);
+                }
+            }
+            rigidbody.constraints = RigidbodyConstraints.None;
+            if (baseSpecies == BASE_SPECIES.Gnat)
+                locomotionType = CreatureLocomotionType.Flight;
+            else if (baseSpecies == BASE_SPECIES.Gagk)
+                locomotionType = CreatureLocomotionType.StandardForwardBack;
+            foreach (Part part in allParts)
+            {
+                if (part is EnginePart)
+                {
+                    EnginePart movePart = (EnginePart)part;
+                    movePart.InitializeMovementPart();
+                }
+            }
+            ignoreIncomingCollisions = false;
+            initialized = true;
         }
 
         #region MONO METHODS
@@ -486,49 +485,66 @@ namespace rak.creatures
             if(touchingBodies.Contains(collision))
                 touchingBodies.Remove(collision);
         }
+        public bool HasCollision(Transform collision)
+        {
+            return touchingBodies.Contains(collision);
+        }
+        public bool IsStuck()
+        {
+            float stuckIfDistanceMovedLessThan =
+                15;//miscVariables[MiscVariables.AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_Five_Secs];
+            float distanceMoved = GetDistanceMovedInLast(.1f);
+            //Debug.LogWarning("Moved - " + distanceMoved);
+            return distanceMoved <= stuckIfDistanceMovedLessThan && Time.time > 1;
+        }
         // Called from Creature Object //
         public void Update()
         {
             if (!Active) return;
-            sinceLastTurnUpdate += Time.deltaTime;
-            // Agent updates //
-            if (sinceLastTurnUpdate > updateMainAgentEvery)
-            {
-                updateMainAgentEvery = 0;
-                if (landing)
-                {
-                    if (!OverTarget && Mathf.Abs(GetDistanceZFromDestination()) <
-                        miscVariables[MiscVariables.AgentMiscVariables.Agent_Landing_OverTarget_If_Z_Dis_Less_Than]
-                        && Mathf.Abs(GetDistanceXFromDestination()) <
-                        miscVariables[MiscVariables.AgentMiscVariables.Agent_Landing_OverTarget_If_X_Dis_Less_Than])
-                    {
-                        if (rigidbody.velocity.z <
-                            miscVariables[MiscVariables.AgentMiscVariables.Agent_Landing_OverTarget_If_Z_Vel_Less_Than]
-                            && rigidbody.velocity.x <
-                            miscVariables[MiscVariables.AgentMiscVariables.Agent_Landing_OverTarget_If_X_Vel_Less_Than])
-                        {
-                            if (GetDistanceFromGround() > 50)
-                            {
-                                Debug.LogWarning("Supposed to be over target, but can't see ground");
-                            }
-                            OverTarget = true;
-                            MaintainPosition = true;
-                        }
-                    }
-                }
-                if (!ignoreIncomingCollisions && orbitTarget)
-                    ignoreIncomingCollisions = true;
-            }
+            lastUpdate += Time.deltaTime;
+            
             // Part updates //
             foreach (Part part in allParts)
             {
                 part.Update();
             }
+            DistanceMovedLastUpdate = Vector3.Distance(positionLastUpdate, creature.transform.position);
+            if(Time.time > 0)
+                distancesMoved.Add(Time.time, DistanceMovedLastUpdate);
+            positionLastUpdate = creature.transform.position;
         }
         #endregion MONO METHODS
+        public float GetDistanceMovedInLast(float seconds)
+        {
+            int removeEntryIfOlderThenSeconds = 5;
+            List<float> timesTooOld = new List<float>();
+            float beginningTime = Time.time - seconds;
+            float distanceMovedInThatTime = 0;
+            foreach (float time in distancesMoved.Keys)
+            {
+                if (time < beginningTime)
+                {
+                    if(Time.time - time > removeEntryIfOlderThenSeconds)
+                    {
+                        timesTooOld.Add(time);
+                    }
+                }
+                distanceMovedInThatTime += distancesMoved[time];
+            }
+            if(timesTooOld.Count > 0)
+            {
+                foreach(float key in timesTooOld)
+                {
+                    distancesMoved.Remove(key);
+                }
+            }
 
+            return distanceMovedInThatTime;
+        }
     }
-    public enum CreaturePart { LEG , FOOT, BODY, ENGINE_Z, ENGINE_Y, ENGINE_X, BRAKE, NONE }
+    public enum CreaturePart { LEG , FOOT, BODY, ENGINE_Z, ENGINE_Y, ENGINE_X, BRAKE, SHIELD,
+        TRACTORBEAM, NONE }
+    public enum CreatureGrabType { TractorBeam }
     public enum CreatureLocomotionType { StandardForwardBack, Flight, NONE }
     public enum CreatureAnimationMovementType { Rotation, Inch, NONE }
     public enum CreatureTurnType { Rotate , Shorten, Inch }

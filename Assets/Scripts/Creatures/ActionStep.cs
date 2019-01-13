@@ -64,7 +64,7 @@ namespace rak
             //Debug.LogWarning("Elapsed Time - " + elapsedTime + " Max - " + maxAllowedTime);
             if (elapsedTime > maxAllowedTime)
             {
-                Debug.Log(performer.name + " has exceeded task time for task. Resetting");
+                //Debug.Log(performer.name + " has exceeded task time for task. Resetting");
                 status = Tasks.TASK_STATUS.Failed;
                 failReason = FailReason.ExceededTimeLimit;
                 if (_targetThing != null) _targetThing.MakeAvailable(performer);
@@ -121,15 +121,22 @@ namespace rak
                 // LOCATE EXPLORE //
                 else if (associatedTask == Tasks.TASKS.EXPLORE)
                 {
-                    Vector3 explorePoint = performer.transform.position;
-                    if (explorePoint.y < performer.GetCreatureAgent().GetSustainHeight())
+                    GridSector sector = performer.GetClosestUnexploredSector();
+                    if (sector != null)
+                    {
+                        Vector3 explorePoint = sector.GetTwoDLerpOfSector();
+                        // Vector2 to Vector3 //
+                        explorePoint.z = explorePoint.y;
                         explorePoint.y = performer.GetCreatureAgent().GetSustainHeight();
-                    explorePoint.z += Random.Range(0, 50);
-                    explorePoint.x += Random.Range(0, 50);
-                    _targetPosition = explorePoint;
-                    performer.GetCreatureAgent().SetDestination(_targetPosition);
-                    creatureAgentDestinationHasBeenSet = true;
-                    status = Tasks.TASK_STATUS.Complete;
+                        _targetPosition = explorePoint;
+                        performer.GetCreatureAgent().SetDestination(_targetPosition);
+                        creatureAgentDestinationHasBeenSet = true;
+                        status = Tasks.TASK_STATUS.Complete;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("No unexplored sectors!");
+                    }
                     return;
                 }
             }
@@ -137,6 +144,7 @@ namespace rak
             // MOVE TO //
             else if (action == Actions.MoveTo)
             {
+                Debug.DrawLine(performer.transform.position, _targetPosition, Color.cyan,.5f);
                 // The agent should have a destination before getting to this point //
                 if (!creatureAgentDestinationHasBeenSet)
                 {
@@ -159,7 +167,7 @@ namespace rak
                     float distanceBeforeRayCastCheckOnTarget = performer.miscVariables
                         [MiscVariables.CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below];
                     // Arrived //
-                    if (performer.getDistanceFromDestination() <= distanceRequiredToCompleteModifier *
+                    if (performer.getDistanceFromDestination() <=
                         performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached())
                     {
                         status = Tasks.TASK_STATUS.Complete;
@@ -176,12 +184,10 @@ namespace rak
                                 // Raycast forward //
                                 if (!performer.IsTargetInFrontOfMe(_targetThing))
                                 {
-                                    performer.GetCreatureAgent().SetOrbitTarget(true);
                                     performer.GetCreatureAgent().SetIgnoreCollisions(false);
                                 }
                                 else
                                 {
-                                    performer.GetCreatureAgent().SetOrbitTarget(false);
                                     performer.GetCreatureAgent().SetIgnoreCollisions(true);
                                 }
                             }
@@ -189,7 +195,6 @@ namespace rak
                         // Not close enough, make sure orbiting is disabled //
                         else
                         {
-                            performer.GetCreatureAgent().SetOrbitTarget(false);
                             performer.GetCreatureAgent().SetIgnoreCollisions(false);
                         }
                     }
@@ -198,19 +203,29 @@ namespace rak
             // ADD //
             else if (action == Actions.Add)
             {
-                if (performer.AddThingToInventory(_targetThing))
+                CreatureAgent agent = performer.GetCreatureAgent();
+                // Tractor Beam //
+                if (agent.grabType == CreatureGrabType.TractorBeam)
                 {
-                    _targetThing.GetComponent<Renderer>().enabled = false;
-                    performer.GetCreatureAgent().CollisionRemoveIfPresent(_targetThing.transform);
-                    status = Tasks.TASK_STATUS.Complete;
-                    return;
-                }
-                else
-                {
-                    Debug.LogWarning("Failed adding thing to inventory");
-                    failReason = FailReason.FailureAddingToInventory;
-                    status = Tasks.TASK_STATUS.Failed;
-                    return;
+                    // Touching Target //
+                    if (agent.HasCollision(_targetThing.transform) || 
+                        Vector3.Distance(_targetThing.transform.position,performer.transform.position) < .5f)
+                    {
+                        if (performer.AddThingToInventory(_targetThing))
+                        {
+                            performer.GetCreatureAgent().CollisionRemoveIfPresent(_targetThing.transform);
+                            _targetThing.transform.SetParent(performer.transform);
+                            status = Tasks.TASK_STATUS.Complete;
+                            return;
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Failed adding thing to inventory");
+                            failReason = FailReason.FailureAddingToInventory;
+                            status = Tasks.TASK_STATUS.Failed;
+                            return;
+                        }
+                    }
                 }
 
             }

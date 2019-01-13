@@ -7,10 +7,10 @@ using rak;
 using rak.world;
 using rak.creatures;
 
-public class RAKTerrainMaster : MonoBehaviour
+public partial class RAKTerrainMaster : MonoBehaviour
 {
 
-    public bool debug = true;
+    public bool debug = World.ISDEBUGSCENE;
     public bool forceGenerate = false;
     private void logDebug(string message)
     {
@@ -75,14 +75,15 @@ public class RAKTerrainMaster : MonoBehaviour
             if (!saveDataAvail) //  generate //
             {
                 td = generateTerrain(width, height, currentBiome.depth, currentBiome.scale, currentBiome.offsetX, currentBiome.offsetY);
+                generateSplatPrototypes(td);
             }
             else
             {
                 savedTerrain = RAKTerrainSavedData.loadTerrain(cell.GetCellSaveFileName(world.WorldName)+"T"+count + ".area");
-                td = savedTerrain.generateTerrainData();
+                td = savedTerrain.generateTerrainDataFromFlatMap();
                 Debug.LogWarning("Loading terrain from disk tdsize - " + td.size.x + "-" + td.size.y + "-" + td.size.z);
             }
-            generateSplatPrototypes(td);
+            //generateSplatPrototypes(td);
             GameObject go = Terrain.CreateTerrainGameObject(td);
             go.transform.SetParent(transform);
             go.name = "Terrain" + count;
@@ -137,7 +138,7 @@ public class RAKTerrainMaster : MonoBehaviour
         List<RAKTerrainObject> loadedTerrainObjects = new List<RAKTerrainObject>();
         for (int count = 0; count < objects.Length; count++)
         {
-            RAKTerrainObject terrainObject = RAKUtilities.getPrefab(
+            RAKTerrainObject terrainObject = RAKUtilities.getTerrainObjectPrefab(
                 RAKUtilities.nonTerrainObjects[objects[count].prefabObjectIndex])
                 .GetComponent<RAKTerrainObject>();
             GameObject prefab = (GameObject)Instantiate(terrainObject.gameObject, objects[count].position.getVector3(), Quaternion.identity);//, 2);
@@ -206,16 +207,6 @@ public class RAKTerrainMaster : MonoBehaviour
         data.heightmapResolution = width;
         data.size = new Vector3(width, depth, height);
         data.SetHeights(0, 0, generateHeights(width, height, scale, offsetX, offsetY));
-
-        /*List<TreePrototype> protoTypes = new List<TreePrototype>();
-        for (int count = 0; count < treePrefabs.Length; count++)
-        {
-            TreePrototype treePrototype = new TreePrototype();
-            treePrototype.prefab = treePrefabs[count];
-            protoTypes.Add(treePrototype);
-        }
-        data.treePrototypes = protoTypes.ToArray();
-        generateTrees(data, numberOfTrees);*/
         return data;
     }
     private int getRandomTerrainObject(int[] percentages)
@@ -245,7 +236,7 @@ public class RAKTerrainMaster : MonoBehaviour
             GameObject prefab = null;
             try
             {
-                prefab = RAKUtilities.getPrefab(biome.prefabNames[currentObjectCount]);
+                prefab = RAKUtilities.getTerrainObjectPrefab(biome.prefabNames[currentObjectCount]);
             }
             catch(Exception e)
             {
@@ -260,9 +251,19 @@ public class RAKTerrainMaster : MonoBehaviour
             float minimiumDistanceBetweenObjects = terrainObject.minimiumDistanceBetweenObjects;
             float heightOffset = terrainObject.heightOffset;
             MeshFilter meshFilter = terrainObject.GetComponent<MeshFilter>();
-            float detailHeight = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.y * prefab.transform.localScale.y;
-            float detailWidthX = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.x * prefab.transform.localScale.x;
-            float detailWidthZ = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.z * prefab.transform.localScale.z;
+            float detailHeight,detailWidthX, detailWidthZ;
+            if (meshFilter == null)
+            {
+                detailHeight = 1;
+                detailWidthX = 1;
+                detailWidthZ = 1;
+            }
+            else
+            {
+                detailHeight = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.y * prefab.transform.localScale.y;
+                detailWidthX = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.x * prefab.transform.localScale.x;
+                detailWidthZ = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.z * prefab.transform.localScale.z;
+            }
             // Sometimes we need to force a width if the bottom of the object is skinny (trees) //
             if (terrainObject.sizeOverride != Vector3.zero)
             {
@@ -753,7 +754,7 @@ public class RAKTerrainMaster : MonoBehaviour
                 this.nonTerrainObjectsSaveData[count] = RAKTerrainObjectSaveData.createSaveData(nonTerrainObjects[count]);
             }
         }
-        public TerrainData generateTerrainData()
+        public TerrainData generateTerrainDataFromFlatMap()
         {
             TerrainData td = new TerrainData();
             td.splatPrototypes = getSplatProtoTypes();
@@ -826,11 +827,6 @@ public class RAKTerrainMaster : MonoBehaviour
                 var bformatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                 return (RAKTerrainSavedData)bformatter.Deserialize(stream);
             }
-        }
-        public void prepareForXfer()
-        {
-            alphaMapFlat = new float[(int)((tdSize.x-1) * (tdSize.z-1) * splatPrototypes.Length)];
-            heightMapFlat = new float[(int)(tdSize.x * tdSize.z)];
         }
 
         public bool appendToArray(bool isAlphaNotHeight,float[] data,int startIndex)
@@ -995,57 +991,5 @@ public class RAKTerrainMaster : MonoBehaviour
             }
             public RAKTreeInstance() { }
         }
-    }
-
-    [Serializable]
-    public class RAKBiome
-    {
-        public enum BIOMETYPE { Forest }
-
-        public BIOMETYPE type { get; set; }
-        public string[] prefabNames { get; set; }
-        public int[] objectCounts { get; set; }
-
-        public int depth { get; set; }// 150;
-        public int numberOfTrees { get; set; }// 0;                 
-        public float offsetX { get; set; }// 100f;
-        public float offsetY { get; set; }// 100f;
-        public float scale { get; set; }// 2f;
-
-        public static RAKBiome getForestBiome()
-        {
-            RAKBiome biome = new RAKBiome(new string[]
-                {RAKUtilities.NON_TERRAIN_OBJECT_HOUSE1,RAKUtilities.NON_TERRAIN_OBJECT_HOUSE2,RAKUtilities.NON_TERRAIN_OBJECT_TREE01,
-                RAKUtilities.NON_TERRAIN_OBJECT_TREE02,RAKUtilities.NON_TERRAIN_OBJECT_TREE03,RAKUtilities.NON_TERRAIN_OBJECT_TREE04_3PACK,
-                RAKUtilities.NON_TERRAIN_OBJECT_BUSH_01,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_02,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_03,
-                RAKUtilities.NON_TERRAIN_OBJECT_BUSH_04,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_05,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_06},
-                new int[] {
-                0, // House1
-                0, // House2
-                5, // Tree01
-                5, // Tree02
-                5, // Tree03
-                5, // Tree04_3k
-                30, // Bush01
-                30, // Bush02
-                30, // Bush03
-                30, // Bush04
-                30, // Bush05
-                3 // Bush06
-                });
-            biome.depth = 80;
-            biome.numberOfTrees = 0;
-            biome.offsetX = UnityEngine.Random.Range(0, 100);
-            biome.offsetY = UnityEngine.Random.Range(0, 100);
-            biome.scale = UnityEngine.Random.Range(1, 3);
-            biome.type = BIOMETYPE.Forest;
-            return biome;
-        }
-        public RAKBiome(string[] prefabNames, int[] objectCounts)
-        {
-            this.prefabNames = prefabNames;
-            this.objectCounts = objectCounts;
-        }
-        public RAKBiome() { }
     }
 }

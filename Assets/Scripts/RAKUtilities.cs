@@ -20,6 +20,14 @@ namespace rak
         public const string NON_TERRAIN_OBJECT_BUSH_04 = "bush04";
         public const string NON_TERRAIN_OBJECT_BUSH_05 = "bush05";
         public const string NON_TERRAIN_OBJECT_BUSH_06 = "bush06";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_TREE_1 = "Tree-1-Green";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_TREE_2 = "Tree-2-Green";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_TREE_3 = "Tree-3-Green";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_TREE_4 = "Tree-4-Green";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_BUSH_1 = "Bush-1-Green";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_BUSH_2 = "Bush-2-Green";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_BUSH_3 = "Bush-3-Green";
+        public const string NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4 = "Bush-4-Green";
         public const string AUDIO_CLIP_RAIN_LIGHT = "rain_light";
         public const string AUDIO_CLIP_WIND_MEDIUM = "wind_normal1";
         public const string MATERIAL_SKYBOX_FOREST = "forest";
@@ -53,6 +61,7 @@ namespace rak
         }
         public static GameObject getPrefab(string prefabName)
         {
+            //Debug.Log("Getting prefab - " + prefabName);
             GameObject prefab = (GameObject)Resources.Load("Prefabs/Things/" + prefabName);
             return prefab;
         }
@@ -74,6 +83,11 @@ namespace rak
         public static GameObject getThingPrefab(string name)
         {
             GameObject prefab = (GameObject)Resources.Load("Prefabs/Things/" + name);
+            return prefab;
+        }
+        public static GameObject getTerrainObjectPrefab(string name)
+        {
+            GameObject prefab = (GameObject)Resources.Load("Prefabs/World/TerrainObjects/" + name);
             return prefab;
         }
         public static GameObject getWorldPrefab(string name)

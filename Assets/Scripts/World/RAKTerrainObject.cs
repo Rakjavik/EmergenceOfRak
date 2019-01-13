@@ -138,6 +138,46 @@ public class RAKTerrainObject : MonoBehaviour, Resource
                 numberOfTimesToSearchForLocation = 250;
                 sizeOverride = new Vector3(5, 15, 5);
                 break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_1:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 10;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 2;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = new Vector3(5, 15, 5);
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_2:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 10;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 2;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = new Vector3(5, 15, 5);
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_3:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 10;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 2;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = new Vector3(5, 15, 5);
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_4:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 10;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 2;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = new Vector3(5, 15, 5);
+                break;
         }
     }
 

@@ -8,10 +8,11 @@ namespace rak.creatures
     {
         public float UpdateEvery; // How often Part Updates in seconds
         public CreaturePart PartType; // Rough category for type of limb/part
-        public Transform PartTransform; // Transform of the single part
+        protected Transform PartTransform; // Transform of the single part
         public bool Enabled { get; protected set; } // Enabled
         public AudioClip audioClip { get; protected set; }
 
+        protected int durability; // Velocity magnitude of the Creature in a collision before the part is destroyed
         protected Creature parentCreature;
         protected float sinceLastUpdate;
         protected Rigidbody attachedBody;
@@ -23,6 +24,7 @@ namespace rak.creatures
             this.PartType = creaturePart;
             this.PartTransform = transform;
             this.UpdateEvery = updateEvery;
+            
             this.parentCreature = transform.GetComponentInParent<Creature>();
             this.attachedAgent = parentCreature.GetCreatureAgent();
             miscVariables = MiscVariables.GetAgentMiscVariables(parentCreature);
@@ -51,23 +53,20 @@ namespace rak.creatures
             if (sinceLastUpdate >= UpdateEvery)
             {
                 sinceLastUpdate = 0;
-                if(this is EnginePart)
-                {
-                    EnginePart thisMovementPart = (EnginePart)this;
-                    thisMovementPart.UpdateMovePart();
-                }
-                else if (this is TurnPart)
-                {
-                    TurnPart thisTurnPart = (TurnPart)this;
-                    thisTurnPart.turn();
-                }
-                else
-                {
-                    AnimationPart thisAnimationPart = (AnimationPart)this;
-                    thisAnimationPart.UpdateAnimationPart(parentCreature.GetCurrentAction());
-                }
+                UpdateDerivedPart(attachedAgent.GetCurrentCreatureAction());
             }
         }
+        public void SetUpdateStaggerTime(float staggeredTime)
+        {
+            sinceLastUpdate = staggeredTime;
+        }
+
+        // Implemented in more derived classes //
+        public virtual void UpdateDerivedPart(ActionStep.Actions action) { }
+        public virtual void NotifyTargetObjectiveComplete(Thing thing) { }
+
+        public Transform GetPartTransform() { return PartTransform; }
+
         private bool arrayContains(ActionStep.Actions action, ActionStep.Actions[] list)
         {
             foreach (ActionStep.Actions singleAction in list)
@@ -88,7 +87,8 @@ namespace rak.creatures
         POWER_DOWN, // Force degrades slowly then turns engines UNINTIALIZED when 0 is hit
         REVERSE, // Max negative force
         STARTING, // Coming from UNINITIALIZED state
-        UNINITIALIZED // Shut down
+        UNINITIALIZED, // Shut down
+        DESTROYED // Destroyed
     }
     public enum Direction { X, Y, Z }
 }

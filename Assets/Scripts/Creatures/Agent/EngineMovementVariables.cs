@@ -9,6 +9,7 @@ namespace rak.creatures
         public float MaxForce { get; set; }
         public float MinForce { get; set; }
         public Direction flightDirection { get; private set; }
+        public bool _engineLocked = false; // Prevents normal throttle adjustments
 
         private ConstantForce cf;
         private float startupRunningFor;

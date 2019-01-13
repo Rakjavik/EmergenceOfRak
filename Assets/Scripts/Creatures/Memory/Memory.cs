@@ -1,4 +1,5 @@
-﻿using System;
+﻿using rak.world;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -68,6 +69,11 @@ namespace rak.creatures.memory
                 // We remember not being able to access this previously //
                 if (HasRecentMemoryOf(Verb.MOVEDTO, food[count], true) && filterOutMoveToFailuresFromShortTerm)
                     continue;
+                // Object has since been destroyed //
+                if (food[count] == null)
+                {
+                    continue;
+                }
                 float thisDist = Vector3.Distance(originPosition, food[count].transform.position);
                 if(thisDist < closestDist)
                 {
@@ -111,11 +117,14 @@ namespace rak.creatures.memory
             {
                 shortTermMemory[currentMemoryIndex] = memory;
                 currentMemoryIndex++;
-                StringBuilder builder = new StringBuilder("I will remember I did ");
-                if (memory.invertVerb) builder.Append(" NOT ");
-                builder.Append(memory.verb);
-                builder.Append(" " + memory.subject.name);
-                //Debug.LogWarning(builder.ToString());
+                if (World.ISDEBUGSCENE)
+                {
+                    StringBuilder builder = new StringBuilder("I will remember I ");
+                    if (memory.invertVerb) builder.Append(" NOT ");
+                    builder.Append(memory.verb);
+                    builder.Append(" " + memory.subject.name);
+                    //Debug.LogWarning(builder.ToString());
+                }
                 return true;
             }
             return false;

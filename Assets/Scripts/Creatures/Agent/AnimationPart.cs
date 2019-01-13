@@ -2,22 +2,23 @@
 
 namespace rak.creatures
 {
-    public enum PartMovesWith { Velocity, Braking, NA, ConstantForceY, ConstantForceZ }
+    public enum PartMovesWith { Velocity, Braking, NA, ConstantForceY, ConstantForceZ, IsKinematic, TargetPosition }
     public enum PartAnimationType { Movement, Particles }
 
     public class AnimationPart : Part
     {
         private Vector3 movementDirection;
-        private float movementMultiplier;
+        protected float movementMultiplier;
         private ActionStep.Actions[] AnimateDuring;
         private PartMovesWith partMovesRelativeTo;
         private PartAnimationType animationType;
-        private Component animationComponent;
-        private float maxParticleCount = 750;
+        private bool visibleIfNotAnimating;
+
+        private bool visible {get; set;}
 
         public AnimationPart(CreaturePart creaturePart, Transform transform, CreatureAnimationMovementType partMovementType, 
             float updateEvery,Vector3 movementDirection,float movementMultiplier,ActionStep.Actions[] animateDuring,
-            PartMovesWith partMovesRelativeTo,PartAnimationType animationType)
+            PartMovesWith partMovesRelativeTo,PartAnimationType animationType, bool visibleIfNotAnimating)
             : base(creaturePart, transform, updateEvery)
         {
             this.movementDirection = movementDirection;
@@ -25,69 +26,80 @@ namespace rak.creatures
             this.AnimateDuring = animateDuring;
             this.partMovesRelativeTo = partMovesRelativeTo;
             this.animationType = animationType;
-            if(animationType == PartAnimationType.Particles)
-            {
-                animationComponent = PartTransform.gameObject.AddComponent<ParticleSystem>();
-                CreatureConstants.SetPropertiesForParticleSystemByCreature((ParticleSystem)animationComponent, parentCreature);
-            }
+            this.visibleIfNotAnimating = visibleIfNotAnimating;
+            visible = true;
         }
 
-        public void UpdateAnimationPart(ActionStep.Actions currentCreatureAction)
+        public override void UpdateDerivedPart(ActionStep.Actions currentCreatureAction)
         {
+            base.UpdateDerivedPart(currentCreatureAction);
             if (!animateDuringThis(currentCreatureAction))
             {
+                if (!visibleIfNotAnimating && visible)
+                {
+                    SetVisibility(false);
+                }
                 return;
             }
             if (animationType == PartAnimationType.Movement)
             {
-                animateMovement();   
-            }
-            else if (animationType == PartAnimationType.Particles)
-            {
-                animateParticles();
+                animateMovement();
             }
         }
-
-        private void animateParticles()
+        
+        private void SetVisibility(bool visible)
         {
-            ParticleSystem ps = (ParticleSystem)animationComponent;
-            ParticleSystem.EmissionModule emission = ps.emission;
-            float modifier = attachedAgent.currentBrakeAmount;
-            int amount = (int)(maxParticleCount * (modifier * .01f));
-            if (amount < 100) amount = 0;
-            emission.rateOverTime = amount;
-            if(amount > 0 && !ps.isPlaying)
+            if (this.visible == visible) return;
+            MeshRenderer renderer = PartTransform.GetComponent<MeshRenderer>();
+            if (visible)
             {
-                ps.Play();
-                
-            }
-            if (amount > 0)
-            {
-                if (audioClip != null)
+                if (renderer != null) renderer.enabled = true;
+                for(int count = 0; count < PartTransform.childCount; count++)
                 {
-                    AudioSource audioSource = ps.GetComponentInParent<AudioSource>();
-                    if (!audioSource.isPlaying)
-                        audioSource.PlayOneShot(audioClip);
-                    if (partMovesRelativeTo == PartMovesWith.Braking)
-                        audioSource.volume = (attachedAgent.currentBrakeAmount * .01f)/2;
-                }
+                    PartTransform.GetChild(count).gameObject.SetActive(true);
+                };
+                this.visible = true;
+            }
+            else
+            {
+                
+                if (renderer != null) renderer.enabled = false;
+                for (int count = 0; count < PartTransform.childCount; count++)
+                {
+                    PartTransform.GetChild(count).gameObject.SetActive(false);
+                };
+                this.visible = false;
             }
         }
         private void animateMovement()
         {
             float relativeMultiplier;
             if (partMovesRelativeTo == PartMovesWith.Braking)
-                relativeMultiplier = attachedAgent.currentBrakeAmount;
+                relativeMultiplier = attachedAgent.CurrentBrakeAmountRequest.magnitude;
             else if (partMovesRelativeTo == PartMovesWith.ConstantForceY)
                 relativeMultiplier = attachedAgent.GetConstantForceComponent().relativeForce.y;
             else if (partMovesRelativeTo == PartMovesWith.ConstantForceZ)
                 relativeMultiplier = attachedAgent.GetConstantForceComponent().relativeForce.z;
             else if (partMovesRelativeTo == PartMovesWith.Velocity)
                 relativeMultiplier = attachedAgent.GetRigidBody().velocity.magnitude;
+            else if (partMovesRelativeTo == PartMovesWith.IsKinematic)
+                relativeMultiplier = attachedAgent.IsKinematic();
             else
                 relativeMultiplier = 1;
-            Vector3 rotation = movementDirection * relativeMultiplier;
-            PartTransform.Rotate(rotation * movementMultiplier);
+            // NO changes //
+            if (relativeMultiplier == 0)
+            {
+                if (!visibleIfNotAnimating && visible)
+                    SetVisibility(false);
+            }
+            else
+            {
+                if (!visibleIfNotAnimating && !visible)
+                    SetVisibility(true);
+
+                Vector3 rotation = movementDirection * relativeMultiplier;
+                PartTransform.Rotate(rotation * movementMultiplier);
+            }
         }
 
         private bool animateDuringThis(ActionStep.Actions action)

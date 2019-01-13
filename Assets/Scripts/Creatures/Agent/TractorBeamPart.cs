@@ -1,0 +1,68 @@
+﻿using rak.world;
+using UnityEngine;
+
+namespace rak.creatures
+{
+    public class TractorBeamPart : Part
+    {
+        private Thing target { get; set; }
+        private float beamStrength { get; set; }
+        private bool locked { get; set; }
+        private Rigidbody targetBody { get; set; }
+
+        public TractorBeamPart(Transform transform, float updateEvery,float beamStrength) : 
+            base(CreaturePart.TRACTORBEAM, transform, updateEvery)
+        {
+            attachedBody = transform.GetComponentInParent<Rigidbody>();
+            if (attachedBody == null) Debug.LogError("Can't find Rigidbody for tractor beam part");
+            locked = false;
+            this.beamStrength = beamStrength;
+        }
+
+        public override void UpdateDerivedPart(ActionStep.Actions action)
+        {
+            base.UpdateDerivedPart(action);
+            if(action == ActionStep.Actions.Add)
+            {
+                // Need to lock //
+                if (!locked)
+                {
+                    LockOnTarget();
+                }
+                // Already locked //
+                else
+                {
+                    float distance = Vector3.Distance(targetBody.position, attachedBody.position);
+                    //Debug.LogWarning("Tractor beam on, distance - " + distance);
+                    Vector3 newPosition = Vector3.MoveTowards(targetBody.position, attachedBody.position, beamStrength*Time.deltaTime);
+                    targetBody.position = newPosition;
+                }
+            }
+            else
+            {
+                if (locked)
+                    DisengageBeam();
+            }
+        }
+        
+        private void DisengageBeam()
+        {
+            locked = false;
+            target = null;
+            targetBody = null;
+        }
+        private void LockOnTarget()
+        {
+            target = attachedAgent.GetCurrentActionTarget();
+            if (target.RequestControl(attachedAgent.creature))
+            {
+                targetBody = target.RequestRigidBodyAccess(attachedAgent.creature);
+                if (targetBody != null)
+                {
+                    targetBody.isKinematic = true;
+                    locked = true;
+                }
+            }
+        }
+    }
+}

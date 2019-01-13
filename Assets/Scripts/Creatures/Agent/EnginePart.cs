@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using rak.world;
+using UnityEngine;
 
 namespace rak.creatures
 {
@@ -6,7 +7,7 @@ namespace rak.creatures
     public class EnginePart : Part
     {
         private bool _landing = false; // Whether the landing process has been started
-
+        
         // Constant Force component control for X Y and Z Axis //
         private EngineMovementVariables[] engineMovementVariables;
 
@@ -65,10 +66,7 @@ namespace rak.creatures
             {
                 for (int count = 0; count < engineMovementVariables.Length; count++)
                 {
-                    if (engineMovementVariables[count].CurrentState != MovementState.UNINITIALIZED)
-                    {
-                        engineMovementVariables[count].SetState(MovementState.UNINITIALIZED);
-                    }
+                    engineMovementVariables[count].SetState(MovementState.DESTROYED);
                 }
                 _landing = false;
                 Enabled = false;
@@ -269,7 +267,7 @@ namespace rak.creatures
             bool needDirectionUp = attachedAgent.GetDistanceYFromDestination() < distanceToInteract *
                 miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Y_Engine_Dist_To_Act_UP_Mult];
             bool goingUp = (relativeVel.y > .01f);
-            attachedAgent.SetCurrentlyBrakingToFalse();
+            attachedAgent.SetBrakeRequestToZero();
 
             // Loop through axis //
             for (int count = 0; count < 3; count++)
@@ -315,31 +313,13 @@ namespace rak.creatures
                     }
                 }
 
-                // Special Operations //
-                // MAINTAIN POSITION //
-                if (attachedAgent.MaintainPosition)
-                {
-                    maintainPosition(engine, relativeVel);
-                    continue;
-                }
-                // ORBITING //
-                else if (attachedAgent.IsOrbitingTarget())
-                {
-                    orbit(engine, relativeVel);
-                    continue;
-                }
                 // Make throttle adjustments //
                 MovementState desiredState = MovementState.NONE;
-                if (attachedAgent.MaintainPosition || attachedAgent.IsOrbitingTarget())
-                {
-                    Debug.LogError("At regular flight procedure when supposed to maintain position");
-                    return;
-                }
-                if (!goingPlusDirection && needToGoPlusDirection)
+                if (!goingPlusDirection && needToGoPlusDirection && !engine._engineLocked)
                 {
                     desiredState = MovementState.FORWARD;
                 }
-                else if (goingPlusDirection && !needToGoPlusDirection)
+                else if (goingPlusDirection && !needToGoPlusDirection && !engine._engineLocked)
                 {
                     if (engine.flightDirection != Direction.X)
                     {
@@ -350,7 +330,7 @@ namespace rak.creatures
                         desiredState = MovementState.REVERSE;
                     }
                 }
-                else if (!goingPlusDirection && !needToGoPlusDirection)
+                else if (!goingPlusDirection && !needToGoPlusDirection && !engine._engineLocked)
                 {
                     if (engine.flightDirection == Direction.Y)
                     {
@@ -365,7 +345,7 @@ namespace rak.creatures
                     else
                         desiredState = MovementState.IDLE;
                 }
-                else if (goingPlusDirection && needToGoPlusDirection)
+                else
                 {
                     float directionalSpeed;
                     float cruisingSpeed;
@@ -378,53 +358,66 @@ namespace rak.creatures
                         if (engine.flightDirection == Direction.X)
                         {
                             timeToCollision = timeBeforeCollision.x;
-                        }
-                        else if (engine.flightDirection == Direction.Z)
-                        {
-                            timeToCollision = timeBeforeCollision.z;
-                        }
-                        else
-                        {
-                            timeToCollision = timeBeforeCollision.y;
-                        }
-
-                        if (engine.flightDirection == Direction.X)
-                        {
                             directionalSpeed = relativeVel.x;
                             cruisingSpeed = attachedAgent.CruisingSpeed.x;
                         }
                         else if (engine.flightDirection == Direction.Y)
                         {
+                            timeToCollision = timeBeforeCollision.y;
                             directionalSpeed = relativeVel.y;
                             cruisingSpeed = attachedAgent.CruisingSpeed.y;
                         }
                         else // Z AXIS
                         {
+                            timeToCollision = timeBeforeCollision.z;
                             directionalSpeed = relativeVel.z;
                             cruisingSpeed = attachedAgent.CruisingSpeed.z;
                         }
                         // Imminenet Collision //
                         float collisionProblem =
                             miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Reverse_Engine_If_Colliding_In];
-                        if (timeToCollision < collisionProblem && engine.flightDirection != Direction.Y)
+                        if (goingPlusDirection && needToGoPlusDirection)
                         {
-                            if (engine.CurrentState != MovementState.REVERSE)
+                            // Z Engine, go into reverse if we're going to collide //
+                            if (timeToCollision < collisionProblem &&
+                            engine.flightDirection == Direction.Z)
                             {
-                                engine.SetState(MovementState.REVERSE);
+                                if (engine.CurrentState != MovementState.REVERSE)
+                                {
+                                    engine.SetState(MovementState.REVERSE);
+                                }
                             }
                         }
-                        else if (engine.CurrentState == MovementState.REVERSE && timeToCollision >= collisionProblem
-                            && engine.flightDirection != Direction.Y)
+                    
+                        // X Engine, move to the side to avoid collision in front //
+                        if (engine.flightDirection == Direction.X)
                         {
-                            engine.SetState(MovementState.IDLE);
-                        }
-                        else if (directionalSpeed >= cruisingSpeed)
-                        {
-                            if (engine.CurrentState != MovementState.IDLE)
+                            if ((timeBeforeCollision.z < collisionProblem) ||
+                                (attachedAgent.GetDistanceBeforeCollision(true).z < 1))
                             {
-                                engine.SetState(MovementState.IDLE);
+                                engineMovementVariables[(int)Direction.X]._engineLocked = true;
+                                Vector2 distanceOnSides = attachedAgent.GetDistanceFromCollisionLeftRight();
+                                if (distanceOnSides.x > distanceOnSides.y)
+                                {
+                                    if (engine.CurrentState != MovementState.REVERSE)
+                                    {
+                                        //Debug.LogWarning("Shifting X engine to reverse");
+                                        engine.SetState(MovementState.REVERSE);
+                                    }
+                                }
+                                else
+                                {
+                                    if (engine.CurrentState != MovementState.FORWARD)
+                                    {
+                                        //Debug.LogWarning("Shifting X engine to forward");
+                                        engine.SetState(MovementState.FORWARD);
+                                    }
+                                }
                             }
-
+                            else
+                            {
+                                engineMovementVariables[(int)Direction.X]._engineLocked = false;
+                            }
                         }
                     }
                 }
@@ -435,7 +428,7 @@ namespace rak.creatures
             }
             // If close to target apply brakes //
             if (attachedAgent.GetDistanceFromDestination() < distanceToInteract *
-                    attachedAgent.slowDownModifier)
+                    attachedAgent.slowDownModifier && !attachedAgent.GetRigidBody().isKinematic)
             {
                 if (relativeVel.magnitude >
                     miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Close_To_Target_Max_Vel_Mag_Before_Brake])
@@ -455,6 +448,76 @@ namespace rak.creatures
                     miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Max_Vel_Magnitude_Brake_Multiplier],false);
             }
             // END FLIGHT PROCESSING //
+        }
+        private void Flight(ActionStep.Actions currentCreatureAction)
+        {
+            if(currentCreatureAction == ActionStep.Actions.MoveTo)
+            {
+                EngineMovementVariables engineZ = engineMovementVariables[(int)Direction.Z];
+                EngineMovementVariables engineY = engineMovementVariables[(int)Direction.Y];
+                EngineMovementVariables engineX = engineMovementVariables[(int)Direction.X];
+                Vector3 relativeVel = attachedBody.transform.InverseTransformDirection(attachedBody.velocity);
+                float distFromGround = attachedAgent.GetDistanceFromGround();
+                float distanceFromFirstZHit = attachedAgent.GetDistanceFromFirstZHit();
+                bool objectBlockingForward = distanceFromFirstZHit < 3;
+                MovementState stateToSetY = MovementState.IDLE;
+                // Moving down or close to ground, throttle up //
+                if (relativeVel.y < -.5f || distFromGround < attachedAgent.GetSustainHeight())
+                {
+                    stateToSetY = MovementState.FORWARD;
+                }
+                else if (distFromGround == Mathf.Infinity)
+                {
+                    if (attachedBody.position.y < Area.MinimumHeight)
+                        stateToSetY = MovementState.FORWARD;
+                    else if (attachedBody.position.y > Area.MaximumHeight)
+                        stateToSetY = MovementState.IDLE;
+                }
+                // Moving up, throttle idle
+                else if (relativeVel.y > .5f)
+                {
+                    stateToSetY = MovementState.IDLE;
+                }
+                else
+                {
+                    stateToSetY = MovementState.IDLE;
+                }
+                if (engineY.CurrentState != stateToSetY)
+                    engineY.SetState(stateToSetY);
+                // Don't move forward if we're blocked //
+                if (engineZ.CurrentState != MovementState.FORWARD && !objectBlockingForward)
+                    engineZ.SetState(MovementState.FORWARD);
+                if (objectBlockingForward)
+                {
+                    Vector2 distanceLeftRight = attachedAgent.GetDistanceFromCollisionLeftRight();
+                    float distanceRight = distanceLeftRight.y;
+                    float distanceLeft = distanceLeftRight.x;
+                    if (engineX.CurrentState == MovementState.IDLE)
+                    {
+                        bool goRight = distanceLeft < distanceRight;
+                        if (goRight)
+                            engineX.SetState(MovementState.FORWARD);
+                        else
+                        {
+                            engineX.SetState(MovementState.REVERSE);
+                        }
+                    }
+                    if (engineZ.CurrentState == MovementState.FORWARD)
+                        engineZ.SetState(MovementState.IDLE);
+                    else if (engineZ.CurrentState == MovementState.IDLE &&
+                        distanceFromFirstZHit < .5f)
+                        engineZ.SetState(MovementState.REVERSE);
+                    else if (engineZ.CurrentState == MovementState.REVERSE &&
+                        distanceFromFirstZHit >= .5f)
+                        engineZ.SetState(MovementState.IDLE);
+                }
+                else
+                {
+                    if (engineX.CurrentState != MovementState.IDLE)
+                        engineX.SetState(MovementState.IDLE);
+                }
+
+            }
         }
         // GROUND //
         private void ProcessStandardForwardBack()
@@ -479,11 +542,12 @@ namespace rak.creatures
 
         public void OnCollisionExit(Collision collision) { }
 
-        public void UpdateMovePart()
+        public override void UpdateDerivedPart(ActionStep.Actions action)
         {
+            if (attachedBody.isKinematic) return;
             if(attachedAgent.locomotionType == CreatureLocomotionType.Flight)
             {
-                ProcessFlight();
+                Flight(action);
             }
             else if (attachedAgent.locomotionType == CreatureLocomotionType.StandardForwardBack)
             {

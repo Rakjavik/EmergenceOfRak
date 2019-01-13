@@ -8,19 +8,28 @@ namespace rak.world
 {
     public class Area
     {
+        private static List<Thing> allThings;
+        private static List<Thing> _removeTheseThings = new List<Thing>();
+        private static readonly object _allThingsLock = new object();
+        public static float MinimumHeight = .5f;
+        public static float MaximumHeight = 40;
         public static List<Thing> GetAllThings()
         {
-            return allThings;
+            lock (_allThingsLock)
+            {
+                return allThings;
+            }
         }
-        private static List<Thing> allThings;
+
         private World world;
         private HexCell cell;
         private Vector3 areaSize;
-        private bool debug = true;
+        private bool debug;
         private GameObject thingContainer = null;
         private GameObject creatureContainer;
         private List<Tribe> tribesPresent;
         private List<Site> sitesPresent;
+        private GameObject[] walls;
 
         public Area(HexCell cell,World world)
         {
@@ -29,6 +38,8 @@ namespace rak.world
             this.cell = cell;
             this.world = world;
             areaSize = Vector3.zero; // Initialize in method
+            walls = new GameObject[4];
+            debug = World.ISDEBUGSCENE;
         }
         private void InitializeDebug(Tribe tribe)
         {
@@ -39,44 +50,54 @@ namespace rak.world
             allThings = new List<Thing>();
             thingContainer = new GameObject("ThingContainer");
             creatureContainer = new GameObject("CreatureContainer");
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 50; i++)
             {
-                Vector3 position = new Vector3(Random.Range(-1, 70), Random.Range(3,15), Random.Range(-20, 50));
+                Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f,15f), Random.Range(10f, 200));
                 addThingToWorld("fruit",position,false);
-                if(i % 4 == 0)
-                    addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), new Vector3(13, 6, 7), true, tribe);
+                    
             }
-            //addCreatureToWorldDEBUG(BASE_SPECIES.Gagk.ToString(),new Vector3(13,6,7),false,tribe);
-            //addThingToWorld("fruit", new Vector3(60,4.5f,32), false);
-            //addThingToWorld("fruit", new Vector3(28.75f, 4.5f, 100), false);
-            //addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), new Vector3(19, 6, 31), false, tribe);
-            //addCreatureToWorldDEBUG("Gnat", new Vector3(31, 6, 22), false, tribe);
-            //addCreatureToWorldDEBUG("Gnat", new Vector3(125, 6, 100), false, tribe);
-            //addCreatureToWorldDEBUG("Gnat", new Vector3(119, 6, 131), false, tribe);
-
+            for (int i = 0; i < 1; i++)
+            {
+                Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
+                addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), position, false, tribe);
+            }
+            CreatureUtilities.OptimizeUpdateTimes(allThings);
+            Debug.LogWarning("Updates balanced");
         }
         public void Initialize(Tribe tribe)
         {
-            if (debug)
+            if (debug) // DEBUG
             {
                 InitializeDebug(tribe);
                 return;
             }
-            if(thingContainer == null)
+            areaSize = world.masterTerrain.GetSize();
+            for(int count = 0; count < walls.Length; count++)
             {
-                thingContainer = new GameObject("ThingContainer");
+                walls[count] = GameObject.Instantiate(RAKUtilities.getWorldPrefab("Wall"), world.transform);
+                walls[count].transform.GetChild(0).localScale = new Vector3(areaSize.x, 256, 1);
             }
-            areaSize = world.currentTerrain.GetSize();
+            walls[0].transform.position = new Vector3(areaSize.x / 2, 128, 1);
+            walls[1].transform.rotation = Quaternion.Euler(new Vector3(0, 90, 0));
+            walls[1].transform.position = new Vector3(0,0,areaSize.z/2);
+            walls[2].transform.position = new Vector3(areaSize.x/2, 0, areaSize.z);
+            walls[3].transform.rotation = Quaternion.Euler(new Vector3(0, 90, 0));
+            walls[3].transform.position = new Vector3(areaSize.x, 0, areaSize.z/2);
+            if (thingContainer == null)
+                thingContainer = new GameObject("ThingContainer");
+            if(creatureContainer == null)
+                creatureContainer = new GameObject("CreatureContainer");
             allThings = new List<Thing>();
             int populationToCreate = tribe.GetPopulation();
+            int MAXPOP = 50;
+            if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
-            if (populationToCreate > 10) populationToCreate = 10;
             for (int count = 0; count < populationToCreate; count++)
             {
                 addCreatureToWorld("Gnat");
             }
             
-            for (int i = 0; i < populationToCreate*50; i++)
+            for (int i = 0; i < populationToCreate*5; i++)
             {
                 addThingToWorld("fruit");
             }
@@ -85,37 +106,43 @@ namespace rak.world
 
         public void Update(float delta)
         {
-            List<Thing> inactiveThings = new List<Thing>();
-            foreach(Thing thing in allThings)
+            lock (_allThingsLock)
             {
-                thing.ManualUpdate(delta);
-                if (thing is Creature)
+                foreach (Thing thing in allThings)
                 {
-                    Creature creature = (Creature)thing;
-                    if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
+                    thing.ManualUpdate(delta);
+                    if (thing is Creature)
                     {
-                        inactiveThings.Add(creature);
-                        creature.DestroyAllParts();
-                        GameObject.Destroy(creature.gameObject);
-                        Debug.LogWarning("Removed a dead creature");
+                        Creature creature = (Creature)thing;
+                        if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
+                        {
+                            _removeTheseThings.Add(creature);
+                            creature.DestroyAllParts();
+                            GameObject.Destroy(creature.gameObject);
+                            Debug.LogWarning("Removed a dead creature");
+                        }
                     }
                 }
+                foreach (Thing thing in _removeTheseThings)
+                {
+                    allThings.Remove(thing);
+                    GameObject.Destroy(thing.gameObject);
+                }
+                _removeTheseThings = new List<Thing>();
             }
-            foreach(Thing thing in inactiveThings)
-            {
-                removeThingFromWorld(thing);
-            }
-            
         }
 
         public Thing[] findConsumeable(CONSUMPTION_TYPE consumptionType)
         {
             List<Thing> things = new List<Thing>();
-            foreach(Thing thing in allThings)
+            lock (_allThingsLock)
             {
-                if(thing.matchesConsumptionType(consumptionType))
+                foreach (Thing thing in allThings)
                 {
-                    things.Add(thing);
+                    if (thing.matchesConsumptionType(consumptionType))
+                    {
+                        things.Add(thing);
+                    }
                 }
             }
             return things.ToArray();
@@ -143,7 +170,7 @@ namespace rak.world
                 float x = Random.Range(0, areaSize.x);
                 float z = Random.Range(0, areaSize.z);
                 Vector2 targetSpawn = new Vector2(x, z);
-                float y = world.currentTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
+                float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
             allThings.Add(newThing.GetComponent<Thing>());
@@ -154,7 +181,7 @@ namespace rak.world
             GameObject thingObject = RAKUtilities.getCreaturePrefab(nameOfPrefab);
             GameObject newThing = Object.Instantiate(thingObject);
             newThing.transform.SetParent(creatureContainer.transform);
-            newThing.GetComponent<Creature>().Initialize(nameOfPrefab,this);
+            newThing.GetComponent<Creature>().Initialize(nameOfPrefab,this,null);
             newThing.transform.localPosition = Vector3.zero;
             newThing.transform.rotation = Quaternion.identity;
             if(!generatePosition)
@@ -166,14 +193,14 @@ namespace rak.world
                 float x = Random.Range(0, areaSize.x);
                 float z = Random.Range(0, areaSize.z);
                 Vector2 targetSpawn = new Vector2(x, z);
-                float y = world.currentTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
+                float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
             allThings.Add(newThing.GetComponent<Thing>());
         }
-        private RAKTerrain GetClosestTerrainToPoint(Vector3 point)
+        public RAKTerrain GetClosestTerrainToPoint(Vector3 point)
         {
-            return world.currentTerrain.GetClosestTerrainToPoint(point);
+            return world.masterTerrain.GetClosestTerrainToPoint(point);
         }
         public void addThingToWorld(string nameOfPrefab)
         {
@@ -193,11 +220,14 @@ namespace rak.world
             {
                 newThing.transform.position = GetRandomPositionOnNavMesh();
             }
-            allThings.Add(newThing.GetComponent<Thing>());
+            lock (_allThingsLock)
+            {
+                allThings.Add(newThing.GetComponent<Thing>());
+            }
         }
-        public bool removeThingFromWorld(Thing thing)
+        public static void removeThingFromWorld(Thing thing)
         {
-            return allThings.Remove(thing);
+            _removeTheseThings.Add(thing);
         }
         public Vector3 GetRandomPositionOnNavMesh(Vector3 startPosition,float maxDistance)
         {
@@ -208,7 +238,7 @@ namespace rak.world
                 float x = Random.Range(startPosition.x-maxDistance, startPosition.x+maxDistance);
                 float z = Random.Range(startPosition.z - maxDistance, startPosition.z + maxDistance);
                 Vector2 targetSpawn = new Vector2(x, z);
-                float y = world.currentTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
+                float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 Vector3 randomPosition = new Vector3(x, y, z);
                 NavMeshHit hit;
                 if (NavMesh.SamplePosition(randomPosition, out hit, maxDistance, NavMesh.AllAreas))
@@ -224,6 +254,26 @@ namespace rak.world
         public Vector3 GetRandomPositionOnNavMesh()
         {
             return GetRandomPositionOnNavMesh(Vector3.zero, 1000);
+        }
+        public GridSector GetCurrentGridSector(Transform transform)
+        {
+            RAKTerrain closestTerrain = world.masterTerrain.GetClosestTerrainToPoint(transform.position);
+            GridSector[] sectors = closestTerrain.GetGridElements();
+            float closestDist = Mathf.Infinity;
+            int indexOfClosest = -1;
+            Vector2 twoDPosition = new Vector2(transform.position.x, transform.position.z);
+            for (int count = 0; count < sectors.Length; count++)
+            {
+                Vector2 middleOfSector = Vector2.Lerp(sectors[count].worldPositionStart, sectors[count].worldPositionEnd,.5f);
+                float currentDistance = Vector2.Distance(twoDPosition, middleOfSector);
+                if (currentDistance < closestDist)
+                {
+                    closestDist = currentDistance;
+                    indexOfClosest = count;
+                }
+            }
+            //Debug.LogWarning("Closest sector - " + sectors[indexOfClosest].name);
+            return sectors[indexOfClosest];
         }
     }
 }

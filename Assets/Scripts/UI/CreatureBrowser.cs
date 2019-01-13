@@ -94,7 +94,8 @@ namespace rak.UI
                 text = text.Replace("{sleep}", selectedCreature.GetNeedAmount(Needs.NEEDTYPE.SLEEP).ToString());
                 text = text.Replace("{sleepRelative}", selectedCreature.
                     GetRelativeNeedAmount(Needs.NEEDTYPE.SLEEP).ToString());
-                text = text.Replace("{currentBrake}", selectedCreature.GetCreatureAgent().currentBrakeAmount.ToString());
+                text = text.Replace("{currentBrake}", selectedCreature.GetCreatureAgent().
+                    CurrentBrakeAmountRequest.magnitude.ToString());
                 detailText.text = text;
             }
         }

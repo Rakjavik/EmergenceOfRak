@@ -20,7 +20,7 @@ namespace rak.creatures
         private CREATURE_STATE currentState;
         private float lastUpdated = 0;
         private bool initialized = false;
-        
+
         private Species species;
         private SpeciesPhysicalStats creaturePhysicalStats;
         private AudioSource audioSource;
@@ -31,6 +31,7 @@ namespace rak.creatures
         private CreatureAgent agent;
         private Tribe memberOfTribe;
         private Area currentArea;
+        private Dictionary<GridSector,bool> knownGridSectorsVisited;
         
         public bool IsInitialized()
         {
@@ -86,7 +87,7 @@ namespace rak.creatures
             Initialize(name, area);
             memberOfTribe = memberOf;
         }
-        public void Initialize(string name, Area area)
+        private void Initialize(string name, Area area)
         {
             base.initialize(name);
             this.currentArea = area;
@@ -110,8 +111,7 @@ namespace rak.creatures
             agent.Initialize(species.getBaseSpecies());
             miscVariables = MiscVariables.GetCreatureMiscVariables(this);
             memberOfTribe = null;
-            lastUpdated = Random.Range(0f, (float)creaturePhysicalStats.updateEvery);
-            Debug.Log("Staggered update to - " + lastUpdated);
+            knownGridSectorsVisited = new Dictionary<GridSector, bool>();
             initialized = true;
         }
         public void PlayOneShot()
@@ -185,7 +185,7 @@ namespace rak.creatures
         private void OnCollisionEnter(Collision collision)
         {
             agent.OnCollisionEnter(collision);
-            if(agent.GetRigidBody().velocity.magnitude > agent.maxVelocityMagnitude*2)
+            if(agent.GetRigidBody().velocity.magnitude > agent.maxVelocityMagnitude)
             {
                 Debug.LogWarning("Creature dying of collision");
                 ChangeState(CREATURE_STATE.DEAD);
@@ -237,31 +237,29 @@ namespace rak.creatures
         }
         private void observeSurroundings()
         {
-            float multiplier = miscVariables[MiscVariables.CreatureMiscVariables.Observe_BoxCast_Size_Multiplier];
-            foreach(RaycastHit hit in Physics.BoxCastAll(transform.position, Vector3.one * multiplier, transform.forward))
+            // Observe Things //
+
+            float thingDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_BoxCast_Size_Multiplier];
+            Thing[] thingsWithinProximity = CreatureUtilities.GetThingsWithinProximityOf(this, thingDistance);
+            foreach (Thing thing in thingsWithinProximity)
             {
-                // Skip if we hit ourselves //
-                if (hit.rigidbody == agent.GetRigidBody()) continue;
-                Thing thing = hit.transform.GetComponent<Thing>();
-                if(thing)
+                species.memory.AddMemory(new MemoryInstance(Verb.SAW, thing, false));
+            }
+            float areaDistance = 300;
+            // Observe Areas //
+            GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
+                this, areaDistance, currentArea.GetClosestTerrainToPoint(transform.position));
+            GridSector currentSector = currentArea.GetCurrentGridSector(transform);
+            foreach (GridSector element in closeAreas)
+            {
+                if (!knownGridSectorsVisited.ContainsKey(element))
                 {
-                    if (thing is Creature)
-                    {
-                        Disposition disposition = species.personality.GetDispositionToward((Creature)thing);
-                        if (disposition == Disposition.Friend)
-                        {
-                            //Debug.Log("Saw a friend");
-                        }
-                        else if (disposition == Disposition.Enemy)
-                        {
-                            //Debug.Log("Saw an enemy");
-                        }
-                        else
-                        {
-                            //Debug.Log("Who dat?");
-                        }
-                    }
-                    species.memory.AddMemory(new MemoryInstance(Verb.SAW, thing, false));
+                    knownGridSectorsVisited.Add(element, false);
+                }
+                if (currentSector == element && !knownGridSectorsVisited[currentSector])
+                {
+                    Debug.LogWarning("Explored new sector - " + currentSector.name);
+                    knownGridSectorsVisited[currentSector] = true;
                 }
             }
         }
@@ -312,12 +310,57 @@ namespace rak.creatures
         }
         public void ConsumeThing(Thing thing)
         {
-            getCurrentArea().removeThingFromWorld(thing);
+            Area.removeThingFromWorld(thing);
+            //getCurrentArea().removeThingFromWorld(thing);
             RemoveFromInventory(thing);
             creaturePhysicalStats.getNeeds().DecreaseNeed(Needs.NEEDTYPE.HUNGER,thing.getWeight());
         }
+        public override bool RequestControl(Creature requestor)
+        {
+            ControlledBy = requestor;
+            return true;
+        }
+        public override Rigidbody RequestRigidBodyAccess(Creature requestor)
+        {
+            // Check for access //
+            if(requestor == ControlledBy)
+            {
+                return GetCreatureAgentBody();
+            }
+            return null;
+        }
+        public GridSector GetClosestUnexploredSector()
+        {
+            GridSector closestSector = null;
+            float closestDistance = Mathf.Infinity;
+            foreach (GridSector sector in knownGridSectorsVisited.Keys)
+            {
+                // Already visited //
+                if (knownGridSectorsVisited[sector])
+                    continue;
+                float distance = Vector2.Distance(sector.GetTwoDLerpOfSector(), transform.position);
+                if(distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestSector = sector;
+                }
+            }
+            return closestSector;
+        }
 
         #region GETTERS/SETTERS
+        public void SetUpdateStaggerTime(float staggeredUpdate)
+        {
+            lastUpdated = staggeredUpdate;
+        }
+        public Thing GetCurrentActionTarget()
+        {
+            return taskManager.GetCurrentTaskTarget();
+        }
+        public Vector3 GetCurrentActionTargetDestination()
+        {
+            return taskManager.GetCurrentTaskDestination();
+        }
         public Tribe GetTribe()
         {
             return memberOfTribe;

@@ -46,9 +46,9 @@ namespace rak.creatures
         {
             return inchBody;
         }
-        public override void turn()
+        public override void UpdateDerivedPart(ActionStep.Actions action)
         {
-            base.turn();
+            base.UpdateDerivedPart(action);
         }
     }
     public class TurnPartRotation : TurnPart
@@ -60,12 +60,12 @@ namespace rak.creatures
 
         }
 
-        public override void turn()
+        public override void UpdateDerivedPart(ActionStep.Actions action)
         {
-            base.turn();
+            base.UpdateDerivedPart(action);
             if (attachedAgent.locomotionType == CreatureLocomotionType.Flight)
             {
-                if (attachedAgent.IsLanding() && attachedAgent.OverTarget)
+                if (attachedAgent.IsLanding())
                 {
                     RightRotation();
                     return;
@@ -73,10 +73,13 @@ namespace rak.creatures
             }
             Quaternion newRotation;
             Vector3 _direction = (attachedAgent.Destination - parentCreature.transform.position).normalized;
-            Quaternion _lookRotation = Quaternion.LookRotation(_direction);
-            newRotation = Quaternion.Slerp(parentCreature.transform.rotation, _lookRotation,
-                attachedAgent.turnSpeed);
-            parentCreature.transform.rotation = newRotation;
+            if (_direction != Vector3.zero)
+            {
+                Quaternion _lookRotation = Quaternion.LookRotation(_direction);
+                newRotation = Quaternion.Slerp(parentCreature.transform.rotation, _lookRotation,
+                    attachedAgent.turnSpeed);
+                parentCreature.transform.rotation = newRotation;
+            }
         }
     }
     public abstract class TurnPart : Part
@@ -88,8 +91,6 @@ namespace rak.creatures
         {
             this.turnType = turnType;
         }
-
-        public virtual void turn() { }
 
         public void RightRotation()
         {

@@ -8,6 +8,8 @@ namespace rak.world
 {
     public class World : MonoBehaviour
     {
+        public static bool ISDEBUGSCENE { get; private set; }
+
         public enum WorldType { CLASSM }
         public const int NUMBEROFSTARTINGCIVS = 30;
         public static string WORLD_DATAPATH;
@@ -16,7 +18,6 @@ namespace rak.world
         public static World GetWorld() { return world; }
         public static Area CurrentArea { get; private set; }
 
-        public bool IsDebugScene = true;
         public bool AutoLoadArea;
 
         public WorldType worldType;
@@ -36,7 +37,7 @@ namespace rak.world
         private HexGrid hexGrid; // Grid that stores the world
         private Dictionary<HexCell, Tribe> tribes;
         private List<Civilization> civilizations;
-        public RAKTerrainMaster currentTerrain;
+        public RAKTerrainMaster masterTerrain;
         public GameObject creatureBrowserPrefab;
         public GameObject worldBrowserPrefab;
         public GameObject debugMenuPrefab;
@@ -64,7 +65,7 @@ namespace rak.world
             HexMetrics.Initialize(worldType);
             hexGrid = HexGrid.generate(this);
             currentCell = debugTribe.FindHome(this, true);
-            currentTerrain.Initialize(this, currentCell);
+            masterTerrain.Initialize(this, currentCell);
             CurrentArea = currentCell.MakeArea(this,debugTribe);
             MenuController menuController = new MenuController(creatureBrowserPrefab, worldBrowserPrefab, debugMenuPrefab);
             
@@ -73,7 +74,8 @@ namespace rak.world
         }
         private void Awake()
         {
-            if (IsDebugScene && !_initialized)
+            ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Debug");
+            if (ISDEBUGSCENE && !_initialized)
             {
                 InitializeDebugWorld();
                 return;
@@ -92,7 +94,7 @@ namespace rak.world
             HexMetrics.Initialize(worldType);
             hexGrid = HexGrid.generate(this);
             mapCam.grid = hexGrid;
-            currentTerrain = GetComponent<RAKTerrainMaster>();
+            masterTerrain = GetComponent<RAKTerrainMaster>();
             if (editing)
                 editor = Instantiate(RAKUtilities.getWorldPrefab("HexMapEditor")).GetComponent<HexMapEditor>();
 
@@ -118,12 +120,12 @@ namespace rak.world
 
         public void LoadArea(HexCell cell)
         {
-            currentTerrain.Initialize(this, cell);
+            masterTerrain.Initialize(this, cell);
             hexGrid.gameObject.SetActive(false);
             Tribe tribe = tribes[cell];
             if (tribe != null)
             {
-                cell.MakeArea(this, tribe);
+                CurrentArea = cell.MakeArea(this, tribe);
             }
             else
             {
@@ -157,7 +159,7 @@ namespace rak.world
         
         public bool IsSaveDataAvailable(HexCell cell)
         {
-            return currentTerrain.IsSaveDataAvailable(cell,WorldName);
+            return masterTerrain.IsSaveDataAvailable(cell,WorldName);
         }
         private void SetEditing(bool editing)
         {

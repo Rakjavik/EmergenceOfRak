@@ -77,9 +77,9 @@ namespace rak.creatures
             Dictionary<Needs.NEEDTYPE,Need> currentNeeds = new Dictionary<Needs.NEEDTYPE, Need>();
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
-                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, 1f, false));
+                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, 100f, false));
                 currentNeeds.Add(Needs.NEEDTYPE.REPRODUCTION, new Need(Needs.NEEDTYPE.REPRODUCTION, 1, false));
-                currentNeeds.Add(Needs.NEEDTYPE.SLEEP, new Need(Needs.NEEDTYPE.SLEEP, 1f, true));
+                currentNeeds.Add(Needs.NEEDTYPE.SLEEP, new Need(Needs.NEEDTYPE.SLEEP, 100f, true));
                 currentNeeds.Add(Needs.NEEDTYPE.TEMPERATURE, new Need(Needs.NEEDTYPE.TEMPERATURE, 1, false));
                 currentNeeds.Add(Needs.NEEDTYPE.THIRST, new Need(Needs.NEEDTYPE.THIRST, 1, false));
                 currentNeeds.Add(Needs.NEEDTYPE.NONE, new Need(Needs.NEEDTYPE.NONE, 0, false));
@@ -112,14 +112,14 @@ namespace rak.creatures
                     1, // Size 
                     1, // Growth
                     1, // Insulation
-                    1, // Amount of Food Required
+                    10, // Amount of Food Required
                     10, // Speed
                     1, // Reproduction Rate
                     1, // Gestation Time
                     10, // Number Per Birth
                     1, // Typical max age
                     1,  // Update Every in Seconds
-                    .3f, // The distance from target before it's considered interactable
+                    10f, // The distance from target before it's considered interactable
                     1); // Needs to sleep after being awake for this many seconds
             }
             else if (baseSpecies == BASE_SPECIES.Gagk)
@@ -152,27 +152,26 @@ namespace rak.creatures
             {
                 agent.GetRigidBody().constraints = RigidbodyConstraints.None;
                 agent.SetTurnSpeed(.3f);
-                agent.SetUpdateAgentEvery(1f);
                 agent.SetSustainHeight(5);
                 agent.SetMaxAngularVel(10);
-                agent.SetMaxVelocityMagnitude(10);
+                agent.SetMaxVelocityMagnitude(20);
                 agent.SetCruisingSpeed(new Vector3(2,1,15));
 
                 // Maximum force of the constant force component //
                 agent.maxForce.y = 15;
                 agent.maxForce.z = 8;
-                agent.maxForce.x = 3;
+                agent.maxForce.x = 4;
                 // Amount of force needed to hold the objects weight //
                 agent.SetMinimumForceToHover(8);
-                agent.SetSlowDownModifier(15);
+                agent.SetSlowDownModifier(1);
                 agent.GetRigidBody().maxAngularVelocity = 5;
                 agent.SetExploreRadiusModifier(200);
-                PartsInitialize(baseSpecies, agent);
+                agent.SetGrabType(CreatureGrabType.TractorBeam);
+                BuildCreatureParts(baseSpecies, agent);
             }
             else if (baseSpecies == BASE_SPECIES.Gagk)
             {
                 agent.SetTurnSpeed(1f);
-                agent.SetUpdateAgentEvery(1f);
                 agent.SetSustainHeight(1);
                 agent.SetMaxAngularVel(15);
                 agent.SetMaxVelocityMagnitude(10);
@@ -186,7 +185,7 @@ namespace rak.creatures
                 agent.SetMinimumForceToHover(0);
                 agent.SetSlowDownModifier(15);
                 agent.SetExploreRadiusModifier(200);
-                PartsInitialize(baseSpecies, agent);
+                BuildCreatureParts(baseSpecies, agent);
             }
         }
         public static void SetPropertiesForParticleSystemByCreature(ParticleSystem ps,Creature creature)
@@ -227,7 +226,7 @@ namespace rak.creatures
                 renderer.lengthScale = .2f;
             }
         }
-        public static void PartsInitialize(BASE_SPECIES baseSpecies,CreatureAgent agent)
+        public static void BuildCreatureParts(BASE_SPECIES baseSpecies,CreatureAgent agent)
         {
             Creature creature = agent.creature;
             Rigidbody rigidbody = agent.GetRigidBody();
@@ -236,41 +235,57 @@ namespace rak.creatures
             {
                 // Body with constant force //
                 EnginePart bodyFlight = new EnginePart
-                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureLocomotionType.Flight, .1f);
+                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureLocomotionType.Flight, .2f);
                 
                 // Body with Rotation turning //
                 TurnPart bodyTurning = new TurnPartRotation
-                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureTurnType.Rotate, .02f);
+                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureTurnType.Rotate, .2f);
 
                 // Backward Propeller //
                 AnimationPart zPropeller = new AnimationPart(CreaturePart.ENGINE_Z, creature.transform.GetChild(1),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.ConstantForceZ,PartAnimationType.Movement);
+                    PartMovesWith.ConstantForceZ,PartAnimationType.Movement,true);
 
                 // Y Propellers //
                 AnimationPart yPropeller = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(3),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.ConstantForceY, PartAnimationType.Movement);
+                    PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
                 AnimationPart yPropeller2 = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(4),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.ConstantForceY, PartAnimationType.Movement);
+                    PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
                 AnimationPart yPropeller3 = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(5),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.ConstantForceY, PartAnimationType.Movement);
+                    PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
                 AnimationPart yPropeller4 = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(6),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.ConstantForceY, PartAnimationType.Movement);
+                    PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
 
-                // Brake disc //
+                /* Brake disc //
                 AnimationPart brakeDisc = new AnimationPart(CreaturePart.BRAKE, creature.transform.GetChild(2),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.Braking, PartAnimationType.Particles);
+                    PartMovesWith.Braking, PartAnimationType.Particles,creature.transform.GetChild(8).GetComponent<Light>(), true);
+                BrakePart brakePart = new BrakePart(CreaturePart.BRAKE, creature.transform.GetChild(2), .1f);
+                */
+                // Antigrav Shield //
+                AntiGravityShieldPart shieldPart = new AntiGravityShieldPart(CreaturePart.SHIELD, creature.transform.GetChild(9),
+                    .2f,creature.GetCreatureAgent().GetRigidBody(), new ActionStep.Actions[] {ActionStep.Actions.Add,
+                        ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait});
+                AnimationPart antiGravShieldAnimation = new AnimationPart(CreaturePart.SHIELD, creature.transform.GetChild(9),
+                    CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
+                    {ActionStep.Actions.Add,ActionStep.Actions.MoveTo,ActionStep.Actions.Add,ActionStep.Actions.Eat
+                    ,ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait}, 
+                    PartMovesWith.IsKinematic, PartAnimationType.Movement, false);
+
+                // Tractor Beam //
+                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f,5);
+                TractorBeamAnimationPart tractorAnimation = new TractorBeamAnimationPart(CreaturePart.TRACTORBEAM,
+                    creature.transform.GetChild(10),.5f,Vector3.forward,.3f);
 
                 allParts.Add(bodyFlight);
                 allParts.Add(bodyTurning);
@@ -279,7 +294,11 @@ namespace rak.creatures
                 allParts.Add(yPropeller2);
                 allParts.Add(yPropeller3);
                 allParts.Add(yPropeller4);
-                allParts.Add(brakeDisc);
+                //allParts.Add(brakeDisc);
+                allParts.Add(shieldPart);
+                allParts.Add(antiGravShieldAnimation);
+                allParts.Add(tractorBeam);
+                allParts.Add(tractorAnimation);
                 agent.SetCreatureTurnType(CreatureTurnType.Rotate);
                 agent.setParts(allParts);
             }
@@ -374,6 +393,8 @@ namespace rak.creatures
         public static List<MovementState> GetStatesCanSwithTo(MovementState currentState)
         {
             List<MovementState> possibleStates = new List<MovementState>();
+            // Destroyed can be switched to at any point //
+            possibleStates.Add(MovementState.DESTROYED);
             if (currentState == MovementState.FORWARD)
             {
                 possibleStates.Add(MovementState.IDLE);

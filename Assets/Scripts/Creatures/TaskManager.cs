@@ -147,6 +147,10 @@ namespace rak
         {
             return currentActionSteps[currentStepNum]._targetThing;
         }
+        public Vector3 GetCurrentTaskDestination()
+        {
+            return currentActionSteps[currentStepNum]._targetPosition;
+        }
         public Thing GetCurrentTaskTarget()
         {
             return getCurrentTaskStepTarget();

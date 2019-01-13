@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System;
 using DigitalRuby.RainMaker;
 using UnityEngine.AI;
+using rak;
 
 [Serializable]
 public class RAKTerrain : MonoBehaviour
@@ -16,12 +17,13 @@ public class RAKTerrain : MonoBehaviour
 
     private RAKTree[] rakTrees;
     private RAKTerrainMaster.RAKBiome biome;
-    
+    private Grid grid;
 
     public void initialize(RAKTerrainMaster terrainMaster)
     {
         this.terrainMaster = terrainMaster;
         terrain = GetComponent<Terrain>();
+        grid = new Grid(this);
     }
     
     public void generateTreeGOs()
@@ -162,6 +164,7 @@ public class RAKTerrain : MonoBehaviour
         rain.FollowCamera = player.GetComponent<Camera>();
         rain.RainIntensity = intensity;
     }
+    public GridSector[] GetGridElements() { return grid.GetGridElements(); }
 }
 
 public class RAKTree

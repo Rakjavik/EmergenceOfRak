@@ -48,7 +48,7 @@ namespace rak.creatures
                 miscVariables.Add(AgentMiscVariables.Agent_Landing_OverTarget_If_Z_Dis_Less_Than, .3f);
                 miscVariables.Add(AgentMiscVariables.Agent_Landing_OverTarget_If_X_Vel_Less_Than, .1f);
                 miscVariables.Add(AgentMiscVariables.Agent_Landing_OverTarget_If_Z_Vel_Less_Than, .1f);
-                miscVariables.Add(AgentMiscVariables.Agent_Detect_Collision_Z_Distance, 40);
+                miscVariables.Add(AgentMiscVariables.Agent_Detect_Collision_Z_Distance, 150);
                 miscVariables.Add(AgentMiscVariables.Agent_Detect_Collision_X_Distance, 15);
                 miscVariables.Add(AgentMiscVariables.Agent_OnSolidGround_If_Dist_From_Ground_Less_Than, 1);
                 miscVariables.Add(AgentMiscVariables.Agent_OnSolidGround_If_Dist_Moved_Last_Update_Less_Than, 1);
@@ -86,7 +86,7 @@ namespace rak.creatures
             Dictionary<CreatureMiscVariables, float> miscVariables = new Dictionary<CreatureMiscVariables, float>();
             miscVariables.Add(CreatureMiscVariables.Observe_BoxCast_Size_Multiplier, 50);
             miscVariables.Add(CreatureMiscVariables.Agent_Locate_Sleep_Area_BoxCast_Size_Multipler, 50);
-            miscVariables.Add(CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below, 25);
+            miscVariables.Add(CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below, 1);
             return miscVariables;
         }
     }

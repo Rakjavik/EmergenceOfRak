@@ -5,14 +5,17 @@ using UnityEngine;
 
 namespace rak
 {
+
+
     public class Thing : MonoBehaviour
     {
         #region ENUMS
-        public enum BOOL_FILTERS { USEABLE,CONSUMEABLE,USE_LOCATE_TARGET }
-        public enum BASE_TYPES { CREATURE,PLANT, NON_ORGANIC }
+        public enum BOOL_FILTERS { USEABLE, CONSUMEABLE, USE_LOCATE_TARGET }
+        public enum BASE_TYPES { CREATURE, PLANT, NON_ORGANIC }
         #endregion
 
-        
+        protected Creature ControlledBy;
+
         private string name;
         private BASE_TYPES baseType;
         private float age;
@@ -22,12 +25,17 @@ namespace rak
         private bool consumeable;
         private bool available;
 
+        private void DestroyThisThing()
+        {
+            world.Area.removeThingFromWorld(this);
+        }
+
         public bool beConsumed(Creature consumer)
         {
             if (consumeable && !available)
             {
                 Debug.Log("Destroying - " + gameObject.name);
-                Destroy(this.gameObject);
+                DestroyThisThing();
                 MemoryInstance eating = new MemoryInstance(Verb.ATE, this, false);
                 MemoryInstance itemGone = new MemoryInstance(Verb.SAW, this, true);
                 consumer.AddMemory(eating);
@@ -50,7 +58,7 @@ namespace rak
                 weight = 1;
                 age = 0;
                 bornAt = Time.time;
-                available = true;
+                available = false;
                 if (baseType == BASE_TYPES.PLANT)
                 {
                     consumeable = true;
@@ -86,9 +94,14 @@ namespace rak
         public void ManualUpdate(float delta)
         {
             age += delta;
+            // Destory if out of bounds //
+            if (transform.position.y < -100)
+            {
+                DestroyThisThing();
+            }
         }
 
-        public bool match(BASE_TYPES baseType,BOOL_FILTERS[] filters)
+        public bool match(BASE_TYPES baseType, BOOL_FILTERS[] filters)
         {
             if (this.baseType == baseType)
             {
@@ -102,9 +115,9 @@ namespace rak
 
         public bool match(BOOL_FILTERS[] filters)
         {
-            foreach(BOOL_FILTERS filter in filters)
+            foreach (BOOL_FILTERS filter in filters)
             {
-                if(filter == BOOL_FILTERS.CONSUMEABLE)
+                if (filter == BOOL_FILTERS.CONSUMEABLE)
                 {
                     if (!consumeable) return false;
                 }
@@ -123,17 +136,27 @@ namespace rak
 
         public bool matchesConsumptionType(CONSUMPTION_TYPE consumptionType)
         {
-            if(consumptionType == CONSUMPTION_TYPE.OMNIVORE)
+            if (consumptionType == CONSUMPTION_TYPE.OMNIVORE)
             {
-                if(consumeable && available)
+                if (consumeable && available)
                 {
-                    if(baseType == BASE_TYPES.PLANT)
+                    if (baseType == BASE_TYPES.PLANT)
                     {
                         return true;
                     }
                 }
             }
             return false;
+        }
+
+        public virtual bool RequestControl(Creature requestor)
+        {
+            return true;
+        }
+        public virtual Rigidbody RequestRigidBodyAccess(Creature requestor)
+        {
+            Rigidbody body = GetComponent<Rigidbody>();
+            return body;
         }
 
         #region GETTERS/SETTERS
