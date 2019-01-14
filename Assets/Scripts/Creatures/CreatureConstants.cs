@@ -369,6 +369,7 @@ namespace rak.creatures
         {
             return Tasks.TASKS.EXPLORE;
         }
+        // EXCEPTION ACTIONS, Do these when tasks fail for a certain reason //
         public static ActionStep[] GetExceptionActions(Tasks.TASKS task, ActionStep.FailReason failReason)
         {
             Tasks.TASKS exceptionTask = Tasks.TASKS.NONE;
@@ -386,7 +387,7 @@ namespace rak.creatures
             // If we're exploring looking for food, only explore for a little bit //
             if (task == Tasks.TASKS.EAT && exceptionTask == Tasks.TASKS.EXPLORE)
             {
-                steps[1].OverrideMaxTimeAllowed(.3f);
+                steps[1].OverrideMaxTimeAllowed(10f);
             }
             return steps;
         }

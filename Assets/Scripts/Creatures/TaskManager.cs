@@ -90,6 +90,7 @@ namespace rak
             _previousActionSteps = currentActionSteps;
             // DO TASK //
             ActionStep currentStep = currentActionSteps[currentStepNum];
+            Debug.LogWarning("Current action - " + currentStep.getAction());
             currentStep.performAction(creature);
             // TASK UPDATE COMPLETE - Check status //
             if (currentStep.isStatus(Tasks.TASK_STATUS.Complete))
@@ -127,7 +128,10 @@ namespace rak
                 creature.SoThisFailed(currentStep);
                 ActionStep[] steps = CreatureConstants.GetExceptionActions(currentTask, currentStep.failReason);
                 if (steps != null)
+                {
                     startNewTask(steps, steps[0].associatedTask);
+                    status = Tasks.TASK_STATUS.Started;
+                }
                 else
                     status = Tasks.TASK_STATUS.Cancelled;
                 return;

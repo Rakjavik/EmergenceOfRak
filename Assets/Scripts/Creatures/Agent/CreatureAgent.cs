@@ -218,22 +218,6 @@ namespace rak.creatures
         {
             CurrentBrakeAmountRequest = percentToBrake;
         }
-        private Quaternion CorrectRotation()
-        {
-            float minimumDiffFromCorrectRotation =
-                miscVariables[MiscVariables.AgentMiscVariables.Agent_Correct_Rotation_If_Diff_Less_Than];
-            float currentZRotation = creature.transform.rotation.z;
-            float currentXRotation = creature.transform.rotation.x;
-            if (Mathf.Abs(currentXRotation) > minimumDiffFromCorrectRotation ||
-               Mathf.Abs(currentZRotation) > minimumDiffFromCorrectRotation)
-            {
-                Quaternion currentRot = creature.transform.rotation;
-                currentRot.y = 0;
-                return Quaternion.Slerp(
-                    currentRot, Quaternion.identity, turnSpeed);
-            }
-            return Quaternion.identity;
-        }
         #endregion MISC METHODS
 
         #region CALCULATION METHODS
@@ -372,9 +356,10 @@ namespace rak.creatures
                 if (DEBUG)
                 {
                     Color color;
-                    if (direction == CreatureUtilities.RayCastDirection.LEFT ||
-                        direction == CreatureUtilities.RayCastDirection.RIGHT)
+                    if (direction == CreatureUtilities.RayCastDirection.LEFT)
                         color = Color.white;
+                    else if (direction == CreatureUtilities.RayCastDirection.RIGHT)
+                        color = Color.red;
                     else
                         color = Color.yellow;
                     //Debug.DrawLine(_transform.position, hit.point, color, .5f);

@@ -31,7 +31,6 @@ namespace rak
 
         private Tasks.TASK_STATUS status = Tasks.TASK_STATUS.Incomplete;
         private bool creatureAgentDestinationHasBeenSet;
-        private bool breakExploreForConsumeable;
         private float elapsedTime = 0;
         private float maxAllowedTime = float.MaxValue;
         private float distanceRequiredToCompleteModifier;
@@ -78,8 +77,8 @@ namespace rak
                 // LOCATE EAT //
                 if (associatedTask == Tasks.TASKS.EAT)
                 {
+                    Debug.LogWarning("Locating consumeable");
                     Thing target = performer.GetClosestKnownReachableConsumable();
-
                     if (target == null)
                     {
                         // Target doesn't know of any consumables //
@@ -121,6 +120,7 @@ namespace rak
                 // LOCATE EXPLORE //
                 else if (associatedTask == Tasks.TASKS.EXPLORE)
                 {
+                    Debug.LogWarning("Locating explore sector");
                     GridSector sector = performer.GetClosestUnexploredSector();
                     if (sector != null)
                     {

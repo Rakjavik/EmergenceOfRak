@@ -345,8 +345,6 @@ namespace rak.creatures
                 }
                 else
                 {
-                    float directionalSpeed;
-                    float cruisingSpeed;
                     float timeToCollision = -1;
 
                     // CALCULATE NEARBY COLLISIONS //
@@ -378,12 +376,16 @@ namespace rak.creatures
                             {
                                 engineMovementVariables[(int)Direction.X]._engineLocked = true;
                                 float distanceLeft = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.LEFT);
-                                float distanceRight = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.RIGHT);
+                                // If the Left is clear, don't bother checking Right //
+                                float distanceRight;
+                                if (distanceLeft != Mathf.Infinity)
+                                    distanceRight = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.RIGHT);
+                                else
+                                    distanceRight = 0;
                                 if (distanceLeft > distanceRight)
                                 {
                                     if (engine.CurrentState != MovementState.REVERSE)
                                     {
-                                        //Debug.LogWarning("Shifting X engine to reverse");
                                         engine.SetState(MovementState.REVERSE);
                                     }
                                 }
@@ -391,7 +393,6 @@ namespace rak.creatures
                                 {
                                     if (engine.CurrentState != MovementState.FORWARD)
                                     {
-                                        //Debug.LogWarning("Shifting X engine to forward");
                                         engine.SetState(MovementState.FORWARD);
                                     }
                                 }
@@ -442,7 +443,9 @@ namespace rak.creatures
                 float distFromGround = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.DOWN);
                 float distanceFromFirstZHit = attachedAgent.GetDistanceBeforeCollision(
                     CreatureUtilities.RayCastDirection.FORWARD);
-                bool objectBlockingForward = distanceFromFirstZHit < 3;
+                float objectBlockDistance = miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Halt_Forward_Movement_If_Object_Is_Distance];
+                bool objectBlockingForward = distanceFromFirstZHit < objectBlockDistance;
+                //Debug.LogWarning("Distance from first z- " + distanceFromFirstZHit);
                 MovementState stateToSetY = MovementState.IDLE;
                 // Moving down or close to ground, throttle up //
                 if (relativeVel.y < -.5f || distFromGround < attachedAgent.GetSustainHeight())

@@ -78,7 +78,6 @@ namespace rak.creatures
                         else if (attachedBody.angularVelocity.magnitude > 
                             miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Angular_Velocity_Brake_When_Over])
                         {
-                            Debug.LogWarning("Current angular vel - " + attachedBody.angularVelocity.magnitude);
                             activate = true;
                         }
 
