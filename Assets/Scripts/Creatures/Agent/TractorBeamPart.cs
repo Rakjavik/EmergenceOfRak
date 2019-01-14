@@ -41,11 +41,11 @@ namespace rak.creatures
             else
             {
                 if (locked)
-                    DisengageBeam();
+                    disengageBeam();
             }
         }
         
-        private void DisengageBeam()
+        private void disengageBeam()
         {
             locked = false;
             target = null;
@@ -54,6 +54,12 @@ namespace rak.creatures
         private void LockOnTarget()
         {
             target = attachedAgent.GetCurrentActionTarget();
+            if(target == null)
+            {
+                Debug.LogWarning("Can't find target for lock");
+                disengageBeam();
+                return;
+            }
             if (target.RequestControl(attachedAgent.creature))
             {
                 targetBody = target.RequestRigidBodyAccess(attachedAgent.creature);

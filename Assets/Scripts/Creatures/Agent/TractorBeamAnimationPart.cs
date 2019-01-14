@@ -40,20 +40,25 @@ namespace rak.creatures
                     else
                     {
                         target = targetThing.transform;
+                        updateMainModuleStartSpeedBasedOffDistFromTarget();
                         verifyParticlesAreON();
                     }
                 }
                 else
                 {
                     verifyParticlesAreON();
-                    float distanceFromTarget = Vector3.Distance(PartTransform.position, target.position);
-                    mainModule.startSpeed = new ParticleSystem.MinMaxCurve(distanceFromTarget*movementMultiplier);
+                    updateMainModuleStartSpeedBasedOffDistFromTarget();
                 }
             }
             else
             {
                 verifyParticlesAreOff();
             }
+        }
+        private void updateMainModuleStartSpeedBasedOffDistFromTarget()
+        {
+            float distanceFromTarget = Vector3.Distance(PartTransform.position, target.position);
+            mainModule.startSpeed = new ParticleSystem.MinMaxCurve(distanceFromTarget * movementMultiplier);
         }
         private void verifyParticlesAreOff()
         {

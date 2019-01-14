@@ -3,13 +3,14 @@ using UnityEngine;
 
 public class Grid
 {
-    public static readonly Vector2 ELEMENT_SIZE = new Vector2(50, 50);
+    public static readonly Vector2 ELEMENT_SIZE = new Vector2(64, 64);
 
     private GridSector[] elements;
 
     public Grid(RAKTerrain terrain)
     {
         Vector3 terrainSize = terrain.terrain.terrainData.size;
+        Debug.LogWarning(terrainSize);
         int numberOfXElements = (int)(terrainSize.x / ELEMENT_SIZE.x);
         int numberOfZElements = (int)(terrainSize.z / ELEMENT_SIZE.y);
         elements = new GridSector[numberOfXElements * numberOfZElements];
@@ -44,13 +45,26 @@ public class GridSector
         this.worldPositionStart = worldPositionStart;
         this.worldPositionEnd = worldPositionEnd;
         this.parentTerrain = terrain;
+        float y = 0;
+        Vector3 start = new Vector3(worldPositionStart.x, y, worldPositionStart.y);
+        Vector3 end = new Vector3(worldPositionEnd.x, y, worldPositionEnd.y);
+        Debug.DrawLine(start, new Vector3(end.x,y,start.z), Color.yellow, 30);
+        Debug.DrawLine(end, new Vector3(end.x, y, start.z), Color.yellow, 30);
     }
 
     public Vector2 gridPosition { get; private set; }
     private RAKTerrain parentTerrain = null;
+    public Vector3 GetRandomPositionInSector { get
+        {
+            float x = Random.Range(0, Grid.ELEMENT_SIZE.x);
+            float z = Random.Range(0, Grid.ELEMENT_SIZE.y);
+            float y = parentTerrain.GetHeightAt(new Vector2(worldPositionStart.x + x, worldPositionStart.y + z));
+            return new Vector3(worldPositionStart.x+x, y+3, worldPositionStart.y+z);
+        } }
     public Vector3 GetSectorPosition { get
         {
-            Vector3 position = new Vector3(worldPositionStart.x, 6, worldPositionStart.y);
+            Vector3 position = new Vector3(worldPositionStart.x+(Grid.ELEMENT_SIZE.x/2), 6, worldPositionStart.y + 
+                (Grid.ELEMENT_SIZE.y / 2));
             //Debug.LogWarning("Position of sector - " + heightY);
             return position;
         } }

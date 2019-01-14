@@ -58,8 +58,10 @@ namespace rak.creatures
                     // STUCK //
                     if (attachedAgent.IsStuck())
                     {
-                        if(ignoreStuckFor <= 0)
+                        if (ignoreStuckFor <= 0)
+                        {
                             activate = true;
+                        }
                     }
                     // Not stuck //
                     else if (!attachedAgent.IsStuck())
@@ -114,7 +116,7 @@ namespace rak.creatures
                         if (turnNeeded.magnitude < 5f || turnNeeded.magnitude > 355)
                         {
                             DeActivateShield();
-                            GotoSleep(.1f);
+                            GotoSleep(.15f);
                         }
                     }
                 }

@@ -265,13 +265,6 @@ namespace rak.creatures
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
                     PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
 
-                /* Brake disc //
-                AnimationPart brakeDisc = new AnimationPart(CreaturePart.BRAKE, creature.transform.GetChild(2),
-                    CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
-                    { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.Braking, PartAnimationType.Particles,creature.transform.GetChild(8).GetComponent<Light>(), true);
-                BrakePart brakePart = new BrakePart(CreaturePart.BRAKE, creature.transform.GetChild(2), .1f);
-                */
                 // Antigrav Shield //
                 AntiGravityShieldPart shieldPart = new AntiGravityShieldPart(CreaturePart.SHIELD, creature.transform.GetChild(9),
                     .2f,creature.GetCreatureAgent().GetRigidBody(), new ActionStep.Actions[] {ActionStep.Actions.Add,
@@ -283,7 +276,7 @@ namespace rak.creatures
                     PartMovesWith.IsKinematic, PartAnimationType.Movement, false);
 
                 // Tractor Beam //
-                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f,5);
+                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f,75);
                 TractorBeamAnimationPart tractorAnimation = new TractorBeamAnimationPart(CreaturePart.TRACTORBEAM,
                     creature.transform.GetChild(10),.5f,Vector3.forward,.3f);
 
@@ -294,7 +287,6 @@ namespace rak.creatures
                 allParts.Add(yPropeller2);
                 allParts.Add(yPropeller3);
                 allParts.Add(yPropeller4);
-                //allParts.Add(brakeDisc);
                 allParts.Add(shieldPart);
                 allParts.Add(antiGravShieldAnimation);
                 allParts.Add(tractorBeam);
@@ -387,7 +379,7 @@ namespace rak.creatures
             // If we're exploring looking for food, only explore for a little bit //
             if (task == Tasks.TASKS.EAT && exceptionTask == Tasks.TASKS.EXPLORE)
             {
-                steps[1].OverrideMaxTimeAllowed(10f);
+                steps[1].OverrideMaxTimeAllowed(6f);
             }
             return steps;
         }

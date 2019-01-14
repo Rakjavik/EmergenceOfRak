@@ -155,7 +155,7 @@ public class RAKTerrain : MonoBehaviour
     public float GetHeightAt(Vector2 position)
     {
         float height = terrain.terrainData.GetInterpolatedHeight(position.x, position.y);
-        Debug.LogWarning("Interpolated height - " + height + " at position " + position);
+        //Debug.LogWarning("Interpolated height - " + height + " at position " + position);
         return height;
     }
     private void createPlayerRainWithIntensity(float intensity,RAKPlayer player)

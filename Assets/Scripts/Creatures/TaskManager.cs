@@ -90,7 +90,7 @@ namespace rak
             _previousActionSteps = currentActionSteps;
             // DO TASK //
             ActionStep currentStep = currentActionSteps[currentStepNum];
-            Debug.LogWarning("Current action - " + currentStep.getAction());
+            //Debug.LogWarning("Current action - " + currentStep.getAction());
             currentStep.performAction(creature);
             // TASK UPDATE COMPLETE - Check status //
             if (currentStep.isStatus(Tasks.TASK_STATUS.Complete))

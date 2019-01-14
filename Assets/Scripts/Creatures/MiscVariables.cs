@@ -40,7 +40,7 @@ namespace rak.creatures
                 miscVariables.Add(AgentMiscVariables.Agent_Brake_If_Colliding_In, 2);
                 miscVariables.Add(AgentMiscVariables.Part_Flight_Max_Vel_Magnitude_Brake_Multiplier, 1);
                 miscVariables.Add(AgentMiscVariables.Part_Flight_Angular_Velocity_Brake_When_Over, 5);
-                miscVariables.Add(AgentMiscVariables.Part_Flight_Max_Vel_Mag_Before_Brake, 15);
+                miscVariables.Add(AgentMiscVariables.Part_Flight_Max_Vel_Mag_Before_Brake, 20);
                 miscVariables.Add(AgentMiscVariables.Part_Flight_Reverse_Engine_If_Colliding_In, 5);
                 miscVariables.Add(AgentMiscVariables.Part_Flight_X_Engine_Kick_In_When_Faster_Than, .3f);
                 miscVariables.Add(AgentMiscVariables.Part_Flight_Y_Engine_Dist_To_Act_UP_Mult, 2);
@@ -57,14 +57,14 @@ namespace rak.creatures
 
         public enum CreatureMiscVariables
         {
-            Observe_BoxCast_Size_Multiplier,
+            Observe_Distance,
             Agent_Locate_Sleep_Area_BoxCast_Size_Multipler,
             Agent_MoveTo_Raycast_For_Target_When_Distance_Below,
         }
         public static Dictionary<CreatureMiscVariables,float> GetCreatureMiscVariables(Creature creature)
         {
             Dictionary<CreatureMiscVariables, float> miscVariables = new Dictionary<CreatureMiscVariables, float>();
-            miscVariables.Add(CreatureMiscVariables.Observe_BoxCast_Size_Multiplier, 50);
+            miscVariables.Add(CreatureMiscVariables.Observe_Distance, 100);
             miscVariables.Add(CreatureMiscVariables.Agent_Locate_Sleep_Area_BoxCast_Size_Multipler, 50);
             miscVariables.Add(CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below, 1);
             return miscVariables;

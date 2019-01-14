@@ -184,10 +184,10 @@ namespace rak.creatures
         }
         private void OnCollisionEnter(Collision collision)
         {
+            if (currentState == CREATURE_STATE.DEAD) return;
             agent.OnCollisionEnter(collision);
             if(agent.GetRigidBody().velocity.magnitude > agent.maxVelocityMagnitude)
             {
-                Debug.LogWarning("Creature dying of collision at speed - " + agent.GetRigidBody().velocity.magnitude);
                 if (currentState != CREATURE_STATE.DEAD)
                 {
                     ChangeState(CREATURE_STATE.DEAD);
@@ -242,13 +242,13 @@ namespace rak.creatures
         {
             // Observe Things //
 
-            float thingDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_BoxCast_Size_Multiplier];
+            float thingDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
             Thing[] thingsWithinProximity = CreatureUtilities.GetThingsWithinProximityOf(this, thingDistance);
             foreach (Thing thing in thingsWithinProximity)
             {
                 species.memory.AddMemory(new MemoryInstance(Verb.SAW, thing, false));
             }
-            float areaDistance = 100;
+            float areaDistance = Grid.ELEMENT_SIZE.sqrMagnitude;
             // Observe Areas //
             GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
                 this, areaDistance, currentArea.GetClosestTerrainToPoint(transform.position));
@@ -262,7 +262,7 @@ namespace rak.creatures
                 }
                 if (currentSector == element && !knownGridSectorsVisited[currentSector])
                 {
-                    Debug.LogWarning("Explored new sector - " + currentSector.name);
+                    //Debug.LogWarning("Explored new sector - " + currentSector.name);
                     knownGridSectorsVisited[currentSector] = true;
                 }
             }
@@ -332,6 +332,19 @@ namespace rak.creatures
                 return GetCreatureAgentBody();
             }
             return null;
+        }
+
+        public Vector3 GetRandomKnownSectorPosition()
+        {
+            List<GridSector> listToPickFrom = new List<GridSector>();
+            foreach (GridSector sector in knownGridSectorsVisited.Keys)
+            {
+                if (knownGridSectorsVisited[sector])
+                {
+                    listToPickFrom.Add(sector);
+                }
+            }
+            return listToPickFrom[(int)Random.Range(0, listToPickFrom.Count)].GetRandomPositionInSector;
         }
         public GridSector GetClosestUnexploredSector()
         {

@@ -178,7 +178,7 @@ namespace rak.creatures
                 if (allParts[count] is EnginePart)
                 {
                     EnginePart currentPart = (EnginePart)allParts[count];
-                    currentPart.PrepareForLanding();
+                    // TODO Landing
                 }
             }
             landing = true;

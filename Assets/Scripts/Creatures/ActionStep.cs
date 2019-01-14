@@ -63,7 +63,7 @@ namespace rak
             //Debug.LogWarning("Elapsed Time - " + elapsedTime + " Max - " + maxAllowedTime);
             if (elapsedTime > maxAllowedTime)
             {
-                //Debug.Log(performer.name + " has exceeded task time for task. Resetting");
+                Debug.Log(performer.name + " has exceeded task time for task. Resetting");
                 status = Tasks.TASK_STATUS.Failed;
                 failReason = FailReason.ExceededTimeLimit;
                 if (_targetThing != null) _targetThing.MakeAvailable(performer);
@@ -77,7 +77,7 @@ namespace rak
                 // LOCATE EAT //
                 if (associatedTask == Tasks.TASKS.EAT)
                 {
-                    Debug.LogWarning("Locating consumeable");
+                    //Debug.LogWarning("Locating consumeable");
                     Thing target = performer.GetClosestKnownReachableConsumable();
                     if (target == null)
                     {
@@ -120,20 +120,21 @@ namespace rak
                 // LOCATE EXPLORE //
                 else if (associatedTask == Tasks.TASKS.EXPLORE)
                 {
-                    Debug.LogWarning("Locating explore sector");
+                    //Debug.LogWarning("Locating explore sector");
                     GridSector sector = performer.GetClosestUnexploredSector();
                     if (sector != null)
                     {
-                        Vector3 explorePoint = sector.GetSectorPosition;
+                        Vector3 explorePoint = sector.GetRandomPositionInSector;
                         _targetPosition = explorePoint;
-                        performer.GetCreatureAgent().SetDestination(_targetPosition);
-                        creatureAgentDestinationHasBeenSet = true;
-                        status = Tasks.TASK_STATUS.Complete;
                     }
                     else
                     {
                         Debug.LogWarning("No unexplored sectors!");
+                        _targetPosition = performer.GetRandomKnownSectorPosition();
                     }
+                    performer.GetCreatureAgent().SetDestination(_targetPosition);
+                    creatureAgentDestinationHasBeenSet = true;
+                    status = Tasks.TASK_STATUS.Complete;
                     return;
                 }
             }
@@ -164,8 +165,9 @@ namespace rak
                     float distanceBeforeRayCastCheckOnTarget = performer.miscVariables
                         [MiscVariables.CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below];
                     // Arrived //
-                    if (performer.getDistanceFromDestination() <=
-                        performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached())
+                    float distanceToCompleteArrival = performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached();
+                    //if (associatedTask == Tasks.TASKS.EXPLORE)
+                    if (performer.getDistanceFromDestination() <= distanceToCompleteArrival)
                     {
                         status = Tasks.TASK_STATUS.Complete;
                         return;

@@ -50,7 +50,7 @@ namespace rak.world
             allThings = new List<Thing>();
             thingContainer = new GameObject("ThingContainer");
             creatureContainer = new GameObject("CreatureContainer");
-            for (int i = 0; i < 50; i++)
+            for (int i = 0; i <= 0; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f,15f), Random.Range(10f, 200));
                 addThingToWorld("fruit",position,false);
@@ -89,7 +89,7 @@ namespace rak.world
                 creatureContainer = new GameObject("CreatureContainer");
             allThings = new List<Thing>();
             int populationToCreate = tribe.GetPopulation();
-            int MAXPOP = 50;
+            int MAXPOP = 5;
             if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)
@@ -97,10 +97,10 @@ namespace rak.world
                 addCreatureToWorld("Gnat");
             }
             
-            for (int i = 0; i < populationToCreate*5; i++)
+            /*for (int i = 0; i < populationToCreate*5; i++)
             {
                 addThingToWorld("fruit");
-            }
+            }*/
 
         }
 
@@ -205,7 +205,7 @@ namespace rak.world
         {
             addThingToWorld(nameOfPrefab, Vector3.zero,true);
         }
-        public void addThingToWorld(string nameOfPrefab,Vector3 position,bool generatePos)
+        public GameObject addThingToWorld(string nameOfPrefab,Vector3 position,bool generatePos)
         {
             GameObject thingObject = RAKUtilities.getThingPrefab(nameOfPrefab);
             GameObject newThing = UnityEngine.Object.Instantiate(thingObject);
@@ -223,6 +223,7 @@ namespace rak.world
             {
                 allThings.Add(newThing.GetComponent<Thing>());
             }
+            return newThing;
         }
         public static void removeThingFromWorld(Thing thing)
         {

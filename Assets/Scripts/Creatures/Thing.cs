@@ -58,7 +58,7 @@ namespace rak
                 weight = 1;
                 age = 0;
                 bornAt = Time.time;
-                available = false;
+                available = true;
                 if (baseType == BASE_TYPES.PLANT)
                 {
                     consumeable = true;
