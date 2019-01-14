@@ -156,6 +156,10 @@ namespace rak.creatures
         #endregion
 
         #region MISC METHODS
+        public void DestroyAllParts()
+        {
+            destroyAll(creature.gameObject);
+        }
         private void destroyAll(GameObject gameObject)
         {
             for(int count = 0; count < gameObject.transform.childCount; count++)
@@ -166,14 +170,6 @@ namespace rak.creatures
                 }
                 GameObject.Destroy(gameObject.transform.GetChild(count).gameObject);
             }
-        }
-        public void DestroyAllParts()
-        {
-            foreach(Part part in allParts)
-            {
-                destroyAll(part.GetPartTransform().gameObject);
-            }
-            
         }
         public void Land()
         {
@@ -208,7 +204,6 @@ namespace rak.creatures
                     part.Disable();
                 }
                 rigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                //ActivateAntiGravity(false);
                 landing = false;
                 Active = false;
             }
@@ -342,13 +337,14 @@ namespace rak.creatures
             Vector3 relativeVel =
                 rigidbody.transform.InverseTransformDirection(rigidbody.velocity);
             RaycastHit hit;
-            float rayLength = miscVariables[MiscVariables.AgentMiscVariables.Agent_Detect_Collision_Vel_Distance];
+            float rayLength = 20;//miscVariables[MiscVariables.AgentMiscVariables.Agent_Detect_Collision_Vel_Distance];
             if (Physics.Raycast(_transform.position, rigidbody.velocity, out hit, rayLength))
             {
                 if (DEBUG)
                     Debug.DrawLine(_transform.position, hit.point, Color.black, .5f);
                 distanceToCollision[trajIndex] = Vector3.Distance(_transform.position, hit.point);
-                TimeToCollisionAtCurrentVel = distanceToCollision[3] / relativeVel.sqrMagnitude;
+                TimeToCollisionAtCurrentVel = distanceToCollision[(int)CreatureUtilities.RayCastDirection.VELOCITY]
+                    / relativeVel.magnitude;
                 _timeUpdatedCollisionAtVel = Time.time;
                 _timeUpdatedDistanceToCollision[trajIndex] = Time.time;
             }
@@ -374,7 +370,15 @@ namespace rak.creatures
             if (Physics.Raycast(_transform.position, vectorDirection, out hit, rayLength))
             {
                 if (DEBUG)
-                    Debug.DrawLine(_transform.position, hit.point, Color.white, .5f);
+                {
+                    Color color;
+                    if (direction == CreatureUtilities.RayCastDirection.LEFT ||
+                        direction == CreatureUtilities.RayCastDirection.RIGHT)
+                        color = Color.white;
+                    else
+                        color = Color.yellow;
+                    //Debug.DrawLine(_transform.position, hit.point, color, .5f);
+                }
                 distanceToCollision[(int)direction] = Vector3.Distance(_transform.position, hit.point);
                 _timeUpdatedDistanceToCollision[(int)direction] = Time.time;
             }
@@ -382,9 +386,10 @@ namespace rak.creatures
         }
         public float GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection direction)
         {
-            if(Time.time - _timeUpdatedDistanceToCollision[(int)direction] > .02f)
+            if(Time.time - _timeUpdatedDistanceToCollision[(int)direction] > .2f)
             {
                 _RaycastDirection(direction);
+                //Debug.LogWarning("Refreshing direction ray - " + direction);
             }
             return distanceToCollision[(int)direction];
         }
@@ -393,6 +398,7 @@ namespace rak.creatures
             if(Time.time -_timeUpdatedCollisionAtVel > .2f)
             {
                 _RaycastTrajectory();
+                //Debug.LogWarning("Before collision - " + TimeToCollisionAtCurrentVel);
             }
             return TimeToCollisionAtCurrentVel;
         }
@@ -520,7 +526,7 @@ namespace rak.creatures
         public bool IsStuck()
         {
             float stuckIfDistanceMovedLessThan =
-                15;//miscVariables[MiscVariables.AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_Five_Secs];
+                miscVariables[MiscVariables.AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_One_Sec];
             float distanceMoved = GetDistanceMovedInLast(.1f);
             //Debug.LogWarning("Moved - " + distanceMoved);
             return distanceMoved <= stuckIfDistanceMovedLessThan && Time.time > 1;

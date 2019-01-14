@@ -413,13 +413,13 @@ namespace rak.creatures
                     attachedAgent.slowDownModifier && !attachedAgent.GetRigidBody().isKinematic)
             {
                 if (relativeVel.magnitude >
-                    miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Close_To_Target_Max_Vel_Mag_Before_Brake])
+                    miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Max_Vel_Mag_Before_Brake])
                 {
                     Vector3 amount = Vector3.one;
                     attachedAgent.ApplyBrake(amount *
-                        miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Close_To_Target_Brake_Percent], true);
+                        miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Angular_Velocity_Brake_When_Over], true);
                     attachedAgent.ApplyBrake(amount *
-                        miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Close_To_Target_Brake_Percent], false);
+                        miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Angular_Velocity_Brake_When_Over], false);
                     //Debug.LogWarning("Applying brake, close to target - " + amount);
                 }
             }

@@ -6,7 +6,7 @@ namespace rak.creatures
     {
         public bool Activated { get; private set; }
         private ActionStep.Actions[] _OnDuringTheseActions;
-        private float sleepFor = 0; // disable turning on while this is + 0
+        private float ignoreStuckFor = 0; // disable turning on while this is + 0
 
         public AntiGravityShieldPart(CreaturePart creaturePart, Transform transform, float updateEvery,
             Rigidbody bodyToShield, ActionStep.Actions[] actions)
@@ -43,7 +43,7 @@ namespace rak.creatures
         }
         private void GotoSleep(float time)
         {
-            sleepFor = time;
+            ignoreStuckFor = time;
         }
         public override void UpdateDerivedPart(ActionStep.Actions action)
         {
@@ -58,24 +58,34 @@ namespace rak.creatures
                     // STUCK //
                     if (attachedAgent.IsStuck())
                     {
-                        activate = true;
+                        if(ignoreStuckFor <= 0)
+                            activate = true;
                     }
-                    // Not stuck, do additional checks //
+                    // Not stuck //
                     else if (!attachedAgent.IsStuck())
                     {
                         // Check for imminent collision //
                         float beforeCollision = attachedAgent.GetTimeBeforeCollision();
-                        float collisionProblem = 10;
+                        float collisionProblem = miscVariables[MiscVariables.AgentMiscVariables.Agent_Brake_If_Colliding_In];
+                        float velocityNeededToBrake = miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Max_Vel_Mag_Before_Brake];
                         if (Mathf.Abs(beforeCollision) <= collisionProblem && Mathf.Abs(beforeCollision) != Mathf.Infinity &&
-                            beforeCollision > .1f &&
-                            attachedBody.velocity.magnitude > 5)
+                            beforeCollision > .01f &&
+                            attachedBody.velocity.magnitude > velocityNeededToBrake)
                         {
                             activate = true;
                         }
+                        // Check for spinning //
+                        else if (attachedBody.angularVelocity.magnitude > 
+                            miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Angular_Velocity_Brake_When_Over])
+                        {
+                            Debug.LogWarning("Current angular vel - " + attachedBody.angularVelocity.magnitude);
+                            activate = true;
+                        }
+
                     }
-                    
                     // Check if we're going in the wrong direction if we're not stopped //
-                    else if (attachedBody.velocity.magnitude > 12)
+                    else if (attachedBody.velocity.magnitude > 
+                        miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel])
                     {
                         Vector3 turnNeeded = getDifferenceFromLookAtTargetRotationViaVelocity().eulerAngles;
                         if ((turnNeeded.x > 10 && turnNeeded.x < 350) ||
@@ -84,9 +94,15 @@ namespace rak.creatures
                             activate = true;
                         }
                     }
-                    if (sleepFor > 0) sleepFor -= Time.deltaTime;
-                    if (activate && sleepFor <= 0)
+                    if (ignoreStuckFor > 0)
+                    {
+                        ignoreStuckFor -= Time.deltaTime;
+                        //Debug.LogWarning("Sleeping - " + sleepFor);
+                    }
+                    if (activate)
+                    {
                         ActivateShield();
+                    }
                     
                 }
                 // Currently Activated //
@@ -99,7 +115,7 @@ namespace rak.creatures
                         if (turnNeeded.magnitude < 5f || turnNeeded.magnitude > 355)
                         {
                             DeActivateShield();
-                            GotoSleep(.05f);
+                            GotoSleep(.1f);
                         }
                     }
                 }

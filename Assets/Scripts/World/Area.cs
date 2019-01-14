@@ -118,7 +118,6 @@ namespace rak.world
                         {
                             _removeTheseThings.Add(creature);
                             creature.DestroyAllParts();
-                            GameObject.Destroy(creature.gameObject);
                             Debug.LogWarning("Removed a dead creature");
                         }
                     }

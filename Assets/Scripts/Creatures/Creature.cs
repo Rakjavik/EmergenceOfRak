@@ -187,8 +187,11 @@ namespace rak.creatures
             agent.OnCollisionEnter(collision);
             if(agent.GetRigidBody().velocity.magnitude > agent.maxVelocityMagnitude)
             {
-                Debug.LogWarning("Creature dying of collision");
-                ChangeState(CREATURE_STATE.DEAD);
+                Debug.LogWarning("Creature dying of collision at speed - " + agent.GetRigidBody().velocity.magnitude);
+                if (currentState != CREATURE_STATE.DEAD)
+                {
+                    ChangeState(CREATURE_STATE.DEAD);
+                }
             }
         }
         private void OnCollisionExit(Collision collision)
@@ -407,7 +410,7 @@ namespace rak.creatures
                 }
                 if(requestedState == CREATURE_STATE.DEAD)
                 {
-                    demolish();
+                    //demolish();
                 }
                 this.currentState = requestedState;
             }
@@ -441,14 +444,18 @@ namespace rak.creatures
             {
                 GameObject part = transform.GetChild(childCount).gameObject;
                 part.transform.SetParent(null);
-                if (part.GetComponent<Part>() != null)
+                if (true == false)
                 {
                     Rigidbody body = part.AddComponent<Rigidbody>();
                     body.velocity = currentVel;
                 }
                 else
                 {
-                    Destroy(transform.GetChild(childCount).gameObject);
+                    try
+                    {
+                        Destroy(transform.GetChild(childCount).gameObject);
+                    }
+                    catch (UnityException ex) { }
                 }
             }
         }

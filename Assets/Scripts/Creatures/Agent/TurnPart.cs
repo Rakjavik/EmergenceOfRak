@@ -96,7 +96,7 @@ namespace rak.creatures
         {
             if (parentCreature.transform.rotation == Quaternion.identity) return;
             Quaternion newRotation = Quaternion.Slerp(parentCreature.transform.rotation, Quaternion.identity,
-                miscVariables[MiscVariables.AgentMiscVariables.Agent_Right_Rotation_Amount]);
+                miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel]);
             parentCreature.transform.rotation = newRotation;
         }
     }
