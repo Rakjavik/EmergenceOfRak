@@ -60,7 +60,6 @@ namespace rak.creatures
         }
         public override void Disable()
         {
-            //base.Disable();
             Debug.LogWarning("Disable call from engine class");
             if (Enabled)
             {
@@ -74,7 +73,6 @@ namespace rak.creatures
         }
         public override void Enable()
         {
-            //base.Enable();
             Debug.LogWarning("Enable call from engine class");
             if (Enabled) Debug.LogError("Call to enable part when already enabled");
             InitiateEngineStartupSequences();
@@ -232,7 +230,7 @@ namespace rak.creatures
                 float atMostVel = miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Y_Engine_PowerDown_Until_Vel_At_Most];
                 if (relativeDirection > atMostVel && engine.flightDirection == Direction.Y)
                 {
-                    float amount = (attachedAgent.GetDistanceFromGround() * Time.deltaTime) /
+                    float amount = (attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.DOWN) * Time.deltaTime) /
                         miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Y_Engine_PowerDown_Reduction_Factor];
                     engine.SubtractForceForLanding(amount, engine.flightDirection);
                 }
@@ -354,25 +352,7 @@ namespace rak.creatures
                     // CALCULATE NEARBY COLLISIONS //
                     if (!attachedAgent.ignoreIncomingCollisions)
                     {
-                        Vector3 timeBeforeCollision = attachedAgent.GetTimeBeforeCollision();
-                        if (engine.flightDirection == Direction.X)
-                        {
-                            timeToCollision = timeBeforeCollision.x;
-                            directionalSpeed = relativeVel.x;
-                            cruisingSpeed = attachedAgent.CruisingSpeed.x;
-                        }
-                        else if (engine.flightDirection == Direction.Y)
-                        {
-                            timeToCollision = timeBeforeCollision.y;
-                            directionalSpeed = relativeVel.y;
-                            cruisingSpeed = attachedAgent.CruisingSpeed.y;
-                        }
-                        else // Z AXIS
-                        {
-                            timeToCollision = timeBeforeCollision.z;
-                            directionalSpeed = relativeVel.z;
-                            cruisingSpeed = attachedAgent.CruisingSpeed.z;
-                        }
+                        timeToCollision = attachedAgent.TimeToCollisionAtCurrentVel;
                         // Imminenet Collision //
                         float collisionProblem =
                             miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Reverse_Engine_If_Colliding_In];
@@ -392,12 +372,14 @@ namespace rak.creatures
                         // X Engine, move to the side to avoid collision in front //
                         if (engine.flightDirection == Direction.X)
                         {
-                            if ((timeBeforeCollision.z < collisionProblem) ||
-                                (attachedAgent.GetDistanceBeforeCollision(true).z < 1))
+                            if ((timeToCollision < collisionProblem) ||
+                                (attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.FORWARD) 
+                                < 1))
                             {
                                 engineMovementVariables[(int)Direction.X]._engineLocked = true;
-                                Vector2 distanceOnSides = attachedAgent.GetDistanceFromCollisionLeftRight();
-                                if (distanceOnSides.x > distanceOnSides.y)
+                                float distanceLeft = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.LEFT);
+                                float distanceRight = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.RIGHT);
+                                if (distanceLeft > distanceRight)
                                 {
                                     if (engine.CurrentState != MovementState.REVERSE)
                                     {
@@ -457,8 +439,9 @@ namespace rak.creatures
                 EngineMovementVariables engineY = engineMovementVariables[(int)Direction.Y];
                 EngineMovementVariables engineX = engineMovementVariables[(int)Direction.X];
                 Vector3 relativeVel = attachedBody.transform.InverseTransformDirection(attachedBody.velocity);
-                float distFromGround = attachedAgent.GetDistanceFromGround();
-                float distanceFromFirstZHit = attachedAgent.GetDistanceFromFirstZHit();
+                float distFromGround = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.DOWN);
+                float distanceFromFirstZHit = attachedAgent.GetDistanceBeforeCollision(
+                    CreatureUtilities.RayCastDirection.FORWARD);
                 bool objectBlockingForward = distanceFromFirstZHit < 3;
                 MovementState stateToSetY = MovementState.IDLE;
                 // Moving down or close to ground, throttle up //
@@ -489,9 +472,8 @@ namespace rak.creatures
                     engineZ.SetState(MovementState.FORWARD);
                 if (objectBlockingForward)
                 {
-                    Vector2 distanceLeftRight = attachedAgent.GetDistanceFromCollisionLeftRight();
-                    float distanceRight = distanceLeftRight.y;
-                    float distanceLeft = distanceLeftRight.x;
+                    float distanceRight = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.RIGHT);
+                    float distanceLeft = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.LEFT);
                     if (engineX.CurrentState == MovementState.IDLE)
                     {
                         bool goRight = distanceLeft < distanceRight;

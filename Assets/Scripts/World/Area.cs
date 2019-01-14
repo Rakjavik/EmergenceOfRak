@@ -261,18 +261,16 @@ namespace rak.world
             GridSector[] sectors = closestTerrain.GetGridElements();
             float closestDist = Mathf.Infinity;
             int indexOfClosest = -1;
-            Vector2 twoDPosition = new Vector2(transform.position.x, transform.position.z);
             for (int count = 0; count < sectors.Length; count++)
             {
-                Vector2 middleOfSector = Vector2.Lerp(sectors[count].worldPositionStart, sectors[count].worldPositionEnd,.5f);
-                float currentDistance = Vector2.Distance(twoDPosition, middleOfSector);
+                float currentDistance = Vector3.Distance(transform.position, sectors[count].GetSectorPosition);
                 if (currentDistance < closestDist)
                 {
                     closestDist = currentDistance;
                     indexOfClosest = count;
                 }
             }
-            //Debug.LogWarning("Closest sector - " + sectors[indexOfClosest].name);
+            
             return sectors[indexOfClosest];
         }
     }

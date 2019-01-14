@@ -12,6 +12,10 @@ namespace rak.creatures
 
         // Movement destination //
         public Vector3 Destination { get; private set; }
+        public float TimeToCollisionAtCurrentVel { get; private set; }
+        private float _timeUpdatedCollisionAtVel = 0;
+        private float[] distanceToCollision = new float[5];
+        private float[] _timeUpdatedDistanceToCollision = new float[5];
         // Not active skips update method //
         public bool Active { get; private set; }
         // Size of the boxcast when looking for explore targets //
@@ -54,6 +58,8 @@ namespace rak.creatures
         private Vector3 positionLastUpdate { get; set; }
         // For tracking distance movement each update //
         public float DistanceMovedLastUpdate { get; private set; }
+
+        private Transform _transform;
         private Dictionary<float, float> distancesMoved = new Dictionary<float, float>();
         private Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables;
         
@@ -236,27 +242,6 @@ namespace rak.creatures
         #endregion MISC METHODS
 
         #region CALCULATION METHODS
-        public bool HasCompletedLanding()
-        {
-            if (touchingBodies.Count > 0)
-            {
-                return true;
-            }
-            else if (rigidbody.velocity.y < 
-                miscVariables[MiscVariables.AgentMiscVariables.Agent_Landing_Complete_When_Y_Vel_Lower_Than]
-                && GetDistanceFromGround() < 
-                miscVariables[MiscVariables.AgentMiscVariables.Agent_Landing_Complete_When_Distance_From_Ground_Less_Than])
-            {
-                return true;
-            }
-            return false;
-        }
-        public float GetTimeTillReachGroundYAtCurrentVelocity()
-        {
-            float returnTime = GetDistanceFromGround() / Mathf.Abs(rigidbody.velocity.y);
-            if (returnTime < .01) returnTime = 0;
-            return returnTime;
-        }
         public bool IsCollidingWithSomethingOnAxis(Direction axis)
         {
             bool xCollision = false;
@@ -295,7 +280,9 @@ namespace rak.creatures
         {
             return Vector3.Distance(creature.transform.position, Destination);
         }
-        public float GetDistanceFromGround()
+
+
+        /*public float GetDistanceFromGround()
         {
             RaycastHit hit;
             if (Physics.Raycast(creature.transform.position, Vector3.down, out hit))
@@ -305,19 +292,7 @@ namespace rak.creatures
             }
             return Mathf.Infinity;
         }
-        public float GetDistanceFromFirstZHit()
-        {
-            RaycastHit hit;
-            if(Physics.Raycast(creature.transform.position,creature.transform.forward,out hit, 20))
-            {
-                float hitZ = hit.point.z;
-                return Mathf.Abs(creature.transform.position.z - hitZ);
-            }
-            else
-            {
-                return Mathf.Infinity;
-            }
-        }
+
         public Vector3 GetNextDownYCollisionPoint()
         {
             RaycastHit hit;
@@ -359,23 +334,78 @@ namespace rak.creatures
             returnPoints.x = distanceLeft;
             returnPoints.y = distanceRight;
             return returnPoints;
-        }
-        private Vector3 GetBeforeCollision(bool _inTime,bool justGetZDistance)
+        }*/
+        
+        private void _RaycastTrajectory()
         {
+            int trajIndex = (int)CreatureUtilities.RayCastDirection.VELOCITY;
+            Vector3 relativeVel =
+                rigidbody.transform.InverseTransformDirection(rigidbody.velocity);
+            RaycastHit hit;
+            float rayLength = miscVariables[MiscVariables.AgentMiscVariables.Agent_Detect_Collision_Vel_Distance];
+            if (Physics.Raycast(_transform.position, rigidbody.velocity, out hit, rayLength))
+            {
+                if (DEBUG)
+                    Debug.DrawLine(_transform.position, hit.point, Color.black, .5f);
+                distanceToCollision[trajIndex] = Vector3.Distance(_transform.position, hit.point);
+                TimeToCollisionAtCurrentVel = distanceToCollision[3] / relativeVel.sqrMagnitude;
+                _timeUpdatedCollisionAtVel = Time.time;
+                _timeUpdatedDistanceToCollision[trajIndex] = Time.time;
+            }
+        }
+        private void _RaycastDirection(CreatureUtilities.RayCastDirection direction)
+        {
+            Vector3 vectorDirection;
+            if (direction == CreatureUtilities.RayCastDirection.FORWARD)
+                vectorDirection = _transform.forward;
+            else if (direction == CreatureUtilities.RayCastDirection.LEFT)
+                vectorDirection = -_transform.right;
+            else if (direction == CreatureUtilities.RayCastDirection.RIGHT)
+                vectorDirection = _transform.right;
+            else if (direction == CreatureUtilities.RayCastDirection.DOWN)
+                vectorDirection = Vector3.down;
+            else
+            {
+                Debug.LogError("Raycast direction for velocity in wrong method");
+                return;
+            }
+            RaycastHit hit;
+            float rayLength = miscVariables[MiscVariables.AgentMiscVariables.Agent_Detect_Collision_Vel_Distance];
+            if (Physics.Raycast(_transform.position, vectorDirection, out hit, rayLength))
+            {
+                if (DEBUG)
+                    Debug.DrawLine(_transform.position, hit.point, Color.white, .5f);
+                distanceToCollision[(int)direction] = Vector3.Distance(_transform.position, hit.point);
+                _timeUpdatedDistanceToCollision[(int)direction] = Time.time;
+            }
+
+        }
+        public float GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection direction)
+        {
+            if(Time.time - _timeUpdatedDistanceToCollision[(int)direction] > .02f)
+            {
+                _RaycastDirection(direction);
+            }
+            return distanceToCollision[(int)direction];
+        }
+        public float GetTimeBeforeCollision()
+        {
+            if(Time.time -_timeUpdatedCollisionAtVel > .2f)
+            {
+                _RaycastTrajectory();
+            }
+            return TimeToCollisionAtCurrentVel;
+        }
+        /*private Vector3 GetBeforeCollision()
+        {
+
             Transform worldOrigin = creature.transform;
             Vector3 relativeVel =
                 rigidbody.transform.InverseTransformDirection(rigidbody.velocity);
             RaycastHit hit;
             float distanceZ = float.MaxValue, distanceX = float.MaxValue;
-            float rayLength = miscVariables[MiscVariables.AgentMiscVariables.Agent_Detect_Collision_Z_Distance];
-            if (Physics.Raycast(worldOrigin.position, rigidbody.velocity, out hit, rayLength))
-            {
-                if(DEBUG)
-                    Debug.DrawLine(worldOrigin.position, hit.point, Color.black, .5f);
-                distanceZ = Vector3.Distance(worldOrigin.position, hit.point);
-                if (!justGetZDistance)
-                    return new Vector3(0,0,distanceZ);
-            }
+            
+            
             Vector3 direction;
             if (relativeVel.x > 0)
                 direction = creature.transform.right;
@@ -395,17 +425,14 @@ namespace rak.creatures
             else
                 return new Vector3(distanceX, -1, distanceZ);
         }
-        public Vector3 GetDistanceBeforeCollision(bool justGetZDistance)
+        public Vector3 GetDistanceBeforeCollision()
         {
-            if (!justGetZDistance)
-                return GetBeforeCollision(false,false);
-            else
-                return GetBeforeCollision(false, true);
+            GetBeforeCollision();
         }
         public Vector3 GetTimeBeforeCollision()
         {
             return GetBeforeCollision(true,false);
-        }
+        }*/
         #endregion CALCULATION METHODS
 
         // CONSTRUCTOR //
@@ -434,6 +461,7 @@ namespace rak.creatures
                 }
             }
             rigidbody.constraints = RigidbodyConstraints.None;
+            _transform = rigidbody.transform;
             if (baseSpecies == BASE_SPECIES.Gnat)
                 locomotionType = CreatureLocomotionType.Flight;
             else if (baseSpecies == BASE_SPECIES.Gagk)
@@ -509,7 +537,7 @@ namespace rak.creatures
                 part.Update();
             }
             DistanceMovedLastUpdate = Vector3.Distance(positionLastUpdate, creature.transform.position);
-            if(Time.time > 0)
+            if(Time.time > .01f)
                 distancesMoved.Add(Time.time, DistanceMovedLastUpdate);
             positionLastUpdate = creature.transform.position;
         }

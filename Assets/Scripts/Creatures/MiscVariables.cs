@@ -27,7 +27,7 @@ namespace rak.creatures
             Agent_Landing_Complete_When_Distance_From_Ground_Less_Than,
             Agent_OnSolidGround_If_Dist_From_Ground_Less_Than,
             Agent_OnSolidGround_If_Dist_Moved_Last_Update_Less_Than,
-            Agent_Detect_Collision_Z_Distance,
+            Agent_Detect_Collision_Vel_Distance,
             Agent_Detect_Collision_X_Distance,
             Agent_Landing_OverTarget_If_Z_Dis_Less_Than,
             Agent_Landing_OverTarget_If_X_Dis_Less_Than,
@@ -48,7 +48,7 @@ namespace rak.creatures
                 miscVariables.Add(AgentMiscVariables.Agent_Landing_OverTarget_If_Z_Dis_Less_Than, .3f);
                 miscVariables.Add(AgentMiscVariables.Agent_Landing_OverTarget_If_X_Vel_Less_Than, .1f);
                 miscVariables.Add(AgentMiscVariables.Agent_Landing_OverTarget_If_Z_Vel_Less_Than, .1f);
-                miscVariables.Add(AgentMiscVariables.Agent_Detect_Collision_Z_Distance, 150);
+                miscVariables.Add(AgentMiscVariables.Agent_Detect_Collision_Vel_Distance, 150);
                 miscVariables.Add(AgentMiscVariables.Agent_Detect_Collision_X_Distance, 15);
                 miscVariables.Add(AgentMiscVariables.Agent_OnSolidGround_If_Dist_From_Ground_Less_Than, 1);
                 miscVariables.Add(AgentMiscVariables.Agent_OnSolidGround_If_Dist_Moved_Last_Update_Less_Than, 1);

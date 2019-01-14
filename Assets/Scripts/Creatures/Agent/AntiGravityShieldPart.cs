@@ -64,10 +64,10 @@ namespace rak.creatures
                     else if (!attachedAgent.IsStuck())
                     {
                         // Check for imminent collision //
-                        Vector3 beforeCollision = attachedAgent.GetTimeBeforeCollision();
+                        float beforeCollision = attachedAgent.GetTimeBeforeCollision();
                         float collisionProblem = 10;
-                        if (Mathf.Abs(beforeCollision.z) <= collisionProblem && Mathf.Abs(beforeCollision.z) != Mathf.Infinity &&
-                            beforeCollision.z > .1f &&
+                        if (Mathf.Abs(beforeCollision) <= collisionProblem && Mathf.Abs(beforeCollision) != Mathf.Infinity &&
+                            beforeCollision > .1f &&
                             attachedBody.velocity.magnitude > 5)
                         {
                             activate = true;

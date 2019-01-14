@@ -85,13 +85,13 @@ namespace rak.world
             GridSector[] elements = terrain.GetGridElements();
             foreach (GridSector element in elements)
             {
-                if(Vector2.Distance(requester.transform.position,element.worldPositionStart) <= distance ||
-                    Vector2.Distance(requester.transform.position, element.worldPositionEnd) <= distance)
+                if(Vector3.Distance(requester.transform.position,element.GetSectorPosition) <= distance)
                 {
                     elementsWithinRange.Add(element);
                 }
             }
             return elementsWithinRange.ToArray();
         }
+        public enum RayCastDirection { LEFT,RIGHT,FORWARD,DOWN,VELOCITY }
     }
 }

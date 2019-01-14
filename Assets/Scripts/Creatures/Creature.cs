@@ -245,11 +245,12 @@ namespace rak.creatures
             {
                 species.memory.AddMemory(new MemoryInstance(Verb.SAW, thing, false));
             }
-            float areaDistance = 300;
+            float areaDistance = 100;
             // Observe Areas //
             GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
                 this, areaDistance, currentArea.GetClosestTerrainToPoint(transform.position));
             GridSector currentSector = currentArea.GetCurrentGridSector(transform);
+            
             foreach (GridSector element in closeAreas)
             {
                 if (!knownGridSectorsVisited.ContainsKey(element))
@@ -435,12 +436,20 @@ namespace rak.creatures
         private void demolish()
         {
             agent.DisableAgent();
-            for(int x = 0; x < transform.childCount; x++)
+            Vector3 currentVel = agent.GetRigidBody().velocity;
+            for (int childCount = 0; childCount < transform.childCount; childCount++)
             {
-                GameObject part = transform.GetChild(x).gameObject;
+                GameObject part = transform.GetChild(childCount).gameObject;
                 part.transform.SetParent(null);
-                Rigidbody body = part.AddComponent<Rigidbody>();
-                body.velocity = agent.GetRigidBody().velocity;
+                if (part.GetComponent<Part>() != null)
+                {
+                    Rigidbody body = part.AddComponent<Rigidbody>();
+                    body.velocity = currentVel;
+                }
+                else
+                {
+                    Destroy(transform.GetChild(childCount).gameObject);
+                }
             }
         }
         #endregion

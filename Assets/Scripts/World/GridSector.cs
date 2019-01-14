@@ -24,7 +24,7 @@ public class Grid
                 Vector2 elementWorldPositionEnd = new Vector2(
                     elementWorldPosition.x + ELEMENT_SIZE.x, elementWorldPosition.y + ELEMENT_SIZE.y);
                 elements[elementCount] = new GridSector(new Vector2(x, z),
-                    elementWorldPosition, elementWorldPositionEnd,terrain.name);
+                    elementWorldPosition, elementWorldPositionEnd,terrain.name,terrain);
                 elementCount++;
             }
         }
@@ -37,15 +37,23 @@ public class Grid
 public class GridSector
 {
     public GridSector(Vector2 gridPosition, Vector2 worldPositionStart, 
-        Vector2 worldPositionEnd,string terrainName) : base()
+        Vector2 worldPositionEnd,string terrainName,RAKTerrain terrain)
     {
         name = (terrainName + "-" + gridPosition.x + "-" + gridPosition.y);
         this.gridPosition = gridPosition;
         this.worldPositionStart = worldPositionStart;
         this.worldPositionEnd = worldPositionEnd;
+        this.parentTerrain = terrain;
     }
 
     public Vector2 gridPosition { get; private set; }
+    private RAKTerrain parentTerrain = null;
+    public Vector3 GetSectorPosition { get
+        {
+            Vector3 position = new Vector3(worldPositionStart.x, 6, worldPositionStart.y);
+            //Debug.LogWarning("Position of sector - " + heightY);
+            return position;
+        } }
     public Vector2 worldPositionStart { get; private set; }
     public Vector2 worldPositionEnd { get; private set; }
     public string name { get; private set; }

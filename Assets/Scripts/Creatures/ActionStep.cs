@@ -124,10 +124,7 @@ namespace rak
                     GridSector sector = performer.GetClosestUnexploredSector();
                     if (sector != null)
                     {
-                        Vector3 explorePoint = sector.GetTwoDLerpOfSector();
-                        // Vector2 to Vector3 //
-                        explorePoint.z = explorePoint.y;
-                        explorePoint.y = performer.GetCreatureAgent().GetSustainHeight();
+                        Vector3 explorePoint = sector.GetSectorPosition;
                         _targetPosition = explorePoint;
                         performer.GetCreatureAgent().SetDestination(_targetPosition);
                         creatureAgentDestinationHasBeenSet = true;
@@ -249,10 +246,6 @@ namespace rak
                     agent.Land();
                     return;
 
-                }
-                if (agent.HasCompletedLanding())
-                {
-                    status = Tasks.TASK_STATUS.Complete;
                 }
                 return;
             }
