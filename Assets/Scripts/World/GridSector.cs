@@ -1,14 +1,17 @@
 ﻿using rak;
 using UnityEngine;
 
+// A Grid is created for an Area to dissect it into sections //
 public class Grid
 {
+    // Size of each sector X,Y //
     public static readonly Vector2 ELEMENT_SIZE = new Vector2(50, 50);
 
     private GridSector[] elements;
-
+    
     public Grid(RAKTerrain terrain)
     {
+        // Get the Unity Terrain object size //
         Vector3 terrainSize = terrain.terrain.terrainData.size;
         int numberOfXElements = (int)(terrainSize.x / ELEMENT_SIZE.x);
         int numberOfZElements = (int)(terrainSize.z / ELEMENT_SIZE.y);
@@ -34,6 +37,7 @@ public class Grid
     public GridSector[] GetGridElements() { return elements; }
 }
 
+// Section of a grid //
 public class GridSector
 {
     public GridSector(Vector2 gridPosition, Vector2 worldPositionStart, 
