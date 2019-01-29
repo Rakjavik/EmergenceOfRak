@@ -9,9 +9,8 @@ using rak.creatures;
 
 public partial class RAKTerrainMaster : MonoBehaviour
 {
-
     public bool debug = World.ISDEBUGSCENE;
-    public bool forceGenerate = false;
+    public bool forceGenerate = false; // Will generate the terrain even if save data is available
     private void logDebug(string message)
     {
         if (debug)
@@ -19,12 +18,11 @@ public partial class RAKTerrainMaster : MonoBehaviour
             Debug.Log("TerrainMaster - " + message);
         }
     }
-    private static HexCell cell;
-    private static Area area;
+    private static HexCell cell; // Hexcell that represents the terrain being generated
+    private static Area area; // Area holds all variables related to the local representation of the HexCell
     private static World world;
-    private RAKTerrain[] terrain;
-    private int tileSize = 256;
-
+    private RAKTerrain[] terrain; // Terrain objects for this Area
+    
     [Header("Tree Prefabs needed for Terrain Generation")]
     public GameObject[] treePrefabs;
     [Header("Ground Textures needed for Terrain Generation")]
@@ -35,9 +33,10 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     private static RAKWeather sun;
     private static RAKBiome currentBiome;
-    private int width;
-    private int height;
-    private int worldSize;
+    private int tileSize = 256; // Size of each Terrain piece
+    private int width = tileSize+1; // Terrain width/height needs a plus one due to Unity being weird
+    private int height = tileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
+    private int worldSize = 16; // Number of total terrain objects
 
     private void InitializeDebugTerrain(World world,HexCell cell)
     {
@@ -53,37 +52,39 @@ public partial class RAKTerrainMaster : MonoBehaviour
             InitializeDebugTerrain(world,cell);
             return;
         }
+        // Set static data //
         RAKTerrainMaster.world = world;
         RAKTerrainMaster.cell = cell;
         DateTime startTime = DateTime.Now;
-        width = tileSize + 1;
-        height = tileSize + 1;
-        worldSize = 16;
         terrain = new RAKTerrain[worldSize];
+        // Check if files are already present for this cell //
         bool saveDataAvail = IsSaveDataAvailable(cell,world.WorldName);
         if (forceGenerate) saveDataAvail = false;
         if (cell.GetChunkMaterial() == HexGridChunk.ChunkMaterial.GRASS)
             currentBiome = RAKBiome.getForestBiome();
         else
             currentBiome = RAKBiome.getForestBiome();
+        
         #region TERRAIN GENERATION
+        // Load single terrain loop //
         for (int count = 0; count < worldSize; count++)
         {
-            
             TerrainData td;
             RAKTerrainSavedData savedTerrain = null;
+            // If no save data available, go ahead and generate a new terrain //
             if (!saveDataAvail) //  generate //
             {
                 td = generateTerrain(width, height, currentBiome.depth, currentBiome.scale, currentBiome.offsetX, currentBiome.offsetY);
                 generateSplatPrototypes(td);
             }
+            // Save data is available //
             else
             {
                 savedTerrain = RAKTerrainSavedData.loadTerrain(cell.GetCellSaveFileName(world.WorldName)+"T"+count + ".area");
                 td = savedTerrain.generateTerrainDataFromFlatMap();
                 Debug.LogWarning("Loading terrain from disk tdsize - " + td.size.x + "-" + td.size.y + "-" + td.size.z);
             }
-            //generateSplatPrototypes(td);
+            // TerrainData generation complete, finish setting up Unity objects //
             GameObject go = Terrain.CreateTerrainGameObject(td);
             go.isStatic = false;
             go.transform.SetParent(transform);
@@ -96,15 +97,20 @@ public partial class RAKTerrainMaster : MonoBehaviour
             mapPositions(count);
             terrain[count].setBiome(RAKBiome.getForestBiome());
         }
+        // Tell Unity which terrain objects are next to each other //
         setNeighbors();
+        // If we are generating new world terrains, fix the sides and seam together //
         if (!saveDataAvail) fixGaps(16);
+        // Generate the terrain details //
         for (int count = 0; count < terrain.Length; count++)
         {
             generateSplatMap(terrain[count].getTerrainData());
+            // If no save data, generate new details //
             if (!saveDataAvail)
             {
                 generateNonTerrainDetailPrefabs(terrain[count].getTerrainComponenet());
             }
+            // Save data avail, load details from disk //
             else
             {
                 Debug.Log("Loading terrain from disk");
@@ -112,15 +118,19 @@ public partial class RAKTerrainMaster : MonoBehaviour
             }
         }
         #endregion
+        
         float currentTime = Time.time;
-        List<NavMeshSurface> surfaces = new List<NavMeshSurface>();
+        /*List<NavMeshSurface> surfaces = new List<NavMeshSurface>();
         surfaces.Add(gameObject.AddComponent<NavMeshSurface>());
         surfaces[0].collectObjects = CollectObjects.Children;
         RAKMeshBaker.Bake(surfaces.ToArray());
-        Debug.LogWarning("Build nav mesh took - " + (Time.time - currentTime));
-
+        Debug.LogWarning("Build nav mesh took - " + (Time.time - currentTime));*/
+        
+        // Save to disk if needed //
         if (!saveDataAvail)
             SaveTerrainData();
+            
+        // Finish loading //
         RAKTerrainMaster.generateCreatures(cell,world);
         RAKTerrainMaster.sun = gameObject.AddComponent<RAKWeather>();
         RAKTerrainMaster.sun.start(transform, this, sun.gameObject);
@@ -133,12 +143,15 @@ public partial class RAKTerrainMaster : MonoBehaviour
         cell.SetArea(area);
         Debug.Log("Area Initialized");
     }
+    // Create new unity objects from data from disk //
     private void generateNonTerrainDetailsFromDisk(RAKTerrain terrain)
     {
+        // Get all objects from save //
         RAKTerrainObjectSaveData[] objects = terrain.savedData.nonTerrainObjectsSaveData;
         List<RAKTerrainObject> loadedTerrainObjects = new List<RAKTerrainObject>();
         for (int count = 0; count < objects.Length; count++)
         {
+            // Retrieve the prefab and Instantiate //
             RAKTerrainObject terrainObject = RAKUtilities.getTerrainObjectPrefab(
                 RAKUtilities.nonTerrainObjects[objects[count].prefabObjectIndex])
                 .GetComponent<RAKTerrainObject>();
@@ -149,6 +162,8 @@ public partial class RAKTerrainMaster : MonoBehaviour
         }
         terrain.nonTerrainObjects = loadedTerrainObjects.ToArray();
     }
+    
+    // Sets the neighbors for all of our Unity Terrain Objects //
     private void setNeighbors()
     {
         for (int index = 0; index < terrain.Length; index++)
@@ -221,6 +236,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
         }
         return 0;
     }
+    // Generate details for a RAKTerrain object //
     private void generateNonTerrainDetailPrefabs(Terrain terrain)
     {
         RAKTerrain rakTerrain = terrain.GetComponent<RAKTerrain>();
@@ -233,7 +249,6 @@ public partial class RAKTerrainMaster : MonoBehaviour
         int currentDetailCount = 0;
         for (int currentObjectCount = 0; currentObjectCount < biome.objectCounts.Length; currentObjectCount++)
         {
-
             GameObject prefab = null;
             try
             {
