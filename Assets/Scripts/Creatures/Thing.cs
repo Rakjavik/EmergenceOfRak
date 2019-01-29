@@ -1,5 +1,6 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
+using rak.world;
 using System;
 using UnityEngine;
 
@@ -11,23 +12,28 @@ namespace rak
     {
         #region ENUMS
         public enum BOOL_FILTERS { USEABLE, CONSUMEABLE, USE_LOCATE_TARGET }
-        public enum BASE_TYPES { CREATURE, PLANT, NON_ORGANIC }
+        public enum Base_Types { CREATURE, PLANT, NON_ORGANIC }
+        public enum Thing_Types {Fruit,Wood,Gnat,House }
+
         #endregion
 
         protected Creature ControlledBy;
 
-        private string name;
-        private BASE_TYPES baseType;
-        private float age;
+        public Tribe owner { get; private set; }
+        public string thingName { get; protected set; }
+        public Base_Types baseType { get; private set; }
+        public Thing_Types thingType { get; private set; }
+        public float age { get; private set; }
         private int weight;
-        private float bornAt;
+        public float bornAt { get; private set; }
         private bool useable;
         private bool consumeable;
         private bool available;
 
         private void DestroyThisThing()
         {
-            world.Area.removeThingFromWorld(this);
+            available = false;
+            World.CurrentArea.RemoveThingFromWorld(this);
         }
 
         public bool beConsumed(Creature consumer)
@@ -44,7 +50,7 @@ namespace rak
             }
             else
             {
-                Debug.Log(name + " not claimed or not consumeable");
+                Debug.Log(thingName + " not claimed or not consumeable");
             }
             return false;
         }
@@ -52,14 +58,16 @@ namespace rak
         public void initialize(string name)
         {
             this.name = name;
+            this.thingName = name;
             if (name.Equals("fruit"))
             {
-                baseType = BASE_TYPES.PLANT;
+                baseType = Base_Types.PLANT;
+                thingType = Thing_Types.Fruit;
                 weight = 1;
                 age = 0;
                 bornAt = Time.time;
                 available = true;
-                if (baseType == BASE_TYPES.PLANT)
+                if (baseType == Base_Types.PLANT)
                 {
                     consumeable = true;
                     useable = false;
@@ -72,13 +80,14 @@ namespace rak
             }
             else
             {
-                baseType = BASE_TYPES.CREATURE;
+                baseType = Base_Types.CREATURE;
+                thingType = Thing_Types.Gnat;
                 name = "Gnat";
                 weight = 1;
                 age = 0;
                 bornAt = Time.time;
                 available = true;
-                if (baseType == BASE_TYPES.PLANT)
+                if (baseType == Base_Types.PLANT)
                 {
                     consumeable = true;
                     useable = false;
@@ -95,13 +104,13 @@ namespace rak
         {
             age += delta;
             // Destory if out of bounds //
-            if (transform.position.y < -100)
+            if (transform.position.y < Area.MinimumHeight)
             {
-                DestroyThisThing();
+                transform.position = new Vector3(transform.position.x,Area.MaximumHeight,transform.position.z);
             }
         }
 
-        public bool match(BASE_TYPES baseType, BOOL_FILTERS[] filters)
+        public bool match(Base_Types baseType, BOOL_FILTERS[] filters)
         {
             if (this.baseType == baseType)
             {
@@ -129,7 +138,7 @@ namespace rak
             return true;
         }
 
-        public bool match(BASE_TYPES baseType)
+        public bool match(Base_Types baseType)
         {
             return this.baseType == baseType;
         }
@@ -140,7 +149,7 @@ namespace rak
             {
                 if (consumeable && available)
                 {
-                    if (baseType == BASE_TYPES.PLANT)
+                    if (baseType == Base_Types.PLANT)
                     {
                         return true;
                     }
@@ -166,9 +175,11 @@ namespace rak
         }
         public void MakeUnavailable() { available = false; }
         public int getWeight() { return weight; }
-        public void setAvailable(bool available) {
+        public void setAvailable(bool available)
+        {
             if (available != !this.available) Debug.LogWarning("Set available on thing object called setting the same value");
-            this.available = available; }
+            this.available = available;
+        }
         #endregion
     }
 }

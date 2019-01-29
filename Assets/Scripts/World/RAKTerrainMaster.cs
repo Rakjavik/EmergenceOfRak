@@ -85,6 +85,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             }
             //generateSplatPrototypes(td);
             GameObject go = Terrain.CreateTerrainGameObject(td);
+            go.isStatic = false;
             go.transform.SetParent(transform);
             go.name = "Terrain" + count;
             logDebug("Terrain created - " + go.name);

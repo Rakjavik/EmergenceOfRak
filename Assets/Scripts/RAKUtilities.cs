@@ -105,5 +105,10 @@ namespace rak
             GameObject prefab = (GameObject)Resources.Load("Prefabs/UI/" + name);
             return prefab;
         }
+        public static GameObject GetBuildingPrefab(string name)
+        {
+            GameObject prefab = (GameObject)Resources.Load("Prefabs/World/Buildings/" + name);
+            return prefab;
+        }
     }
 }

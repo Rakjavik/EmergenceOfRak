@@ -1,5 +1,6 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
+using rak.world;
 using UnityEngine;
 
 namespace rak
@@ -15,7 +16,7 @@ namespace rak
         public FailReason failReason { get; private set; }
         public Vector3 _targetPosition { get; private set; }
         public Thing _targetThing { get; private set; }
-        public Tasks.TASKS associatedTask { get; private set; }
+        public Tasks.CreatureTasks associatedTask { get; private set; }
         public void SetTarget(Thing thing)
         {
             this._targetThing = thing;
@@ -34,16 +35,22 @@ namespace rak
         private float elapsedTime = 0;
         private float maxAllowedTime = float.MaxValue;
         private float distanceRequiredToCompleteModifier;
+        private Thing.Base_Types targetBaseType;
 
-        public ActionStep(Actions action,Tasks.TASKS task,float distanceRequiredToCompleteModifier)
+        public ActionStep(Actions action,Tasks.CreatureTasks task,float distanceRequiredToCompleteModifier)
         {
             Initialize(action, task, distanceRequiredToCompleteModifier);
         }
-        public ActionStep(Actions action, Tasks.TASKS task)
+        public ActionStep(Actions action, Tasks.CreatureTasks task)
         {
             Initialize(action, task, 1);
         }
-        private void Initialize(Actions action, Tasks.TASKS task, float distanceRequiredToCompleteModifier)
+        public ActionStep(Actions action, Tasks.CreatureTasks task, Thing.Base_Types targetBaseType)
+        {
+            this.targetBaseType = targetBaseType;
+            Initialize(action, task,1);
+        }
+        private void Initialize(Actions action, Tasks.CreatureTasks task, float distanceRequiredToCompleteModifier)
         {
             maxAllowedTime = CreatureConstants.GetMaxAllowedTime(action);
             failReason = FailReason.NA;
@@ -63,7 +70,8 @@ namespace rak
             //Debug.LogWarning("Elapsed Time - " + elapsedTime + " Max - " + maxAllowedTime);
             if (elapsedTime > maxAllowedTime)
             {
-                Debug.Log(performer.name + " has exceeded task time for task. Resetting");
+                DebugMenu.AppendLine(performer.thingName + " has exceeded task time for task. Resetting");
+                Debug.Log(performer.thingName + " has exceeded task time for task. Resetting");
                 status = Tasks.TASK_STATUS.Failed;
                 failReason = FailReason.ExceededTimeLimit;
                 if (_targetThing != null) _targetThing.MakeAvailable(performer);
@@ -75,7 +83,7 @@ namespace rak
             if (action == Actions.Locate)
             {
                 // LOCATE EAT //
-                if (associatedTask == Tasks.TASKS.EAT)
+                if (associatedTask == Tasks.CreatureTasks.EAT)
                 {
                     //Debug.LogWarning("Locating consumeable");
                     Thing target = performer.GetClosestKnownReachableConsumable();
@@ -95,7 +103,7 @@ namespace rak
                     }
                 }
                 // LOCATE SLEEP //
-                else if (associatedTask == Tasks.TASKS.SLEEP)
+                else if (associatedTask == Tasks.CreatureTasks.SLEEP)
                 {
                     // Search for target ground //
                     float boxSizeMult = performer.miscVariables[MiscVariables.CreatureMiscVariables.Agent_Locate_Sleep_Area_BoxCast_Size_Multipler];
@@ -118,7 +126,7 @@ namespace rak
                     }
                 }
                 // LOCATE EXPLORE //
-                else if (associatedTask == Tasks.TASKS.EXPLORE)
+                else if (associatedTask == Tasks.CreatureTasks.EXPLORE)
                 {
                     //Debug.LogWarning("Locating explore sector");
                     GridSector sector = performer.GetClosestUnexploredSector();
@@ -129,13 +137,18 @@ namespace rak
                     }
                     else
                     {
-                        Debug.LogWarning("No unexplored sectors!");
+                        //Debug.Log("No unexplored sectors!");
                         _targetPosition = performer.GetRandomKnownSectorPosition();
                     }
                     performer.GetCreatureAgent().SetDestination(_targetPosition);
                     creatureAgentDestinationHasBeenSet = true;
                     status = Tasks.TASK_STATUS.Complete;
                     return;
+                }
+                // LOCATE GATHER //
+                else if (associatedTask == Tasks.CreatureTasks.GATHER)
+                {
+                    //Thing target = performer.GetClosestKnownReachableThing(targetBaseType);
                 }
             }
             
@@ -207,8 +220,7 @@ namespace rak
                 if (agent.grabType == CreatureGrabType.TractorBeam)
                 {
                     // Touching Target //
-                    if (agent.HasCollision(_targetThing.transform) || 
-                        Vector3.Distance(_targetThing.transform.position,performer.transform.position) < .5f)
+                    if (Vector3.Distance(_targetThing.transform.position,performer.transform.position) < .5f)
                     {
                         if (performer.AddThingToInventory(_targetThing))
                         {

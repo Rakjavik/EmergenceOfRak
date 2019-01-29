@@ -30,7 +30,7 @@ namespace rak
             }
             else
             {
-                Debug.Log(owner.name + " cannot pick up " + thing.name + " because it weighs too much");
+                Debug.Log(owner.thingName + " cannot pick up " + thing.thingName + " because it weighs too much");
             }
             return false;
         }

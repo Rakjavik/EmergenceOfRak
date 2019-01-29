@@ -1,5 +1,6 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
+using rak.world;
 using UnityEngine;
 
 namespace rak
@@ -7,7 +8,7 @@ namespace rak
     public class TaskManager
     {
         private int currentStepNum;
-        private Tasks.TASKS currentTask;
+        private Tasks.CreatureTasks currentTask;
         private ActionStep[] currentActionSteps;
         private bool busy;
         private Creature creature;
@@ -16,7 +17,7 @@ namespace rak
 
         public TaskManager(Creature creature)
         {
-            currentTask = Tasks.TASKS.NONE;
+            currentTask = Tasks.CreatureTasks.NONE;
             busy = false;
             this.creature = creature;
         }
@@ -25,8 +26,20 @@ namespace rak
         {
             Needs.NEEDTYPE highestNeed = Needs.NEEDTYPE.NONE;
             highestNeed = creature.getCreatureStats().getNeeds().getMostUrgent();
-            Tasks.TASKS neededTask = Tasks.GetAppropriateTask(highestNeed);
-            if(neededTask == Tasks.TASKS.SLEEP && creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
+            Tasks.CreatureTasks neededTask = Tasks.CreatureTasks.NONE;
+            // No Needs based tasked //
+            /*if (highestNeed == Needs.NEEDTYPE.NONE)
+            {
+                TribeJobPosting posting = creature.GetTribe().GetJobPosting(creature);
+                if(posting != null)
+                {
+                    neededTask = posting.requestedTask;
+                }
+            }
+            else*/
+                neededTask = Tasks.GetAppropriateTask(highestNeed);
+
+            if(neededTask == Tasks.CreatureTasks.SLEEP && creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
             {
                 Debug.LogWarning("Task is sleep, already asleep");
                 return;
@@ -36,17 +49,17 @@ namespace rak
             {
                 if (_previousActionSteps[_previousActionSteps.Length - 1].failReason != ActionStep.FailReason.NA)
                 {
-                    if (neededTask == Tasks.TASKS.EAT &&
+                    if (neededTask == Tasks.CreatureTasks.EAT &&
                         _previousActionSteps[_previousActionSteps.Length - 1].failReason == ActionStep.FailReason.NoneKnown)
                     {
-                        neededTask = Tasks.TASKS.EXPLORE;
+                        neededTask = Tasks.CreatureTasks.EXPLORE;
                     }
                 }
             }
             ActionStep[] steps = CreatureConstants.GetTaskList(neededTask);
             startNewTask(steps,neededTask);
         }
-        private void startNewTask(ActionStep[] steps,Tasks.TASKS neededTask)
+        private void startNewTask(ActionStep[] steps,Tasks.CreatureTasks neededTask)
         {
             currentTask = neededTask;
             currentActionSteps = steps;
@@ -55,9 +68,9 @@ namespace rak
         }
         public bool hasTask()
         {
-            return (currentTask != Tasks.TASKS.NONE);
+            return (currentTask != Tasks.CreatureTasks.NONE);
         }
-        public Tasks.TASKS getCurrentTask()
+        public Tasks.CreatureTasks getCurrentTask()
         {
             return currentTask;
         }
@@ -66,7 +79,7 @@ namespace rak
             if (currentActionSteps == null || currentActionSteps.Length == 0 
                 || currentActionSteps[currentStepNum] == null ||
                 currentActionSteps[currentStepNum]._targetThing == null) return "None";
-            return currentActionSteps[currentStepNum]._targetThing.name;
+            return currentActionSteps[currentStepNum]._targetThing.thingName;
         }
         public ActionStep.Actions GetCurrentAction()
         {
@@ -82,7 +95,7 @@ namespace rak
                 creature.ChangeState(Creature.CREATURE_STATE.IDLE);
             busy = false;
             currentStepNum = 0;
-            currentTask = Tasks.TASKS.NONE;
+            currentTask = Tasks.CreatureTasks.NONE;
             status = Tasks.TASK_STATUS.Cancelled;
         }
         public void performCurrentTask()

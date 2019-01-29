@@ -26,12 +26,12 @@ public partial class RAKTerrainMaster
                 RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_1,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_2,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_3,
                 RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4},
                 new int[] {
-                0, // House1
-                0, // House2
-                2, // Tree01
-                2, // Tree02
-                2, // Tree03
-                2, // Tree04_3k
+                5, // House1
+                5, // House2
+                5, // Tree01
+                5, // Tree02
+                5, // Tree03
+                5, // Tree04
                 5, // Bush01
                 5, // Bush02
                 5, // Bush03

@@ -10,10 +10,13 @@ namespace rak.world
     {
         public static bool ISDEBUGSCENE { get; private set; }
 
+        public FollowCamera followCamera;
+        public static FollowCamera FollowCamera;
         public enum WorldType { CLASSM }
         public const int NUMBEROFSTARTINGCIVS = 30;
         public static string WORLD_DATAPATH;
         private static World world;
+
         public static HexCell currentCell { get; private set; }
         public static World GetWorld() { return world; }
         public static Area CurrentArea { get; private set; }
@@ -68,7 +71,7 @@ namespace rak.world
             masterTerrain.Initialize(this, currentCell);
             CurrentArea = currentCell.MakeArea(this,debugTribe);
             MenuController menuController = new MenuController(creatureBrowserPrefab, worldBrowserPrefab, debugMenuPrefab);
-            
+            FollowCamera = followCamera;
             menuController.Initialize(RootMenu.CreatureBrowser);
             _initialized = true;
         }
@@ -81,6 +84,7 @@ namespace rak.world
                 return;
             }
             world = this;
+            FollowCamera = this.followCamera;
             WORLD_DATAPATH = Application.persistentDataPath + "/Worlds/";
             if (!Directory.Exists(WORLD_DATAPATH))
             {
@@ -126,6 +130,7 @@ namespace rak.world
             if (tribe != null)
             {
                 CurrentArea = cell.MakeArea(this, tribe);
+                tribe.Initialize();
             }
             else
             {
@@ -187,5 +192,6 @@ namespace rak.world
                 sinceLastUpdate = 0;
             }
         }
+
     }
 }

@@ -77,22 +77,22 @@ namespace rak.creatures
                             activate = true;
                         }
                         // Check for spinning //
-                        else if (attachedBody.angularVelocity.magnitude > 
+                        else if (attachedBody.angularVelocity.magnitude >
                             miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Angular_Velocity_Brake_When_Over])
                         {
                             activate = true;
                         }
-
-                    }
-                    // Check if we're going in the wrong direction if we're not stopped //
-                    else if (attachedBody.velocity.magnitude > 
-                        miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel])
-                    {
-                        Vector3 turnNeeded = getDifferenceFromLookAtTargetRotationViaVelocity().eulerAngles;
-                        if ((turnNeeded.x > 10 && turnNeeded.x < 350) ||
-                            (turnNeeded.z > 10 && turnNeeded.z < 350))
+                        // Check if we're going in the wrong direction if we're not stopped //
+                        else if (attachedBody.velocity.magnitude >
+                            miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel])
                         {
-                            activate = true;
+                            Vector3 turnNeeded = getDifferenceFromLookAtTargetRotationViaVelocity().eulerAngles;
+                            
+                            if ((turnNeeded.x > 45 && turnNeeded.x < 315) ||
+                                (turnNeeded.z > 45 && turnNeeded.z < 315))
+                            {
+                                activate = true;
+                            }
                         }
                     }
                     if (ignoreStuckFor > 0)
@@ -113,7 +113,7 @@ namespace rak.creatures
                     {
                         // Make sure we are pointing in the right direction before deactivating //
                         Vector3 turnNeeded = getDifferenceFromLookAtTargetRotation().eulerAngles;
-                        if (turnNeeded.magnitude < 5f || turnNeeded.magnitude > 355)
+                        if (turnNeeded.magnitude < 1f || turnNeeded.magnitude > 359)
                         {
                             DeActivateShield();
                             GotoSleep(.15f);

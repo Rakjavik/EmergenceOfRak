@@ -11,6 +11,8 @@ public class DebugMenu : MonoBehaviour, Menu
     private float updateEvery = 1f;
     private float sinceLastUpdate = 0;
     private static Thing thingInFocus;
+    private const int maxStringLength = 1000;
+    private const int removeThisManyWhenMaxed = 100;
     public static string DebugText { get
         {
             return _debugText;
@@ -23,15 +25,26 @@ public class DebugMenu : MonoBehaviour, Menu
             }
         }
     }
-    private static void AppendDebugLine(string line)
+    public static void AppendLine(string line)
+    {
+        appendDebugLine(line);
+    }
+
+    private static void appendDebugLine(string line)
     {
         _debugText += "\n" + line;
+        Debug.Log(line);
+        if (_debugText.Length > maxStringLength)
+        {
+            _debugText = _debugText.Substring(removeThisManyWhenMaxed);
+        }
     }
+
     public static void AppendDebugLine(string line,Thing subject)
     {
         if(thingInFocus == subject)
         {
-            AppendDebugLine(line);
+            AppendLine(line);
         }
     }
 

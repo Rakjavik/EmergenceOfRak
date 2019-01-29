@@ -63,7 +63,6 @@ namespace rak.creatures
 
         // Implemented in more derived classes //
         public virtual void UpdateDerivedPart(ActionStep.Actions action) { }
-        public virtual void NotifyTargetObjectiveComplete(Thing thing) { }
 
         public Transform GetPartTransform() { return PartTransform; }
 

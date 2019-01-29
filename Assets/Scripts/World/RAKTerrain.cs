@@ -21,9 +21,10 @@ public class RAKTerrain : MonoBehaviour
 
     public void initialize(RAKTerrainMaster terrainMaster)
     {
+        Debug.LogWarning("Initialize " + name);
         this.terrainMaster = terrainMaster;
         terrain = GetComponent<Terrain>();
-        grid = new Grid(this);
+        grid = null;
     }
     
     public void generateTreeGOs()
@@ -152,10 +153,11 @@ public class RAKTerrain : MonoBehaviour
     {
         return biome;
     }
-    public float GetHeightAt(Vector2 position)
+    public float GetHeightAt(Vector2 worldXZ)
     {
-        float height = terrain.terrainData.GetInterpolatedHeight(position.x, position.y);
-        //Debug.LogWarning("Interpolated height - " + height + " at position " + position);
+        Vector2 relativePos = new Vector2(worldXZ.x % 256, worldXZ.y % 256);
+        float height = terrain.terrainData.GetHeight((int) relativePos.x,(int) relativePos.y);
+        //Debug.LogWarning("Interpolated height - " + height + " at position " + relativePos);
         return height;
     }
     private void createPlayerRainWithIntensity(float intensity,RAKPlayer player)
@@ -164,7 +166,14 @@ public class RAKTerrain : MonoBehaviour
         rain.FollowCamera = player.GetComponent<Camera>();
         rain.RainIntensity = intensity;
     }
-    public GridSector[] GetGridElements() { return grid.GetGridElements(); }
+    public GridSector[] GetGridElements()
+    {
+        if(grid == null)
+        {
+            grid = new Grid(this);
+        }
+        return grid.GetGridElements();
+    }
 }
 
 public class RAKTree

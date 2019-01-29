@@ -14,14 +14,14 @@ namespace rak.creatures.memory
     {
         public Verb verb { get; private set; }
         public bool invertVerb { get; private set; }
-        public Thing subject { get; private set; }
+        public HistoricalThing subject { get; private set; }
         public long timeStamp { get; private set; }
         public int iterations { get; private set; }
         public MemoryInstance(Verb verb,Thing subject,bool invertVerb)
         {
             this.invertVerb = invertVerb;
             this.verb = verb;
-            this.subject = subject;
+            this.subject = new HistoricalThing(subject);
             timeStamp = DateTime.Now.ToBinary();
             iterations = 0;
         }
@@ -31,7 +31,7 @@ namespace rak.creatures.memory
             if (subject != null)
             {
                 if (invertVerb == this.invertVerb &&
-                    subject == this.subject &&
+                    subject == this.subject.GetThing() &&
                     verb == this.verb)
                 {
                     return true;
@@ -41,8 +41,30 @@ namespace rak.creatures.memory
         }
         public bool IsSameAs(MemoryInstance instance)
         {
-            return IsSameAs(instance.verb, instance.subject, instance.invertVerb);
+            return IsSameAs(instance.verb, instance.subject.GetThing(), instance.invertVerb);
         }
+    }
+    [Serializable]
+    public struct HistoricalThing
+    {
+        private Guid guid;
+        private string name;
+        private Thing.Base_Types baseType;
+        private float age;
+        private float bornAt;
+        [NonSerialized]
+        private Thing thing;
+
+        public HistoricalThing(Thing thing)
+        {
+            guid = Guid.NewGuid();
+            name = thing.thingName;
+            baseType = thing.baseType;
+            age = thing.age;
+            bornAt = thing.bornAt;
+            this.thing = thing;
+        }
+        public Thing GetThing() { return thing; }
     }
 
     public class Memory
@@ -92,9 +114,10 @@ namespace rak.creatures.memory
                 MemoryInstance memory = shortTermMemory[count];
                 if (memory == null) continue;
                 if (memory.verb == Verb.SAW && memory.invertVerb == false && 
-                    memory.subject.matchesConsumptionType(consumptionType))
+                    memory.subject.GetThing() != null && memory.subject.GetThing()
+                    .matchesConsumptionType(consumptionType))
                 {
-                    memoriesOfFood.Add(memory.subject);
+                    memoriesOfFood.Add(memory.subject.GetThing());
                 }
             }
             return memoriesOfFood.ToArray();
@@ -122,8 +145,9 @@ namespace rak.creatures.memory
                     StringBuilder builder = new StringBuilder("I will remember I ");
                     if (memory.invertVerb) builder.Append(" NOT ");
                     builder.Append(memory.verb);
-                    builder.Append(" " + memory.subject.name);
+                    builder.Append(" " + memory.subject.GetThing().thingName);
                     Debug.LogWarning(builder.ToString());
+                    DebugMenu.AppendLine(builder.ToString());
                 }
                 return true;
             }
@@ -135,12 +159,12 @@ namespace rak.creatures.memory
             List<MemoryInstance> foundThings = new List<MemoryInstance>();
             foreach(MemoryInstance memory in shortTermMemory)
             {
-                if (memory != null && memory.subject == thing)
+                if (memory != null && memory.subject.GetThing() == thing)
                     foundThings.Add(memory);
             }
             foreach(MemoryInstance memory in longTermMemory)
             {
-                if (memory.subject == thing)
+                if (memory.subject.GetThing() == thing)
                     foundThings.Add(memory);
             }
             return foundThings.ToArray();
@@ -157,7 +181,7 @@ namespace rak.creatures.memory
                 if(shortTermMemory[count] != null)
                 {
                     if (shortTermMemory[count].verb == verb &&
-                        shortTermMemory[count].subject.matchesConsumptionType(consumptionType))
+                        shortTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
                     { 
                         memories.Add(shortTermMemory[count]);
                     }
@@ -165,7 +189,7 @@ namespace rak.creatures.memory
                 for(count = 0; count < longTermMemory.Count; count++)
                 {
                     if(longTermMemory[count].verb == verb &&
-                        longTermMemory[count].subject.matchesConsumptionType(consumptionType))
+                        longTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
                     {
                         memories.Add(longTermMemory[count]);
                     }
@@ -179,7 +203,7 @@ namespace rak.creatures.memory
             {
                 if (shortTermMemory[count] == null) continue;
                 if (shortTermMemory[count].verb == Verb.SAW &&
-                    shortTermMemory[count].subject.matchesConsumptionType(consumptionType))
+                    shortTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
                 {
                     return shortTermMemory[count];
                 }
@@ -187,9 +211,9 @@ namespace rak.creatures.memory
             for (int count = 0; count < longTermMemory.Count; count++)
             {
                 if(longTermMemory[count].verb == Verb.SAW &&
-                    longTermMemory[count].subject.matchesConsumptionType(consumptionType))
+                    longTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
                 {
-                    Debug.LogWarning("I remember food - " + longTermMemory[count].subject.name);
+                    Debug.LogWarning("I remember food - " + longTermMemory[count].subject.GetThing().thingName);
                     return longTermMemory[count];
                 }
             }
@@ -211,7 +235,7 @@ namespace rak.creatures.memory
         }
         private MemoryInstance isRecentMemory(MemoryInstance memory)
         {
-            return isRecentMemory(memory.verb, memory.subject, memory.invertVerb);
+            return isRecentMemory(memory.verb, memory.subject.GetThing(), memory.invertVerb);
         }
         private void CopyShortTermToLongTimeAndReset()
         {

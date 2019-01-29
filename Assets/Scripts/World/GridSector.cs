@@ -10,7 +10,6 @@ public class Grid
     public Grid(RAKTerrain terrain)
     {
         Vector3 terrainSize = terrain.terrain.terrainData.size;
-        Debug.LogWarning(terrainSize);
         int numberOfXElements = (int)(terrainSize.x / ELEMENT_SIZE.x);
         int numberOfZElements = (int)(terrainSize.z / ELEMENT_SIZE.y);
         elements = new GridSector[numberOfXElements * numberOfZElements];
@@ -59,7 +58,7 @@ public class GridSector
             float x = Random.Range(0, Grid.ELEMENT_SIZE.x);
             float z = Random.Range(0, Grid.ELEMENT_SIZE.y);
             float y = parentTerrain.GetHeightAt(new Vector2(worldPositionStart.x + x, worldPositionStart.y + z));
-            return new Vector3(worldPositionStart.x+x, y+3, worldPositionStart.y+z);
+            return new Vector3(worldPositionStart.x+x, y, worldPositionStart.y+z);
         } }
     public Vector3 GetSectorPosition { get
         {

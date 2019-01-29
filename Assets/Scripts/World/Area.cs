@@ -1,4 +1,5 @@
 ﻿using rak.creatures;
+using rak.creatures.memory;
 using rak.UI;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,8 +12,8 @@ namespace rak.world
         private static List<Thing> allThings;
         private static List<Thing> _removeTheseThings = new List<Thing>();
         private static readonly object _allThingsLock = new object();
-        public static float MinimumHeight = .5f;
-        public static float MaximumHeight = 40;
+        public static float MinimumHeight = -50;
+        public static float MaximumHeight = 200;
         public static List<Thing> GetAllThings()
         {
             lock (_allThingsLock)
@@ -26,7 +27,8 @@ namespace rak.world
         private Vector3 areaSize;
         private bool debug;
         private GameObject thingContainer = null;
-        private GameObject creatureContainer;
+        private GameObject creatureContainer = null;
+        private GameObject disabledContainer = null;
         private List<Tribe> tribesPresent;
         private List<Site> sitesPresent;
         private GameObject[] walls;
@@ -45,18 +47,21 @@ namespace rak.world
         {
             sitesPresent.Add(new Site("Home of DeGnats"));
             tribesPresent.Add(tribe);
+            tribe.Initialize();
             Debug.LogWarning("DEBUG MODE ENABLED");
             areaSize = new Vector3(256, 10, 256);
             allThings = new List<Thing>();
             thingContainer = new GameObject("ThingContainer");
             creatureContainer = new GameObject("CreatureContainer");
+            if (disabledContainer == null)
+                disabledContainer = new GameObject("DisabledContainer");
             for (int i = 0; i <= 0; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f,15f), Random.Range(10f, 200));
                 addThingToWorld("fruit",position,false);
                     
             }
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 10; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
                 addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), position, false, tribe);
@@ -87,21 +92,17 @@ namespace rak.world
                 thingContainer = new GameObject("ThingContainer");
             if(creatureContainer == null)
                 creatureContainer = new GameObject("CreatureContainer");
+            if(disabledContainer == null)
+                disabledContainer = new GameObject("DisabledContainer");
             allThings = new List<Thing>();
             int populationToCreate = tribe.GetPopulation();
-            int MAXPOP = 5;
+            int MAXPOP = 200;
             if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)
             {
                 addCreatureToWorld("Gnat");
             }
-            
-            /*for (int i = 0; i < populationToCreate*5; i++)
-            {
-                addThingToWorld("fruit");
-            }*/
-
         }
 
         public void Update(float delta)
@@ -119,15 +120,21 @@ namespace rak.world
                             _removeTheseThings.Add(creature);
                             creature.DestroyAllParts();
                             Debug.LogWarning("Removed a dead creature");
+                            DebugMenu.AppendDebugLine("Removed a dead creature", creature);
                         }
                     }
                 }
                 foreach (Thing thing in _removeTheseThings)
                 {
                     allThings.Remove(thing);
-                    GameObject.Destroy(thing.gameObject);
+                    thing.gameObject.SetActive(false);
+                    thing.transform.SetParent(disabledContainer.transform);
                 }
                 _removeTheseThings = new List<Thing>();
+            }
+            foreach (Tribe tribe in tribesPresent)
+            {
+                tribe.Update();
             }
         }
 
@@ -148,7 +155,7 @@ namespace rak.world
         }
         public void addCreatureToWorld(string nameOfPrefab)
         {
-            addCreatureToWorld(nameOfPrefab, Vector3.zero,true);
+            addCreatureToWorld(nameOfPrefab, GetRandomGridSector().GetRandomPositionInSector,false);
         }
 
         private void addCreatureToWorldDEBUG(string nameOfPrefab, Vector3 position, 
@@ -225,7 +232,7 @@ namespace rak.world
             }
             return newThing;
         }
-        public static void removeThingFromWorld(Thing thing)
+        public void RemoveThingFromWorld(Thing thing)
         {
             _removeTheseThings.Add(thing);
         }
@@ -272,6 +279,26 @@ namespace rak.world
             }
             
             return sectors[indexOfClosest];
+        }
+        public GridSector GetRandomGridSector()
+        {
+            RAKTerrain[] terrain = world.masterTerrain.getTerrain();
+            int index = Random.Range(0, terrain.Length);
+            RAKTerrain chosenTerrain = terrain[index];
+            GridSector[] sectorsInTerrain = chosenTerrain.GetGridElements();
+            index = Random.Range(0, sectorsInTerrain.Length);
+            return sectorsInTerrain[index];
+        }
+        private void dumpDisabledObjectsToDisk()
+        {
+            List<HistoricalThing> makeIntoHistory = new List<HistoricalThing>();
+            for(int count = 0; count < disabledContainer.transform.childCount; count++)
+            {
+                Thing thing = disabledContainer.transform.GetChild(count).GetComponent<Thing>();
+                makeIntoHistory.Add(new HistoricalThing(thing));
+                GameObject.Destroy(thing.gameObject);
+            }
+            string json = JsonUtility.ToJson(makeIntoHistory.ToArray());
         }
     }
 }

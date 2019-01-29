@@ -448,7 +448,7 @@ namespace rak.creatures
                 {
                     rigidbody = creature.GetComponentInChildren<Rigidbody>();
                     if (rigidbody == null)
-                        Debug.LogError("Can't find rigid body on " + creature.name);
+                        Debug.LogError("Can't find rigid body on " + creature.thingName);
                 }
             }
             rigidbody.constraints = RigidbodyConstraints.None;

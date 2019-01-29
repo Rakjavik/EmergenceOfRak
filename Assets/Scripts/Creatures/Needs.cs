@@ -38,7 +38,9 @@ namespace rak.creatures
                 }
             }
             // No needs if we're fine //
-            if (currentNeeds[highest].CurrentAmount == NeedAmount.Fine)
+            if (currentNeeds[highest].CurrentAmount != NeedAmount.Critical &&
+                currentNeeds[highest].CurrentAmount != NeedAmount.Major &&
+                currentNeeds[highest].CurrentAmount != NeedAmount.Moderate)
                 return NEEDTYPE.NONE;
             return highest;
         }

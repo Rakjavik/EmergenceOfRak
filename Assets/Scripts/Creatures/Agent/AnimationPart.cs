@@ -32,7 +32,6 @@ namespace rak.creatures
 
         public override void UpdateDerivedPart(ActionStep.Actions currentCreatureAction)
         {
-            base.UpdateDerivedPart(currentCreatureAction);
             if (!animateDuringThis(currentCreatureAction))
             {
                 if (!visibleIfNotAnimating && visible)
@@ -84,6 +83,8 @@ namespace rak.creatures
                 relativeMultiplier = attachedAgent.GetRigidBody().velocity.magnitude;
             else if (partMovesRelativeTo == PartMovesWith.IsKinematic)
                 relativeMultiplier = attachedAgent.IsKinematic();
+            else if (partMovesRelativeTo == PartMovesWith.TargetPosition)
+                relativeMultiplier = 0;
             else
                 relativeMultiplier = 1;
             // NO changes //
@@ -101,7 +102,7 @@ namespace rak.creatures
                 PartTransform.Rotate(rotation * movementMultiplier);
             }
         }
-
+        
         private bool animateDuringThis(ActionStep.Actions action)
         {
             foreach(ActionStep.Actions animatedAction in AnimateDuring)

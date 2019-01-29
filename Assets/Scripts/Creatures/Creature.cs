@@ -215,7 +215,7 @@ namespace rak.creatures
         public bool AddThingToInventory(Thing thing)
         {
             if(!DEBUGSCENE)
-                DebugMenu.AppendDebugLine(name + " has picked up " + thing.name,this);
+                DebugMenu.AppendDebugLine(thingName + " has picked up " + thing.thingName,this);
             return inventory.addThing(thing);
         }
         public bool RemoveFromInventory(Thing thing)
@@ -228,13 +228,13 @@ namespace rak.creatures
         }
         public void SoThisFailed(ActionStep failedStep)
         {
-            if(failedStep.associatedTask == Tasks.TASKS.EAT)
+            if(failedStep.associatedTask == Tasks.CreatureTasks.EAT)
             {
                 if(failedStep.failReason == ActionStep.FailReason.CouldntGetToTarget ||
                     failedStep.failReason == ActionStep.FailReason.InfinityDistance)
                 {
                     AddMemory(new MemoryInstance(Verb.MOVEDTO, failedStep._targetThing, true));
-                    Debug.LogWarning("Memory of couldnt move to " + failedStep._targetThing.name);
+                    Debug.LogWarning("Memory of couldnt move to " + failedStep._targetThing.thingName);
                 }
             }
         }
@@ -314,7 +314,7 @@ namespace rak.creatures
         }
         public void ConsumeThing(Thing thing)
         {
-            Area.removeThingFromWorld(thing);
+            World.CurrentArea.RemoveThingFromWorld(thing);
             //getCurrentArea().removeThingFromWorld(thing);
             RemoveFromInventory(thing);
             creaturePhysicalStats.getNeeds().DecreaseNeed(Needs.NEEDTYPE.HUNGER,thing.getWeight());
@@ -399,7 +399,7 @@ namespace rak.creatures
         {
             return taskManager.GetCurrentAction();
         }
-        public Tasks.TASKS GetCurrentTask()
+        public Tasks.CreatureTasks GetCurrentTask()
         {
             return taskManager.getCurrentTask();
         }

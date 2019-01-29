@@ -51,24 +51,28 @@ namespace rak.creatures
             target = null;
             targetBody = null;
         }
-        private void LockOnTarget()
+        private bool LockOnTarget()
         {
             target = attachedAgent.GetCurrentActionTarget();
-            if(target == null)
+            if (target == null)
             {
                 Debug.LogWarning("Can't find target for lock");
                 disengageBeam();
-                return;
             }
-            if (target.RequestControl(attachedAgent.creature))
+            else
             {
-                targetBody = target.RequestRigidBodyAccess(attachedAgent.creature);
-                if (targetBody != null)
+                if (target.RequestControl(attachedAgent.creature))
                 {
-                    targetBody.isKinematic = true;
-                    locked = true;
+                    targetBody = target.RequestRigidBodyAccess(attachedAgent.creature);
+                    if (targetBody != null)
+                    {
+                        targetBody.isKinematic = true;
+                        locked = true;
+                        return true;
+                    }
                 }
             }
+            return false;
         }
     }
 }

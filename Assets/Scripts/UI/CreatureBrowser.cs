@@ -9,19 +9,18 @@ namespace rak.UI
     public class CreatureBrowser : MonoBehaviour,Menu
     {
         public const string DETAILTEXT =
-            "--Creature Name--\n"+
+            "--Creature Name--\n" +
             "{name}\n" +
             "--Creature State--\n" +
             "{state}\n" +
             "--Current Task--\n" +
             "{task}\n" +
-            "--Current Task Target--\n"+
-            "{taskTarget}\n" +
-            "--Current Action--\n"+
+            "--Current Action--\n" +
             "{currentAction}\n" +
-            "Hunger -- {hungerRelative}-{hunger}\n"+
-            "Sleep -- {sleepRelative}-{sleep}\n" +
-            "Current Brake amount - {currentBrake}";
+            "--Current Task Target--\n" +
+            "{taskTarget}\n" +
+            "Hunger -- {hungerRelative}-{hunger}\n" +
+            "Sleep -- {sleepRelative}-{sleep}\n";
 
         public static Creature SelectedCreature;
 
@@ -50,9 +49,9 @@ namespace rak.UI
             List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
             for (int count = 0; count < allThingsInArea.Length; count++)
             {
-                if (allThingsInArea[count].match(Thing.BASE_TYPES.CREATURE))
+                if (allThingsInArea[count].match(Thing.Base_Types.CREATURE))
                 {
-                    TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(allThingsInArea[count].name);
+                    TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(allThingsInArea[count].thingName);
                     options.Add(option);
                     tempMap.Add((Creature)allThingsInArea[count]);
                 }
@@ -83,7 +82,7 @@ namespace rak.UI
         {
             if(selectedCreature != null && selectedCreature.IsInitialized())
             {
-                string text = DETAILTEXT.Replace("{name}",selectedCreature.name);
+                string text = DETAILTEXT.Replace("{name}",selectedCreature.thingName);
                 text = text.Replace("{state}", selectedCreature.GetCurrentState().ToString());
                 text = text.Replace("{task}", selectedCreature.GetCurrentTask().ToString());
                 text = text.Replace("{taskTarget}", selectedCreature.GetCurrentTaskTargetName());
@@ -91,34 +90,20 @@ namespace rak.UI
                 text = text.Replace("{hunger}", selectedCreature.GetNeedAmount(Needs.NEEDTYPE.HUNGER).ToString());
                 text = text.Replace("{hungerRelative}", selectedCreature.
                     GetRelativeNeedAmount(Needs.NEEDTYPE.HUNGER).ToString());
-                text = text.Replace("{sleep}", selectedCreature.GetNeedAmount(Needs.NEEDTYPE.SLEEP).ToString());
-                text = text.Replace("{sleepRelative}", selectedCreature.
-                    GetRelativeNeedAmount(Needs.NEEDTYPE.SLEEP).ToString());
-                text = text.Replace("{currentBrake}", selectedCreature.GetCreatureAgent().
-                    CurrentBrakeAmountRequest.magnitude.ToString());
+                text = text.Replace("{sleep}", ((int)selectedCreature.GetNeedAmount(Needs.NEEDTYPE.SLEEP)).ToString());
+                text = text.Replace("{sleepRelative}", ((int)selectedCreature.
+                    GetRelativeNeedAmount(Needs.NEEDTYPE.SLEEP)).ToString());
+                text = text.Replace("{currentBrake}", ((int)selectedCreature.GetCreatureAgent().
+                    CurrentBrakeAmountRequest.magnitude).ToString());
                 detailText.text = text;
             }
         }
 
         public void SetFocusObject(object focus)
         {
-            if (selectedCreature != null)
-            {
-                selectedCreature.GetComponentInChildren<Camera>().enabled = false;
-            }
-
             selectedCreature = (Creature)focus;
-            Camera creatureCam = selectedCreature.GetComponentInChildren<Camera>();
-            creatureCam.enabled = true;
             SelectedCreature = selectedCreature;
-            setCanvasCamera(creatureCam);
-        }
-        private void setCanvasCamera(Camera creatureCam)
-        {
-            Canvas canvas = detailText.GetComponentInParent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = creatureCam;
-            canvas.planeDistance = .5f;
+            FollowCamera.SetFollowTarget(SelectedCreature.transform);
         }
         public void Deactivate()
         {
@@ -139,6 +124,7 @@ namespace rak.UI
                 RefreshMainText();
             }
         }
+        
         public void ChangeToDebugMenu()
         {
             MenuController.ChangeMenu(RootMenu.DebugMenu);

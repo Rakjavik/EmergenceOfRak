@@ -1,13 +1,12 @@
 ﻿using rak.world;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace rak
 {
     public class FruitTree : Thing
     {
-        private float spawnsThingEvery = 60;
+        private float spawnsThingEvery = 180;
         private float timeSincelastSpawned { get; set; }
         private List<GameObject> fruitInstances { get; set; }
 

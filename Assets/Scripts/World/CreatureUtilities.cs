@@ -90,6 +90,22 @@ namespace rak.world
                     elementsWithinRange.Add(element);
                 }
             }
+            if (terrain.neighbors == null)
+                return elementsWithinRange.ToArray();
+            for(int count = 0; count < terrain.neighbors.Length; count++)
+            {
+                Terrain neighbor = terrain.neighbors[count];
+                if (neighbor == null) continue;
+                RAKTerrain neighborTerrain = neighbor.gameObject.GetComponent<RAKTerrain>();
+                GridSector[] sectors = neighborTerrain.GetGridElements();
+                foreach (GridSector element in elements)
+                {
+                    if (Vector3.Distance(requester.transform.position, element.GetSectorPosition) <= distance)
+                    {
+                        elementsWithinRange.Add(element);
+                    }
+                }
+            }
             return elementsWithinRange.ToArray();
         }
         public enum RayCastDirection { LEFT,RIGHT,FORWARD,DOWN,VELOCITY }

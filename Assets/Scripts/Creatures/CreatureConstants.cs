@@ -77,7 +77,7 @@ namespace rak.creatures
             Dictionary<Needs.NEEDTYPE,Need> currentNeeds = new Dictionary<Needs.NEEDTYPE, Need>();
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
-                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, 1f, false));
+                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .1f, false));
                 currentNeeds.Add(Needs.NEEDTYPE.REPRODUCTION, new Need(Needs.NEEDTYPE.REPRODUCTION, 1, false));
                 currentNeeds.Add(Needs.NEEDTYPE.SLEEP, new Need(Needs.NEEDTYPE.SLEEP, 100f, true));
                 currentNeeds.Add(Needs.NEEDTYPE.TEMPERATURE, new Need(Needs.NEEDTYPE.TEMPERATURE, 1, false));
@@ -269,16 +269,16 @@ namespace rak.creatures
                 AntiGravityShieldPart shieldPart = new AntiGravityShieldPart(CreaturePart.SHIELD, creature.transform.GetChild(9),
                     .2f,creature.GetCreatureAgent().GetRigidBody(), new ActionStep.Actions[] {ActionStep.Actions.Add,
                         ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait});
-                AnimationPart antiGravShieldAnimation = new AnimationPart(CreaturePart.SHIELD, creature.transform.GetChild(9),
+                AnimationPart antiGravShieldAnimation = new AnimationPart(CreaturePart.SHIELD, creature.transform.GetChild(7),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     {ActionStep.Actions.Add,ActionStep.Actions.MoveTo,ActionStep.Actions.Add,ActionStep.Actions.Eat
                     ,ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait}, 
                     PartMovesWith.IsKinematic, PartAnimationType.Movement, false);
 
                 // Tractor Beam //
-                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f,75);
+                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f,30);
                 TractorBeamAnimationPart tractorAnimation = new TractorBeamAnimationPart(CreaturePart.TRACTORBEAM,
-                    creature.transform.GetChild(10),.5f,Vector3.forward,.3f);
+                    creature.transform.GetChild(8),.2f,Vector3.forward,.3f);
 
                 allParts.Add(bodyFlight);
                 allParts.Add(bodyTurning);
@@ -329,10 +329,10 @@ namespace rak.creatures
             return maxAllowed;
         }
 
-        public static ActionStep[] GetTaskList(Tasks.TASKS task)
+        public static ActionStep[] GetTaskList(Tasks.CreatureTasks task)
         {
             ActionStep[] steps = null;
-            if (task == Tasks.TASKS.EAT)
+            if (task == Tasks.CreatureTasks.EAT)
             {
                 steps = new ActionStep[4];
                 steps[0] = new ActionStep(ActionStep.Actions.Locate, task);
@@ -340,7 +340,7 @@ namespace rak.creatures
                 steps[2] = new ActionStep(ActionStep.Actions.Add, task);
                 steps[3] = new ActionStep(ActionStep.Actions.Eat, task);
             }
-            else if (task == Tasks.TASKS.SLEEP)
+            else if (task == Tasks.CreatureTasks.SLEEP)
             {
                 steps = new ActionStep[4];
                 steps[0] = new ActionStep(ActionStep.Actions.Locate, task);
@@ -348,36 +348,42 @@ namespace rak.creatures
                 steps[2] = new ActionStep(ActionStep.Actions.Land, task);
                 steps[3] = new ActionStep(ActionStep.Actions.Sleep, task);
             }
-            else if (task == Tasks.TASKS.EXPLORE)
+            else if (task == Tasks.CreatureTasks.EXPLORE)
             {
                 steps = new ActionStep[2];
                 steps[0] = new ActionStep(ActionStep.Actions.Locate, task);
                 steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task,30);
             }
+            else if (task == Tasks.CreatureTasks.GATHER)
+            {
+                steps = new ActionStep[2];
+                steps[0] = new ActionStep(ActionStep.Actions.Locate, task,Thing.Base_Types.PLANT);
+                steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task);
+            }
             return steps;
         }
 
-        private static Tasks.TASKS GetExceptionTask(Tasks.TASKS task, ActionStep.FailReason failReason)
+        private static Tasks.CreatureTasks GetExceptionTask(Tasks.CreatureTasks task, ActionStep.FailReason failReason)
         {
-            return Tasks.TASKS.EXPLORE;
+            return Tasks.CreatureTasks.EXPLORE;
         }
         // EXCEPTION ACTIONS, Do these when tasks fail for a certain reason //
-        public static ActionStep[] GetExceptionActions(Tasks.TASKS task, ActionStep.FailReason failReason)
+        public static ActionStep[] GetExceptionActions(Tasks.CreatureTasks task, ActionStep.FailReason failReason)
         {
-            Tasks.TASKS exceptionTask = Tasks.TASKS.NONE;
+            Tasks.CreatureTasks exceptionTask = Tasks.CreatureTasks.NONE;
             // Couldn't locate Sleeping spot //
-            if (task == Tasks.TASKS.SLEEP && failReason == ActionStep.FailReason.InfinityDistance)
+            if (task == Tasks.CreatureTasks.SLEEP && failReason == ActionStep.FailReason.InfinityDistance)
             {
-                exceptionTask = Tasks.TASKS.EXPLORE;
+                exceptionTask = Tasks.CreatureTasks.EXPLORE;
             }
             // Don't know of any food //
-            if(task == Tasks.TASKS.EAT && failReason == ActionStep.FailReason.NoneKnown)
+            if(task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoneKnown)
             {
-                exceptionTask = Tasks.TASKS.EXPLORE;
+                exceptionTask = Tasks.CreatureTasks.EXPLORE;
             }
             ActionStep[] steps = GetTaskList(exceptionTask);
             // If we're exploring looking for food, only explore for a little bit //
-            if (task == Tasks.TASKS.EAT && exceptionTask == Tasks.TASKS.EXPLORE)
+            if (task == Tasks.CreatureTasks.EAT && exceptionTask == Tasks.CreatureTasks.EXPLORE)
             {
                 steps[1].OverrideMaxTimeAllowed(6f);
             }
