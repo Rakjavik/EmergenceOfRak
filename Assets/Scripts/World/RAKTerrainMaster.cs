@@ -33,7 +33,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     private static RAKWeather sun;
     private static RAKBiome currentBiome;
-    private int tileSize = 256; // Size of each Terrain piece
+    private static int tileSize = 256; // Size of each Terrain piece
     private int width = tileSize+1; // Terrain width/height needs a plus one due to Unity being weird
     private int height = tileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
     private int worldSize = 16; // Number of total terrain objects
@@ -562,7 +562,8 @@ public partial class RAKTerrainMaster : MonoBehaviour
             Terrain[] neighbors = terrain[terrainCount].neighbors;
             for (int nCount = 0; nCount < neighbors.Length; nCount++)
             {
-                if (nCount != 0 && nCount != 3) continue;
+                // Only do right and down //
+                if (nCount == 0 || nCount == 3) continue;
                 float[] seamStartPoints = new float[tileSize];
                 float[,] thisTerrainsEdge = null;
                 float[,] targetTerrainsEdge = null;
@@ -580,8 +581,24 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     {
                         startPoint = new Vector2(0, 0); // Where to insert new heights
                         thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, width, height);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(tileSize, 0, 1, height);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(tileSize-width, 0, width, height);
                     }
+                    // RIGHT
+                    else if (nCount == 1)
+                    {
+                        startPoint = new Vector2(tileSize-width, 0);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(tileSize-width, 0, width, height);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, width, height);
+                    }
+                    // DOWN
+                    else if (nCount == 2)
+                    {
+                        // WIDTH/HEIGHT REVERSED //
+                        startPoint = new Vector2(0, tileSize-width);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, tileSize-width, tileSize, width);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, tileSize, width);
+                    }
+                    // UP
                     else if (nCount == 3)
                     {
                         // WIDTH/HEIGHT REVERSED //
@@ -592,20 +609,43 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     // CALCULATE SEAMS
                     for (int countLong = 0; countLong < tileSize; countLong++)
                     {
-                        if (nCount == 0)
+                        if (nCount == 0) // LEFT
                         {
                             seamStartPoints[countLong] = targetTerrainsEdge[countLong, 0];
                         }
-                        else if (nCount == 3)
+                        else if (nCount == 1) // RIGHT
+                        {
+                            seamStartPoints[countLong] = thisTerrainsEdge[countLong, 0];
+                        }
+                        else if (nCount == 2) // DOWN
+                        {
+                            seamStartPoints[countLong] = thisTerrainsEdge[0, countLong];
+                        }
+                        else if (nCount == 3) // UP
                         {
                             seamStartPoints[countLong] = targetTerrainsEdge[0, countLong];
                         }
                     }
-                    if (nCount == 0)
+                    if (nCount == 0) // LEFT
                     {
                         seam(thisTerrainsEdge, seamStartPoints);
+                        seam(targetTerrainsEdge, seamStartPoints);
                     }
-                    else if (nCount == 3)
+                    else if (nCount == 1) // RIGHT
+                    {
+                        seam(thisTerrainsEdge, seamStartPoints);
+                        seam(targetTerrainsEdge, seamStartPoints);
+                    }
+                    else if (nCount == 2) // DOWN
+                    {
+                        thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
+                        seam(thisTerrainsEdge, seamStartPoints);
+                        thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
+                        targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
+                        seam(targetTerrainsEdge, seamStartPoints);
+                        targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
+                    }
+                    else if (nCount == 3) // UP
                     {
                         thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
                         seam(thisTerrainsEdge, seamStartPoints);
@@ -640,7 +680,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             for (int shortCount = 0; shortCount < shortSize; shortCount++)
             {
                 if (shortCount > 0)
-                    edge[longCount, shortCount] = edge[longCount, shortCount - 1] - step;
+                    edge[longCount, shortCount] = edge[longCount, shortCount - 1] + step;
                 else
                     edge[longCount, shortCount] = seamPoints[longCount];
             }

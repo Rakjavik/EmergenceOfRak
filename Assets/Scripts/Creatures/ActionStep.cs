@@ -99,6 +99,7 @@ namespace rak
                         _targetThing = target;
                         _targetPosition = target.transform.position;
                         _targetThing.MakeUnavailable();
+                        Debug.LogWarning("Locate task complete with target - " + _targetThing.name);
                         status = Tasks.TASK_STATUS.Complete;
                     }
                 }
@@ -248,6 +249,7 @@ namespace rak
                     performer.PlayOneShot();
                     performer.ConsumeThing(_targetThing);
                     status = Tasks.TASK_STATUS.Complete;
+                    return;
                 }
             }
             // Land //

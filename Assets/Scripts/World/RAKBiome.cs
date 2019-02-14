@@ -28,14 +28,14 @@ public partial class RAKTerrainMaster
                 new int[] {
                 5, // House1
                 5, // House2
-                5, // Tree01
-                5, // Tree02
-                5, // Tree03
-                5, // Tree04
-                5, // Bush01
-                5, // Bush02
-                5, // Bush03
-                5 // Bush04
+                1, // Tree01
+                1, // Tree02
+                1, // Tree03
+                1, // Tree04
+                1, // Bush01
+                1, // Bush02
+                1, // Bush03
+                1 // Bush04
                 });
             biome.depth = 80;
             biome.numberOfTrees = 0;

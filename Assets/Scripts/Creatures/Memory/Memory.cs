@@ -146,7 +146,7 @@ namespace rak.creatures.memory
                     if (memory.invertVerb) builder.Append(" NOT ");
                     builder.Append(memory.verb);
                     builder.Append(" " + memory.subject.GetThing().thingName);
-                    Debug.LogWarning(builder.ToString());
+                    //Debug.LogWarning(builder.ToString());
                     DebugMenu.AppendLine(builder.ToString());
                 }
                 return true;

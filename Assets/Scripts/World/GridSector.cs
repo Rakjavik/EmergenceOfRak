@@ -47,8 +47,8 @@ public class GridSector
         float y = 0;
         Vector3 start = new Vector3(worldPositionStart.x, y, worldPositionStart.y);
         Vector3 end = new Vector3(worldPositionEnd.x, y, worldPositionEnd.y);
-        Debug.DrawLine(start, new Vector3(end.x,y,start.z), Color.yellow, 30);
-        Debug.DrawLine(end, new Vector3(end.x, y, start.z), Color.yellow, 30);
+        //Debug.DrawLine(start, new Vector3(end.x,y,start.z), Color.yellow, 30);
+        //Debug.DrawLine(end, new Vector3(end.x, y, start.z), Color.yellow, 30);
     }
 
     public Vector2 gridPosition { get; private set; }

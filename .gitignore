@@ -259,3 +259,17 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/Assets/AssetStoreImports
+/Assets/Scenes
+/Assets/Resources
+/Assets/Gizmos/Cinemachine
+/Assets/DebugScene
+/Assets/_TerrainAutoUpgrade
+/Assets/TextMesh Pro
+/Assets/SteamVR
+/Assets/Scripts.7z
+/Library
+/ProjectSettings
+/Temp
+/Assets/PostProcessing/Resources
+/Assets/PostProcessing

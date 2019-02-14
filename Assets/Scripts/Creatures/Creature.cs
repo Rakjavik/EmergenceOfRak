@@ -158,7 +158,7 @@ namespace rak.creatures
                 // CREATURE IS NOT IDLE //
                 else
                 {
-                    debug("Performing current tasks - " + taskManager.getCurrentTask());
+                    debug("Performing current tasks - " + taskManager.getCurrentTaskType());
                     taskManager.performCurrentTask();
                     // Task was cancelled, mark creature as idle to get a new task next update //
                     if (taskManager.GetCurrentTaskStatus() == Tasks.TASK_STATUS.Cancelled &&
@@ -401,7 +401,7 @@ namespace rak.creatures
         }
         public Tasks.CreatureTasks GetCurrentTask()
         {
-            return taskManager.getCurrentTask();
+            return taskManager.getCurrentTaskType();
         }
         public string GetCurrentTaskTargetName()
         {

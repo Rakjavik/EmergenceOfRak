@@ -77,7 +77,7 @@ namespace rak.creatures
             Dictionary<Needs.NEEDTYPE,Need> currentNeeds = new Dictionary<Needs.NEEDTYPE, Need>();
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
-                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .1f, false));
+                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .01f, false));
                 currentNeeds.Add(Needs.NEEDTYPE.REPRODUCTION, new Need(Needs.NEEDTYPE.REPRODUCTION, 1, false));
                 currentNeeds.Add(Needs.NEEDTYPE.SLEEP, new Need(Needs.NEEDTYPE.SLEEP, 100f, true));
                 currentNeeds.Add(Needs.NEEDTYPE.TEMPERATURE, new Need(Needs.NEEDTYPE.TEMPERATURE, 1, false));

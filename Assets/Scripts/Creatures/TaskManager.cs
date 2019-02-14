@@ -7,17 +7,15 @@ namespace rak
 {
     public class TaskManager
     {
-        private int currentStepNum;
-        private Tasks.CreatureTasks currentTask;
-        private ActionStep[] currentActionSteps;
+        
+        private CreatureTaskInstance currentTask;
+        
         private bool busy;
         private Creature creature;
-        private Tasks.TASK_STATUS status = Tasks.TASK_STATUS.Incomplete;
-        private ActionStep[] _previousActionSteps;
 
         public TaskManager(Creature creature)
         {
-            currentTask = Tasks.CreatureTasks.NONE;
+            currentTask = new CreatureTaskInstance(Tasks.CreatureTasks.NONE,new ActionStep[0],new Thing[0],creature);
             busy = false;
             this.creature = creature;
         }
@@ -44,137 +42,68 @@ namespace rak
                 Debug.LogWarning("Task is sleep, already asleep");
                 return;
             }
+            ActionStep.FailReason failReason = currentTask.GetPreviousStepsFailReason();
             // Previous task was failed //
-            if (_previousActionSteps != null)
+            if (failReason != ActionStep.FailReason.NA)
             {
-                if (_previousActionSteps[_previousActionSteps.Length - 1].failReason != ActionStep.FailReason.NA)
+                if (neededTask == Tasks.CreatureTasks.EAT &&
+                    failReason == ActionStep.FailReason.NoneKnown)
                 {
-                    if (neededTask == Tasks.CreatureTasks.EAT &&
-                        _previousActionSteps[_previousActionSteps.Length - 1].failReason == ActionStep.FailReason.NoneKnown)
-                    {
-                        neededTask = Tasks.CreatureTasks.EXPLORE;
-                    }
+                    neededTask = Tasks.CreatureTasks.EXPLORE;
                 }
             }
             ActionStep[] steps = CreatureConstants.GetTaskList(neededTask);
-            startNewTask(steps,neededTask);
+            startNewTask(neededTask);
         }
-        private void startNewTask(ActionStep[] steps,Tasks.CreatureTasks neededTask)
+        private void startNewTask(Tasks.CreatureTasks neededTask)
         {
-            currentTask = neededTask;
-            currentActionSteps = steps;
-            currentStepNum = 0;
+            currentTask = new CreatureTaskInstance(neededTask,currentTask.currentActionSteps,new Thing[0],creature);
             busy = true;
         }
         public bool hasTask()
         {
-            return (currentTask != Tasks.CreatureTasks.NONE);
+            return currentTask.taskType != Tasks.CreatureTasks.NONE && !currentTask.isStatus(Tasks.TASK_STATUS.Complete);
         }
-        public Tasks.CreatureTasks getCurrentTask()
+        public Tasks.CreatureTasks getCurrentTaskType()
         {
-            return currentTask;
+            return currentTask.taskType;
         }
-        public string GetCurrentTaskTargetName()
-        {
-            if (currentActionSteps == null || currentActionSteps.Length == 0 
-                || currentActionSteps[currentStepNum] == null ||
-                currentActionSteps[currentStepNum]._targetThing == null) return "None";
-            return currentActionSteps[currentStepNum]._targetThing.thingName;
-        }
-        public ActionStep.Actions GetCurrentAction()
-        {
-            if(currentActionSteps == null || currentActionSteps[currentStepNum] == null)
-            {
-                return ActionStep.Actions.None;
-            }
-            return currentActionSteps[currentStepNum].getAction();
-        }
+        
+        
         public void clearAllTasks()
         {
             if (creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
                 creature.ChangeState(Creature.CREATURE_STATE.IDLE);
             busy = false;
-            currentStepNum = 0;
-            currentTask = Tasks.CreatureTasks.NONE;
-            status = Tasks.TASK_STATUS.Cancelled;
+            currentTask.CancelTask();
         }
+        
         public void performCurrentTask()
         {
-            _previousActionSteps = currentActionSteps;
-            // DO TASK //
-            ActionStep currentStep = currentActionSteps[currentStepNum];
-            //Debug.LogWarning("Current action - " + currentStep.getAction());
-            currentStep.performAction(creature);
-            // TASK UPDATE COMPLETE - Check status //
-            if (currentStep.isStatus(Tasks.TASK_STATUS.Complete))
-            {
-                // End of task //
-                if (currentStepNum == currentActionSteps.Length - 1)
-                {
-                    clearAllTasks();
-                }
-                // Next step //
-                else
-                {
-                    ActionStep previousStep = currentActionSteps[currentStepNum];
-                    currentStepNum++;
-                    currentStep = currentActionSteps[currentStepNum];
-                    // If the new step doesn't have a target, and this one did, copy it over, For example Locate //
-                    if(!currentStep.HasTargetThing() && 
-                        previousStep.HasTargetThing())
-                    {
-                        currentStep.SetTarget(previousStep._targetThing);
-                    }
-                    else if (!currentStep.HasTargetPosition() &&
-                        previousStep.HasTargetPosition())
-                    {
-                        currentStep.SetTargetPosition(previousStep._targetPosition);
-                    }
-                    creature.SetNavMeshAgentDestination(currentStep._targetPosition);
-                    status = Tasks.TASK_STATUS.Incomplete;
-                }
-            }
-            // FAILED //
-            else if (currentStep.isStatus(Tasks.TASK_STATUS.Failed))
-            {
-                // Notify creature of failure to record/discard as needed //
-                creature.SoThisFailed(currentStep);
-                ActionStep[] steps = CreatureConstants.GetExceptionActions(currentTask, currentStep.failReason);
-                if (steps != null)
-                {
-                    startNewTask(steps, steps[0].associatedTask);
-                    status = Tasks.TASK_STATUS.Started;
-                }
-                else
-                    status = Tasks.TASK_STATUS.Cancelled;
-                return;
-            }
-            if(status == Tasks.TASK_STATUS.Cancelled)
-            {
-                clearAllTasks();
-            }
+            currentTask.performCurrentTask();
         }
+
         public Tasks.TASK_STATUS GetCurrentTaskStatus()
         {
-            return status;
+            return currentTask.GetCurrentTaskStatus();
         }
-        public bool isStatus(Tasks.TASK_STATUS status) { return status == this.status; }
 
-        private Thing getCurrentTaskStepTarget()
+        public ActionStep.Actions GetCurrentAction()
         {
-            return currentActionSteps[currentStepNum]._targetThing;
+            return currentTask.GetCurrentAction();
+        }
+
+        public Thing GetCurrentTaskTarget()
+        {
+            return currentTask.GetCurrentTaskTarget();
         }
         public Vector3 GetCurrentTaskDestination()
         {
-            return currentActionSteps[currentStepNum]._targetPosition;
+            return currentTask.GetCurrentTaskDestination();
         }
-        public Thing GetCurrentTaskTarget()
+        public string GetCurrentTaskTargetName()
         {
-            return getCurrentTaskStepTarget();
-        }
-        public ActionStep.FailReason GetCurrentTaskStepFailReason()
-        {
-            return currentActionSteps[currentStepNum].failReason;
+            return currentTask.GetCurrentTaskTargetName();
         }
     }
 }

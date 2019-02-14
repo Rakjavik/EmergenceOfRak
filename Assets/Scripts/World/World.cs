@@ -98,7 +98,7 @@ namespace rak.world
             HexMetrics.Initialize(worldType);
             hexGrid = HexGrid.generate(this);
             mapCam.grid = hexGrid;
-            masterTerrain = GetComponent<RAKTerrainMaster>();
+            //masterTerrain = GetComponent<RAKTerrainMaster>();
             if (editing)
                 editor = Instantiate(RAKUtilities.getWorldPrefab("HexMapEditor")).GetComponent<HexMapEditor>();
 
