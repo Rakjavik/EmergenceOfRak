@@ -77,7 +77,7 @@ namespace rak.world
         }
         private void Awake()
         {
-            ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Debug");
+            ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower().Contains("debug");
             if (ISDEBUGSCENE && !_initialized)
             {
                 InitializeDebugWorld();
@@ -188,9 +188,10 @@ namespace rak.world
             sinceLastUpdate += Time.deltaTime;
             if(sinceLastUpdate > worldUpdatesEvery)
             {
-                CurrentArea.Update(sinceLastUpdate);
+                
                 sinceLastUpdate = 0;
             }
+            CurrentArea.Update(Time.deltaTime);
         }
 
     }

@@ -2,6 +2,7 @@
 using rak.creatures.memory;
 using rak.UI;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -12,10 +13,16 @@ namespace rak.world
         private static List<Thing> allThings;
         private static List<Thing> _removeTheseThings = new List<Thing>();
         private static readonly object _allThingsLock = new object();
-        private static float updateEvery = 5;
+        private static float updateSunEvery = .1f;
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
-        public static float areaLocalTime = 0;
+        public static float AreaLocalTime { get; private set; }
+        public static string GetFriendlyLocalTime()
+        {
+            float timeInDay = AreaLocalTime % dayLength;
+            string time = ((int)(timeInDay * .1f)).ToString();
+            return "HH:" + time;
+        }
         public static readonly float dayLength = 240;
         public static List<Thing> GetAllThings()
         {
@@ -36,7 +43,7 @@ namespace rak.world
         private List<Site> sitesPresent;
         private GameObject[] walls;
         private Transform sun;
-        private float sinceLastUpdated = 0;
+        private float sinceLastSunUpdated = 0;
         
         public Area(HexCell cell,World world)
         {
@@ -45,6 +52,7 @@ namespace rak.world
             this.cell = cell;
             this.world = world;
             sun = world.transform;
+            AreaLocalTime = 0;
             areaSize = Vector3.zero; // Initialize in method
             walls = new GameObject[4];
             debug = World.ISDEBUGSCENE;
@@ -67,7 +75,7 @@ namespace rak.world
                 addThingToWorld("fruit",position,false);
                     
             }
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i < 10; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
                 addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), position, false, tribe);
@@ -113,7 +121,7 @@ namespace rak.world
 
         public void Update(float delta)
         {
-            sinceLastUpdated += delta;
+            sinceLastSunUpdated += delta;
             lock (_allThingsLock)
             {
                 foreach (Thing thing in allThings)
@@ -143,12 +151,12 @@ namespace rak.world
             {
                 tribe.Update();
             }
-            areaLocalTime += delta;
-            if(sinceLastUpdated > updateEvery)
+            AreaLocalTime += delta;
+            if(sinceLastSunUpdated > updateSunEvery)
             {
-                float timeOfDay = areaLocalTime % dayLength;
+                float timeOfDay = AreaLocalTime % dayLength;
                 sun.rotation = Quaternion.Euler(new Vector3((timeOfDay/dayLength)*360, 0,0));
-                sinceLastUpdated = 0;
+                sinceLastSunUpdated = 0;
             }
         }
 
@@ -313,6 +321,37 @@ namespace rak.world
                 GameObject.Destroy(thing.gameObject);
             }
             string json = JsonUtility.ToJson(makeIntoHistory.ToArray());
+        }
+        public int ActiveCreatureCount { get
+            {
+                return creatureContainer.transform.childCount;
+            } }
+        public int ActiveThingCount { get
+            {
+                return thingContainer.transform.childCount;
+            } }
+        public int DeathsByFlight { get
+            {
+                return getDeathsBy(Creature.CREATURE_DEATH_CAUSE.FlightCollision);
+            }
+        }
+        public int DeathsByHunger { get
+            {
+                return getDeathsBy(Creature.CREATURE_DEATH_CAUSE.Hunger);
+            } }
+        private int getDeathsBy(Creature.CREATURE_DEATH_CAUSE cause)
+        {
+            int deaths = 0;
+            for (int count = 0; count < disabledContainer.transform.childCount; count++)
+            {
+                Creature creature = disabledContainer.transform.GetChild(count).GetComponent<Creature>();
+                if(creature != null)
+                {
+                    if (creature.CauseOfDeath == cause)
+                        deaths++;
+                }
+            }
+            return deaths;
         }
     }
 }

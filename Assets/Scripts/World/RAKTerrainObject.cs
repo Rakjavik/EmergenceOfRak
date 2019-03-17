@@ -139,8 +139,8 @@ public class RAKTerrainObject : MonoBehaviour, Resource
                 sizeOverride = new Vector3(5, 15, 5);
                 break;
             case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_1:
-                maxSteepness = 35;
-                minimiumDistanceBetweenObjects = 10;
+                maxSteepness = 500;
+                minimiumDistanceBetweenObjects = 20;
                 minDistFromEdge = 0;
                 resourceType = ResourceType.Matter;
                 heightOffset = 2;

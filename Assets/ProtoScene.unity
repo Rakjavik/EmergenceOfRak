@@ -131,6 +131,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   profile: {fileID: 11400000, guid: 16b9a7b30acd3014fbbccb91dc508d75, type: 2}
+--- !u!45 &115668926
+Skybox:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115668922}
+  m_Enabled: 1
+  m_CustomSkybox: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
 --- !u!1001 &233084060
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1345,7 +1354,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2012445617}
   - component: {fileID: 2012445616}
-  - component: {fileID: 2012445618}
   - component: {fileID: 2012445620}
   - component: {fileID: 2012445619}
   m_Layer: 0
@@ -1407,29 +1415,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2012445618
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2012445615}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34f0801363c3e3b45bfd0f75ab3c38e4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  followCamera: {fileID: 9190641456064776814}
-  AutoLoadArea: 1
-  worldType: 0
-  masterTerrain: {fileID: 2012445619}
-  creatureBrowserPrefab: {fileID: 1433953333907242, guid: a55088cc99fbb134e860231256d76c20,
-    type: 3}
-  worldBrowserPrefab: {fileID: 1954163264568892, guid: 4304cd93a3cc1ce47a019ae5656f770b,
-    type: 3}
-  debugMenuPrefab: {fileID: 1371188607978800, guid: c348dabe32f6a014680b77ba4a438d43,
-    type: 3}
-  mapCam: {fileID: 1571009658}
 --- !u!114 &2012445619
 MonoBehaviour:
   m_ObjectHideFlags: 0

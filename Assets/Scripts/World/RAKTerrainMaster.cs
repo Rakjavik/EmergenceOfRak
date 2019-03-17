@@ -152,9 +152,14 @@ public partial class RAKTerrainMaster : MonoBehaviour
         for (int count = 0; count < objects.Length; count++)
         {
             // Retrieve the prefab and Instantiate //
-            RAKTerrainObject terrainObject = RAKUtilities.getTerrainObjectPrefab(
-                RAKUtilities.nonTerrainObjects[objects[count].prefabObjectIndex])
-                .GetComponent<RAKTerrainObject>();
+            Debug.LogWarning(objects[count].prefabObjectIndex);
+            if(objects[count].prefabObjectIndex == -1)
+            {
+                Debug.LogWarning("Object # " + count + " returned -1");
+                continue;
+            }
+            string prefabName = RAKUtilities.nonTerrainObjects[objects[count].prefabObjectIndex];
+            RAKTerrainObject terrainObject = RAKUtilities.getTerrainObjectPrefab(prefabName).GetComponent<RAKTerrainObject>();
             GameObject prefab = (GameObject)Instantiate(terrainObject.gameObject, objects[count].position.getVector3(), Quaternion.identity);//, 2);
             prefab.transform.eulerAngles = objects[count].rotationEulers.getVector3();
             prefab.transform.SetParent(terrain.transform);
@@ -213,9 +218,16 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     private void mapPositions(int index)
     {
-        int y = index / (worldSize / 4);
-        int x = index - y * (worldSize / 4);
-        terrain[index].transform.position = new Vector3(x * tileSize, 0, y * tileSize);
+        if (worldSize == 1)
+        {
+            terrain[index].transform.position = Vector3.zero;
+        }
+        else
+        {
+            int y = index / (worldSize / 4);
+            int x = index - y * (worldSize / 4);
+            terrain[index].transform.position = new Vector3(x * tileSize, 0, y * tileSize);
+        }
     }
     private TerrainData generateTerrain(int width, int height, int depth, float scale, float offsetX, float offsetY)
     {

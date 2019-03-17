@@ -57,6 +57,12 @@ namespace rak.creatures
             if (!_initialized) return;
             float hungerIncrement = (size * amountOfFoodRequired)*.01f;
             needs.IncreaseNeed(Needs.NEEDTYPE.HUNGER, hungerIncrement);
+            if(needs.getNeed(Needs.NEEDTYPE.HUNGER).CurrentAmount == NeedAmount.Critical)
+            {
+                creature.SetStateToDead(Creature.CREATURE_DEATH_CAUSE.Hunger);
+
+                return;
+            }
             if (creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
             {
                 needs.DecreaseNeed(Needs.NEEDTYPE.SLEEP, Time.deltaTime*2);

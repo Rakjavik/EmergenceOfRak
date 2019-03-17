@@ -28,6 +28,7 @@ namespace rak
                 GameObject fruit = World.CurrentArea.addThingToWorld("fruit", newPosition, false);
                 fruitInstances.Add(fruit);
                 timeSincelastSpawned = 0;
+                Debug.Log("Fruit from tree - " + gameObject.name);
             }
         }
     }

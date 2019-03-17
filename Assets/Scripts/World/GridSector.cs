@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Grid
 {
-    public static readonly Vector2 ELEMENT_SIZE = new Vector2(64, 64);
+    public static readonly Vector2 ELEMENT_SIZE = new Vector2(128, 128);
 
     private GridSector[] elements;
 
@@ -47,8 +47,8 @@ public class GridSector
         float y = 0;
         Vector3 start = new Vector3(worldPositionStart.x, y, worldPositionStart.y);
         Vector3 end = new Vector3(worldPositionEnd.x, y, worldPositionEnd.y);
-        //Debug.DrawLine(start, new Vector3(end.x,y,start.z), Color.yellow, 30);
-        //Debug.DrawLine(end, new Vector3(end.x, y, start.z), Color.yellow, 30);
+        Debug.DrawLine(start, new Vector3(end.x,y,start.z), Color.yellow, 3);
+        Debug.DrawLine(end, new Vector3(end.x, y, start.z), Color.yellow, 3);
     }
 
     public Vector2 gridPosition { get; private set; }

@@ -32,10 +32,10 @@ public partial class RAKTerrainMaster
                 1, // Tree02
                 1, // Tree03
                 1, // Tree04
-                1, // Bush01
-                1, // Bush02
-                1, // Bush03
-                1 // Bush04
+                20, // Bush01
+                0, // Bush02
+                0, // Bush03
+                0 // Bush04
                 });
             biome.depth = 80;
             biome.numberOfTrees = 0;

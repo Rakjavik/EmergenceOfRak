@@ -26,6 +26,7 @@ namespace rak.UI
 
         public TMP_Dropdown creatureDropDown;
         public TMP_Text detailText;
+        public TMP_Text clockText;
         private bool initialized = false;
         private CreatureBrowserWindow currentWindow;
         private Creature selectedCreature;
@@ -97,6 +98,11 @@ namespace rak.UI
                     CurrentBrakeAmountRequest.magnitude).ToString());
                 detailText.text = text;
             }
+            int cc = World.CurrentArea.ActiveCreatureCount;
+            int tc = World.CurrentArea.ActiveThingCount;
+            clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + Area.GetFriendlyLocalTime()+"\n";
+            clockText.text += "Deaths Flight-" + World.CurrentArea.DeathsByFlight + 
+                " Hunger-" + World.CurrentArea.DeathsByHunger;
         }
 
         public void SetFocusObject(object focus)
@@ -113,6 +119,14 @@ namespace rak.UI
         public void OnDropDownChange()
         {
             SetFocusObject(creatureMap[creatureDropDown.value]);
+            List<Creature> livingCreatures = new List<Creature>();
+            for(int count = 0; count < creatureMap.Length; count++)
+            {
+                if (creatureMap[count].GetCurrentState() != Creature.CREATURE_STATE.DEAD)
+                    livingCreatures.Add(creatureMap[count]);
+                    
+            }
+            creatureMap = livingCreatures.ToArray();
             RefreshMainText();
         }
         private void Update()

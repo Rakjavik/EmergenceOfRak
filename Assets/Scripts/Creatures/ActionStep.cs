@@ -8,7 +8,9 @@ namespace rak
     public class ActionStep
     {
         public enum Actions { None, Wait, Locate, MoveTo, Use, Add, Eat, Land, Sleep }
-        public enum FailReason { NA, NoneKnown, InfinityDistance, MoveToWithNoDestination,
+        public enum FailReason
+        {
+            NA, NoneKnown, InfinityDistance, MoveToWithNoDestination,
             FailureAddingToInventory, ExceededTimeLimit, CouldntGetToTarget
         }
 
@@ -28,7 +30,7 @@ namespace rak
             creatureAgentDestinationHasBeenSet = true;
             _targetPosition = target;
         }
-        
+
 
         private Tasks.TASK_STATUS status = Tasks.TASK_STATUS.Incomplete;
         private bool creatureAgentDestinationHasBeenSet;
@@ -37,7 +39,7 @@ namespace rak
         private float distanceRequiredToCompleteModifier;
         private Thing.Base_Types targetBaseType;
 
-        public ActionStep(Actions action,Tasks.CreatureTasks task,float distanceRequiredToCompleteModifier)
+        public ActionStep(Actions action, Tasks.CreatureTasks task, float distanceRequiredToCompleteModifier)
         {
             Initialize(action, task, distanceRequiredToCompleteModifier);
         }
@@ -48,7 +50,7 @@ namespace rak
         public ActionStep(Actions action, Tasks.CreatureTasks task, Thing.Base_Types targetBaseType)
         {
             this.targetBaseType = targetBaseType;
-            Initialize(action, task,1);
+            Initialize(action, task, 1);
         }
         private void Initialize(Actions action, Tasks.CreatureTasks task, float distanceRequiredToCompleteModifier)
         {
@@ -78,7 +80,7 @@ namespace rak
                 return;
             }
             //Debug.Log("Performing action " + action + " For Task - " + associatedTask);
-            
+
             // LOCATE //
             if (action == Actions.Locate)
             {
@@ -99,7 +101,7 @@ namespace rak
                         _targetThing = target;
                         _targetPosition = target.transform.position;
                         _targetThing.MakeUnavailable();
-                        Debug.LogWarning("Locate task complete with target - " + _targetThing.name);
+                        //Debug.LogWarning("Locate task complete with target - " + _targetThing.name);
                         status = Tasks.TASK_STATUS.Complete;
                     }
                 }
@@ -109,7 +111,7 @@ namespace rak
                     // Search for target ground //
                     float boxSizeMult = performer.miscVariables[MiscVariables.CreatureMiscVariables.Agent_Locate_Sleep_Area_BoxCast_Size_Multipler];
                     Vector3 raycastHit = performer.BoxCastNotMeGetClosestPoint(5, Vector3.down);
-                    
+
                     if (raycastHit != Vector3.positiveInfinity)
                     {
                         raycastHit.y = performer.transform.position.y;
@@ -152,11 +154,11 @@ namespace rak
                     //Thing target = performer.GetClosestKnownReachableThing(targetBaseType);
                 }
             }
-            
+
             // MOVE TO //
             else if (action == Actions.MoveTo)
             {
-                Debug.DrawLine(performer.transform.position, _targetPosition, Color.cyan,.5f);
+                Debug.DrawLine(performer.transform.position, _targetPosition, Color.cyan, .5f);
                 // The agent should have a destination before getting to this point //
                 if (!creatureAgentDestinationHasBeenSet)
                 {
@@ -174,12 +176,16 @@ namespace rak
                         status = Tasks.TASK_STATUS.Failed;
                         return;
                     }
-                    
+
                     // Raycast if we're close enough to the target to where we should be able to see it //
                     float distanceBeforeRayCastCheckOnTarget = performer.miscVariables
                         [MiscVariables.CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below];
                     // Arrived //
-                    float distanceToCompleteArrival = performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached();
+                    float distanceToCompleteArrival;
+                    if (associatedTask != Tasks.CreatureTasks.EXPLORE)
+                        distanceToCompleteArrival = performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached();
+                    else
+                        distanceToCompleteArrival = 50;
                     //if (associatedTask == Tasks.TASKS.EXPLORE)
                     if (performer.getDistanceFromDestination() <= distanceToCompleteArrival)
                     {
@@ -221,7 +227,7 @@ namespace rak
                 if (agent.grabType == CreatureGrabType.TractorBeam)
                 {
                     // Touching Target //
-                    if (Vector3.Distance(_targetThing.transform.position,performer.transform.position) < .5f)
+                    if (Vector3.Distance(_targetThing.transform.position, performer.transform.position) < .5f)
                     {
                         if (performer.AddThingToInventory(_targetThing))
                         {
@@ -282,7 +288,7 @@ namespace rak
         }
         public bool HasTargetPosition()
         {
-            if(_targetPosition != Vector3.zero)
+            if (_targetPosition != Vector3.zero)
             {
                 return true;
             }

@@ -9,14 +9,14 @@ namespace rak.creatures
         {
             return IsThisFarAwayFromAnyWalls(distance, point, true);
         }
-        private static bool IsThisFarAwayFromAnyWalls(float distance, Vector3 point,bool fixAsWeGo)
+        private static bool IsThisFarAwayFromAnyWalls(float distance, Vector3 point, bool fixAsWeGo)
         {
             bool noWalls = true;
             RaycastHit hit;
             if (Physics.Raycast(point, Vector3.left, out hit))
             {
                 if (Vector3.Distance(point, hit.point) < distance && !fixAsWeGo)
-                    if(!fixAsWeGo)
+                    if (!fixAsWeGo)
                         noWalls = false;
                     else
                         point.x += 5;
@@ -54,7 +54,7 @@ namespace rak.creatures
             return noWalls;
         }
 
-        public static bool IsAtLeastThisFarAwayFromAnyWalls(float distance,Vector3 point)
+        public static bool IsAtLeastThisFarAwayFromAnyWalls(float distance, Vector3 point)
         {
             if (point == Vector3.zero) return false;
             return IsThisFarAwayFromAnyWalls(distance, point, false);
@@ -72,12 +72,12 @@ namespace rak.creatures
             return _inCapacitated;
         }
 
-        public static Dictionary<Needs.NEEDTYPE,Need> NeedsInitialize(BASE_SPECIES baseSpecies)
+        public static Dictionary<Needs.NEEDTYPE, Need> NeedsInitialize(BASE_SPECIES baseSpecies)
         {
-            Dictionary<Needs.NEEDTYPE,Need> currentNeeds = new Dictionary<Needs.NEEDTYPE, Need>();
+            Dictionary<Needs.NEEDTYPE, Need> currentNeeds = new Dictionary<Needs.NEEDTYPE, Need>();
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
-                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .01f, false));
+                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .25f, false));
                 currentNeeds.Add(Needs.NEEDTYPE.REPRODUCTION, new Need(Needs.NEEDTYPE.REPRODUCTION, 1, false));
                 currentNeeds.Add(Needs.NEEDTYPE.SLEEP, new Need(Needs.NEEDTYPE.SLEEP, 100f, true));
                 currentNeeds.Add(Needs.NEEDTYPE.TEMPERATURE, new Need(Needs.NEEDTYPE.TEMPERATURE, 1, false));
@@ -102,7 +102,7 @@ namespace rak.creatures
         }
 
         public static SpeciesPhysicalStats PhysicalStatsInitialize
-            (BASE_SPECIES baseSpecies,Creature creature)
+            (BASE_SPECIES baseSpecies, Creature creature)
         {
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
@@ -146,7 +146,7 @@ namespace rak.creatures
             }
         }
 
-        public static void CreatureAgentInitialize(BASE_SPECIES baseSpecies,CreatureAgent agent)
+        public static void CreatureAgentInitialize(BASE_SPECIES baseSpecies, CreatureAgent agent)
         {
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
@@ -155,7 +155,7 @@ namespace rak.creatures
                 agent.SetSustainHeight(5);
                 agent.SetMaxAngularVel(10);
                 agent.SetMaxVelocityMagnitude(20);
-                agent.SetCruisingSpeed(new Vector3(2,1,15));
+                agent.SetCruisingSpeed(new Vector3(2, 1, 15));
 
                 // Maximum force of the constant force component //
                 agent.maxForce.y = 15;
@@ -188,10 +188,10 @@ namespace rak.creatures
                 BuildCreatureParts(baseSpecies, agent);
             }
         }
-        public static void SetPropertiesForParticleSystemByCreature(ParticleSystem ps,Creature creature)
+        public static void SetPropertiesForParticleSystemByCreature(ParticleSystem ps, Creature creature)
         {
             ps.Stop();
-            if(creature.getSpecies().getBaseSpecies() == BASE_SPECIES.Gnat)
+            if (creature.getSpecies().getBaseSpecies() == BASE_SPECIES.Gnat)
             {
                 ParticleSystem.MainModule main = ps.main;
                 main.duration = .3f;
@@ -226,7 +226,7 @@ namespace rak.creatures
                 renderer.lengthScale = .2f;
             }
         }
-        public static void BuildCreatureParts(BASE_SPECIES baseSpecies,CreatureAgent agent)
+        public static void BuildCreatureParts(BASE_SPECIES baseSpecies, CreatureAgent agent)
         {
             Creature creature = agent.creature;
             Rigidbody rigidbody = agent.GetRigidBody();
@@ -236,7 +236,7 @@ namespace rak.creatures
                 // Body with constant force //
                 EnginePart bodyFlight = new EnginePart
                     (CreaturePart.BODY, creature.transform.GetChild(0), CreatureLocomotionType.Flight, .2f);
-                
+
                 // Body with Rotation turning //
                 TurnPart bodyTurning = new TurnPartRotation
                     (CreaturePart.BODY, creature.transform.GetChild(0), CreatureTurnType.Rotate, .2f);
@@ -245,7 +245,7 @@ namespace rak.creatures
                 AnimationPart zPropeller = new AnimationPart(CreaturePart.ENGINE_Z, creature.transform.GetChild(1),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
-                    PartMovesWith.ConstantForceZ,PartAnimationType.Movement,true);
+                    PartMovesWith.ConstantForceZ, PartAnimationType.Movement, true);
 
                 // Y Propellers //
                 AnimationPart yPropeller = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(3),
@@ -267,18 +267,18 @@ namespace rak.creatures
 
                 // Antigrav Shield //
                 AntiGravityShieldPart shieldPart = new AntiGravityShieldPart(CreaturePart.SHIELD, creature.transform.GetChild(9),
-                    .2f,creature.GetCreatureAgent().GetRigidBody(), new ActionStep.Actions[] {ActionStep.Actions.Add,
+                    .2f, creature.GetCreatureAgent().GetRigidBody(), new ActionStep.Actions[] {ActionStep.Actions.Add,
                         ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait});
                 AnimationPart antiGravShieldAnimation = new AnimationPart(CreaturePart.SHIELD, creature.transform.GetChild(7),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     {ActionStep.Actions.Add,ActionStep.Actions.MoveTo,ActionStep.Actions.Add,ActionStep.Actions.Eat
-                    ,ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait}, 
+                    ,ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait},
                     PartMovesWith.IsKinematic, PartAnimationType.Movement, false);
 
                 // Tractor Beam //
-                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f,30);
+                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f, 30);
                 TractorBeamAnimationPart tractorAnimation = new TractorBeamAnimationPart(CreaturePart.TRACTORBEAM,
-                    creature.transform.GetChild(8),.2f,Vector3.forward,.3f);
+                    creature.transform.GetChild(8), .2f, Vector3.forward, .3f);
 
                 allParts.Add(bodyFlight);
                 allParts.Add(bodyTurning);
@@ -297,7 +297,7 @@ namespace rak.creatures
             else if (baseSpecies == BASE_SPECIES.Gagk)
             {
                 // Constant force for Z //
-                EnginePart mainEngine = new EnginePart(CreaturePart.ENGINE_Z, 
+                EnginePart mainEngine = new EnginePart(CreaturePart.ENGINE_Z,
                     creature.transform.GetChild(0),
                     CreatureLocomotionType.StandardForwardBack, 1);
                 TurnPart inchSpine = new TurnPartInching(CreaturePart.BODY,
@@ -344,7 +344,7 @@ namespace rak.creatures
             {
                 steps = new ActionStep[4];
                 steps[0] = new ActionStep(ActionStep.Actions.Locate, task);
-                steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task,5);
+                steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task, 5);
                 steps[2] = new ActionStep(ActionStep.Actions.Land, task);
                 steps[3] = new ActionStep(ActionStep.Actions.Sleep, task);
             }
@@ -352,12 +352,12 @@ namespace rak.creatures
             {
                 steps = new ActionStep[2];
                 steps[0] = new ActionStep(ActionStep.Actions.Locate, task);
-                steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task,30);
+                steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task, 30);
             }
             else if (task == Tasks.CreatureTasks.GATHER)
             {
                 steps = new ActionStep[2];
-                steps[0] = new ActionStep(ActionStep.Actions.Locate, task,Thing.Base_Types.PLANT);
+                steps[0] = new ActionStep(ActionStep.Actions.Locate, task, Thing.Base_Types.PLANT);
                 steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task);
             }
             return steps;
@@ -377,7 +377,7 @@ namespace rak.creatures
                 exceptionTask = Tasks.CreatureTasks.EXPLORE;
             }
             // Don't know of any food //
-            if(task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoneKnown)
+            if (task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoneKnown)
             {
                 exceptionTask = Tasks.CreatureTasks.EXPLORE;
             }
@@ -429,11 +429,11 @@ namespace rak.creatures
             }
             return possibleStates;
         }
-        public static AudioClip GetCreaturePartAudioClip(BASE_SPECIES species,CreaturePart part)
+        public static AudioClip GetCreaturePartAudioClip(BASE_SPECIES species, CreaturePart part)
         {
-            if(species == BASE_SPECIES.Gnat)
+            if (species == BASE_SPECIES.Gnat)
             {
-                if(part == CreaturePart.BRAKE)
+                if (part == CreaturePart.BRAKE)
                 {
                     return RAKUtilities.getAudioClip("GnatBrake");
                 }

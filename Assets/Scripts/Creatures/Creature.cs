@@ -9,30 +9,38 @@ namespace rak.creatures
     public class Creature : Thing
     {
         public enum CREATURE_STATE { IDLE, MOVE, WAIT, DEAD, SLEEP }
+        public enum CREATURE_DEATH_CAUSE { FlightCollision, Hunger, NA }
 
         public bool DEBUGSCENE = false;
         public float TESTVAR1 = 150;
         public float TESTVAR2 = 0.00001f;
         public bool RunDebugMethod = false;
         public BASE_SPECIES baseSpecies;
+        public CREATURE_DEATH_CAUSE CauseOfDeath { get
+            {
+                if (currentState == CREATURE_STATE.DEAD)
+                    return causeOfDeath;
+                return CREATURE_DEATH_CAUSE.NA;
+            } }
         public Dictionary<MiscVariables.CreatureMiscVariables, float> miscVariables { get; private set; }
 
         private CREATURE_STATE currentState;
+        private CREATURE_DEATH_CAUSE causeOfDeath = CREATURE_DEATH_CAUSE.NA;
         private float lastUpdated = 0;
         private bool initialized = false;
 
         private Species species;
         private SpeciesPhysicalStats creaturePhysicalStats;
         private AudioSource audioSource;
-        
+
         protected Inventory inventory;
         private TaskManager taskManager;
 
         private CreatureAgent agent;
         private Tribe memberOfTribe;
         private Area currentArea;
-        private Dictionary<GridSector,bool> knownGridSectorsVisited;
-        
+        private Dictionary<GridSector, bool> knownGridSectorsVisited;
+
         public bool IsInitialized()
         {
             return initialized;
@@ -43,15 +51,15 @@ namespace rak.creatures
             RaycastHit hit;
             Vector3 origin = transform.position;
             Vector3 destination = target.transform.position - transform.position;
-            if (Physics.Raycast(origin,destination,out hit))
+            if (Physics.Raycast(origin, destination, out hit))
             {
-                
+
                 Thing possibleHit = hit.collider.GetComponent<Thing>();
                 if (possibleHit == null)
                     possibleHit = hit.collider.GetComponentInParent<Thing>();
-                if(possibleHit != null)
+                if (possibleHit != null)
                 {
-                    if(possibleHit == target)
+                    if (possibleHit == target)
                     {
                         if (DEBUGSCENE)
                             Debug.DrawLine(origin, hit.point, Color.yellow, .5f);
@@ -82,7 +90,7 @@ namespace rak.creatures
                 return false;
             return true;
         }
-        public void Initialize(string name,Area area,Tribe memberOf)
+        public void Initialize(string name, Area area, Tribe memberOf)
         {
             Initialize(name, area);
             memberOfTribe = memberOf;
@@ -100,8 +108,8 @@ namespace rak.creatures
             }
             else if (baseSpecies == BASE_SPECIES.Gagk)
             {
-                species = new Species('n', baseSpecies.ToString(), true, BASE_SPECIES.Gagk, 
-                    CONSUMPTION_TYPE.HERBIVORE,this);
+                species = new Species('n', baseSpecies.ToString(), true, BASE_SPECIES.Gagk,
+                    CONSUMPTION_TYPE.HERBIVORE, this);
             }
             creaturePhysicalStats = CreatureConstants.PhysicalStatsInitialize(species.getBaseSpecies(), this);
             agent = new CreatureAgent(this);
@@ -123,7 +131,7 @@ namespace rak.creatures
             return species.memory.GetClosestFoodFromMemory
                 (true, species.getConsumptionType(), transform.position);
         }
-        
+
         #region Mono Methods
         public void Update()
         {
@@ -132,7 +140,7 @@ namespace rak.creatures
                 taskManager.clearAllTasks();
                 RunDebugMethod = false;
             }
-            if(!initialized && DEBUGSCENE)
+            if (!initialized && DEBUGSCENE)
             {
                 Initialize("TestCreature", World.CurrentArea);
             }
@@ -159,17 +167,17 @@ namespace rak.creatures
                 else
                 {
                     debug("Performing current tasks - " + taskManager.getCurrentTaskType());
-                    taskManager.performCurrentTask();
+                    taskManager.PerformCurrentTask();
                     // Task was cancelled, mark creature as idle to get a new task next update //
                     if (taskManager.GetCurrentTaskStatus() == Tasks.TASK_STATUS.Cancelled &&
                         currentState != CREATURE_STATE.IDLE)
                     {
                         ChangeState(CREATURE_STATE.IDLE);
                     }
-                    if(taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
-                        if(DEBUGSCENE)
+                    if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
+                        if (DEBUGSCENE)
                             Debug.DrawLine(transform.position, agent.Destination, Color.cyan, 1f);
-                    
+
                 }
                 //Debug.LogWarning("Current state - " + currentState);
                 if (!taskManager.hasTask() && !CreatureConstants.CreatureIsIncapacitatedState(currentState))
@@ -178,7 +186,7 @@ namespace rak.creatures
                     currentState = CREATURE_STATE.IDLE;
                 }
                 // CREATURE PHYSICAL STATS UPDATES //
-                if(currentState != CREATURE_STATE.DEAD)
+                if (currentState != CREATURE_STATE.DEAD)
                     creaturePhysicalStats.Update();
             }
         }
@@ -186,11 +194,11 @@ namespace rak.creatures
         {
             if (currentState == CREATURE_STATE.DEAD) return;
             agent.OnCollisionEnter(collision);
-            if(agent.GetRigidBody().velocity.magnitude > agent.maxVelocityMagnitude)
+            if (agent.GetRigidBody().velocity.magnitude > agent.maxVelocityMagnitude*2)
             {
                 if (currentState != CREATURE_STATE.DEAD)
                 {
-                    ChangeState(CREATURE_STATE.DEAD);
+                    SetStateToDead(CREATURE_DEATH_CAUSE.FlightCollision);
                 }
             }
         }
@@ -208,14 +216,14 @@ namespace rak.creatures
         {
             SetCreatureAgentDestination(destination, false);
         }
-        public void SetCreatureAgentDestination(Vector3 destination,bool needsToLand)
+        public void SetCreatureAgentDestination(Vector3 destination, bool needsToLand)
         {
             agent.SetDestination(destination);
         }
         public bool AddThingToInventory(Thing thing)
         {
-            if(!DEBUGSCENE)
-                DebugMenu.AppendDebugLine(thingName + " has picked up " + thing.thingName,this);
+            if (!DEBUGSCENE)
+                DebugMenu.AppendDebugLine(thingName + " has picked up " + thing.thingName, this);
             return inventory.addThing(thing);
         }
         public bool RemoveFromInventory(Thing thing)
@@ -228,9 +236,9 @@ namespace rak.creatures
         }
         public void SoThisFailed(ActionStep failedStep)
         {
-            if(failedStep.associatedTask == Tasks.CreatureTasks.EAT)
+            if (failedStep.associatedTask == Tasks.CreatureTasks.EAT)
             {
-                if(failedStep.failReason == ActionStep.FailReason.CouldntGetToTarget ||
+                if (failedStep.failReason == ActionStep.FailReason.CouldntGetToTarget ||
                     failedStep.failReason == ActionStep.FailReason.InfinityDistance)
                 {
                     AddMemory(new MemoryInstance(Verb.MOVEDTO, failedStep._targetThing, true));
@@ -253,7 +261,7 @@ namespace rak.creatures
             GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
                 this, areaDistance, currentArea.GetClosestTerrainToPoint(transform.position));
             GridSector currentSector = currentArea.GetCurrentGridSector(transform);
-            
+
             foreach (GridSector element in closeAreas)
             {
                 if (!knownGridSectorsVisited.ContainsKey(element))
@@ -267,43 +275,43 @@ namespace rak.creatures
                 }
             }
         }
-        public Vector3 BoxCastNotMeGetClosestPoint(float sizeMult,Vector3 direction)
+        public Vector3 BoxCastNotMeGetClosestPoint(float sizeMult, Vector3 direction)
         {
             RaycastHit[] hits = Physics.BoxCastAll(transform.position, Vector3.one * sizeMult, direction);
             Vector3 closest = Vector3.positiveInfinity;
             float closestDistance = float.MaxValue;
-            
+
             for (int count = 0; count < hits.Length; count++)
             {
-                if(hits[count].collider.transform.root != gameObject.transform.root && 
+                if (hits[count].collider.transform.root != gameObject.transform.root &&
                     hits[count].point != Vector3.zero)
                 {
-                    if(Vector3.Distance(hits[count].point,transform.position) < closestDistance)
+                    if (Vector3.Distance(hits[count].point, transform.position) < closestDistance)
                     {
                         closest = hits[count].point;
                         closestDistance = Vector3.Distance(hits[count].point, transform.position);
                     }
                 }
             }
-            Debug.DrawLine(transform.position, closest,Color.green,.5f);
+            Debug.DrawLine(transform.position, closest, Color.green, .5f);
             return closest;
         }
-        public MemoryInstance[] HasAnyMemoriesOf(Verb verb,CONSUMPTION_TYPE consumptionType)
+        public MemoryInstance[] HasAnyMemoriesOf(Verb verb, CONSUMPTION_TYPE consumptionType)
         {
             return species.memory.HasAnyMemoriesOf(verb, consumptionType);
         }
-        public MemoryInstance HasAnyMemoryOf(Verb verb,CONSUMPTION_TYPE consumptionType,bool invertVerb)
+        public MemoryInstance HasAnyMemoryOf(Verb verb, CONSUMPTION_TYPE consumptionType, bool invertVerb)
         {
             return species.memory.HasAnyMemoryOf(verb, consumptionType, invertVerb);
         }
-        public bool HasRecentMemoryOf(Verb verb,Thing target,bool invertVerb)
+        public bool HasRecentMemoryOf(Verb verb, Thing target, bool invertVerb)
         {
             return species.memory.HasRecentMemoryOf(verb, target, invertVerb);
         }
 
         public void DestroyAllParts()
         {
-            if(currentState == CREATURE_STATE.DEAD)
+            if (currentState == CREATURE_STATE.DEAD)
             {
                 agent.DestroyAllParts();
             }
@@ -317,7 +325,7 @@ namespace rak.creatures
             World.CurrentArea.RemoveThingFromWorld(thing);
             //getCurrentArea().removeThingFromWorld(thing);
             RemoveFromInventory(thing);
-            creaturePhysicalStats.getNeeds().DecreaseNeed(Needs.NEEDTYPE.HUNGER,thing.getWeight());
+            creaturePhysicalStats.getNeeds().DecreaseNeed(Needs.NEEDTYPE.HUNGER, thing.getWeight()*10);
         }
         public override bool RequestControl(Creature requestor)
         {
@@ -327,7 +335,7 @@ namespace rak.creatures
         public override Rigidbody RequestRigidBodyAccess(Creature requestor)
         {
             // Check for access //
-            if(requestor == ControlledBy)
+            if (requestor == ControlledBy)
             {
                 return GetCreatureAgentBody();
             }
@@ -356,7 +364,7 @@ namespace rak.creatures
                 if (knownGridSectorsVisited[sector])
                     continue;
                 float distance = Vector2.Distance(sector.GetTwoDLerpOfSector(), transform.position);
-                if(distance < closestDistance)
+                if (distance < closestDistance)
                 {
                     closestDistance = distance;
                     closestSector = sector;
@@ -408,6 +416,12 @@ namespace rak.creatures
             return taskManager.GetCurrentTaskTargetName();
         }
         public CREATURE_STATE GetCurrentState() { return currentState; }
+
+        public void SetStateToDead(CREATURE_DEATH_CAUSE causeOfDeath)
+        {
+            this.causeOfDeath = causeOfDeath;
+            ChangeState(CREATURE_STATE.DEAD);
+        }
         public void ChangeState(CREATURE_STATE requestedState)
         {
             if (requestedState != currentState)
@@ -421,10 +435,6 @@ namespace rak.creatures
                     agent.EnableAgent();
                     Debug.LogWarning("ReEnabling Agent from sleep");
                 }
-                if(requestedState == CREATURE_STATE.DEAD)
-                {
-                    //demolish();
-                }
                 this.currentState = requestedState;
             }
             else
@@ -433,7 +443,7 @@ namespace rak.creatures
         public Area getCurrentArea() { return currentArea; }
         private void debug(string message)
         {
-            if(DEBUGSCENE)
+            if (DEBUGSCENE)
                 Debug.Log(message);
         }
         public Species getSpecies() { return species; }

@@ -7,15 +7,15 @@ namespace rak
 {
     public class TaskManager
     {
-        
+
         private CreatureTaskInstance currentTask;
-        
+
         private bool busy;
         private Creature creature;
 
         public TaskManager(Creature creature)
         {
-            currentTask = new CreatureTaskInstance(Tasks.CreatureTasks.NONE,new ActionStep[0],new Thing[0],creature);
+            currentTask = new CreatureTaskInstance(Tasks.CreatureTasks.NONE, new ActionStep[0], new Thing[0], creature);
             busy = false;
             this.creature = creature;
         }
@@ -35,9 +35,9 @@ namespace rak
                 }
             }
             else*/
-                neededTask = Tasks.GetAppropriateTask(highestNeed);
+            neededTask = Tasks.GetAppropriateTask(highestNeed);
 
-            if(neededTask == Tasks.CreatureTasks.SLEEP && creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
+            if (neededTask == Tasks.CreatureTasks.SLEEP && creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
             {
                 Debug.LogWarning("Task is sleep, already asleep");
                 return;
@@ -57,7 +57,7 @@ namespace rak
         }
         private void startNewTask(Tasks.CreatureTasks neededTask)
         {
-            currentTask = new CreatureTaskInstance(neededTask,currentTask.currentActionSteps,new Thing[0],creature);
+            currentTask = new CreatureTaskInstance(neededTask, currentTask.currentActionSteps, new Thing[0], creature);
             busy = true;
         }
         public bool hasTask()
@@ -68,8 +68,8 @@ namespace rak
         {
             return currentTask.taskType;
         }
-        
-        
+
+
         public void clearAllTasks()
         {
             if (creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
@@ -77,8 +77,8 @@ namespace rak
             busy = false;
             currentTask.CancelTask();
         }
-        
-        public void performCurrentTask()
+
+        public void PerformCurrentTask()
         {
             currentTask.performCurrentTask();
         }

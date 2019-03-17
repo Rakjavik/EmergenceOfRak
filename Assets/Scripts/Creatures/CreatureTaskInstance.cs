@@ -13,8 +13,8 @@ namespace rak
         private Thing[] _targets;
         private Creature creature;
 
-        public CreatureTaskInstance(Tasks.CreatureTasks taskType,ActionStep[] previousSteps,
-            Thing[] targets,Creature actingCreature)
+        public CreatureTaskInstance(Tasks.CreatureTasks taskType, ActionStep[] previousSteps,
+            Thing[] targets, Creature actingCreature)
         {
             this.taskType = taskType;
             this._previousActionSteps = previousSteps;
@@ -38,7 +38,7 @@ namespace rak
         }
         public ActionStep.FailReason GetPreviousStepsFailReason()
         {
-            if(_previousActionSteps != null && _previousActionSteps.Length > 0)
+            if (_previousActionSteps != null && _previousActionSteps.Length > 0)
             {
                 return _previousActionSteps[_previousActionSteps.Length - 1].failReason;
             }
@@ -82,6 +82,10 @@ namespace rak
                     {
                         currentStep.SetTargetPosition(previousStep._targetPosition);
                     }
+                    else
+                    {
+                        //Debug.LogWarning("No step target from previous, currentstep-previousstep " + currentStep.getAction() + "-" + previousStep.getAction());
+                    }
                     creature.SetNavMeshAgentDestination(currentStep._targetPosition);
                     taskStatus = Tasks.TASK_STATUS.Incomplete;
                 }
@@ -99,6 +103,7 @@ namespace rak
                 {
                     _previousActionSteps = currentActionSteps;
                     currentActionSteps = steps;
+                    _currentStepNum = 0;
                     taskStatus = Tasks.TASK_STATUS.Started;
                 }
                 else
