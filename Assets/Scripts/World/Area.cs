@@ -23,13 +23,54 @@ namespace rak.world
             string time = ((int)(timeInDay * .1f)).ToString();
             return "HH:" + time;
         }
+        public static string GetElapsedNumberOfHours()
+        {
+            int elapsedDays = (int)(Time.time / dayLength);
+            float timeInDay = AreaLocalTime % dayLength;
+            int hourInDay = (int)(timeInDay * .1f);
+
+            int elapsedHours = hourInDay + (int)(elapsedDays * dayLength*.1f);
+            return elapsedHours.ToString();
+        }
         public static readonly float dayLength = 240;
-        public static List<Thing> GetAllThings()
+
+        public static void AddThingToAllThingsSync(Thing thingToAdd)
+        {
+            lock (_allThingsLock)
+            {
+                allThings.Add(thingToAdd);
+            }
+        }
+        public static List<Thing> GetAllThingsSync()
         {
             lock (_allThingsLock)
             {
                 return allThings;
             }
+        }
+        // TODO implement
+        public static Thing[] GetAllThingsCopy()
+        {
+            lock (_allThingsLock)
+            {
+                return allThings.ToArray();
+            }
+        }
+        public static List<Creature> GetAllCreatures()
+        {
+            List<Creature> returnList = new List<Creature>();
+            lock (_allThingsLock)
+            {
+                List<Thing> allThingsLocal = GetAllThingsSync();
+                foreach (Thing thing in allThingsLocal)
+                {
+                    if(thing is Creature)
+                    {
+                        returnList.Add((Creature)thing);
+                    }
+                }
+            }
+            return returnList;
         }
 
         private World world;
@@ -69,18 +110,24 @@ namespace rak.world
             creatureContainer = new GameObject("CreatureContainer");
             if (disabledContainer == null)
                 disabledContainer = new GameObject("DisabledContainer");
-            for (int i = 0; i <= 0; i++)
+            for (int i = 0; i < 0; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f,15f), Random.Range(10f, 200));
                 addThingToWorld("fruit",position,false);
                     
             }
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 200; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
                 addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), position, false, tribe);
             }
             CreatureUtilities.OptimizeUpdateTimes(allThings);
+            FruitTree[] trees = GameObject.FindObjectsOfType<FruitTree>();
+            for(int count = 0; count < trees.Length; count++)
+            {
+                AddThingToAllThingsSync(trees[count]);
+                trees[count].initialize("FruitTree");
+            }
             Debug.LogWarning("Updates balanced");
         }
         public void Initialize(Tribe tribe)
@@ -109,8 +156,21 @@ namespace rak.world
             if(disabledContainer == null)
                 disabledContainer = new GameObject("DisabledContainer");
             allThings = new List<Thing>();
+            // Scan the TerrainObjects placed in map for Things //
+            foreach (RAKTerrain terrain in world.masterTerrain.getTerrain())
+            {
+                foreach (RAKTerrainObject terrainObject in terrain.nonTerrainObjects)
+                {
+                    Thing thing = terrainObject.gameObject.GetComponent<Thing>();
+                    if (thing != null)
+                    {
+                        allThings.Add(thing);
+                        thing.initialize(thing.name);
+                    }
+                }
+            }
             int populationToCreate = tribe.GetPopulation();
-            int MAXPOP = 200;
+            int MAXPOP = 100;
             if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)
@@ -122,6 +182,7 @@ namespace rak.world
         public void Update(float delta)
         {
             sinceLastSunUpdated += delta;
+            // AREA OWNS THE MASTER LOCK ON ALL THINGS //
             lock (_allThingsLock)
             {
                 foreach (Thing thing in allThings)
@@ -154,7 +215,7 @@ namespace rak.world
             AreaLocalTime += delta;
             if(sinceLastSunUpdated > updateSunEvery)
             {
-                float timeOfDay = AreaLocalTime % dayLength;
+                float timeOfDay = (AreaLocalTime) % dayLength;
                 sun.rotation = Quaternion.Euler(new Vector3((timeOfDay/dayLength)*360, 0,0));
                 sinceLastSunUpdated = 0;
             }
@@ -163,9 +224,9 @@ namespace rak.world
         public Thing[] findConsumeable(CONSUMPTION_TYPE consumptionType)
         {
             List<Thing> things = new List<Thing>();
-            lock (_allThingsLock)
+            List<Thing> allThingsLocal = GetAllThingsSync();
             {
-                foreach (Thing thing in allThings)
+                foreach (Thing thing in allThingsLocal)
                 {
                     if (thing.matchesConsumptionType(consumptionType))
                     {
@@ -201,7 +262,7 @@ namespace rak.world
                 float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
-            allThings.Add(newThing.GetComponent<Thing>());
+            AddThingToAllThingsSync(newThing.GetComponent<Thing>());
         }
 
         private void addCreatureToWorld(string nameOfPrefab, Vector3 position, bool generatePosition)
@@ -224,7 +285,7 @@ namespace rak.world
                 float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
-            allThings.Add(newThing.GetComponent<Thing>());
+            AddThingToAllThingsSync(newThing.GetComponent<Thing>());
         }
         public RAKTerrain GetClosestTerrainToPoint(Vector3 point)
         {
@@ -248,15 +309,15 @@ namespace rak.world
             {
                 newThing.transform.position = GetRandomPositionOnNavMesh();
             }
-            lock (_allThingsLock)
-            {
-                allThings.Add(newThing.GetComponent<Thing>());
-            }
+            AddThingToAllThingsSync(newThing.GetComponent<Thing>());
             return newThing;
         }
         public void RemoveThingFromWorld(Thing thing)
         {
-            _removeTheseThings.Add(thing);
+            lock (_allThingsLock)
+            {
+                _removeTheseThings.Add(thing);
+            }
         }
         public Vector3 GetRandomPositionOnNavMesh(Vector3 startPosition,float maxDistance)
         {

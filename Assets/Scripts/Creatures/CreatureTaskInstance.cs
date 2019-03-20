@@ -90,7 +90,10 @@ namespace rak
                     taskStatus = Tasks.TASK_STATUS.Incomplete;
                 }
                 else
+                {
                     taskStatus = Tasks.TASK_STATUS.Complete;
+                    creature.RequestObservationUpdate();
+                }
                 return;
             }
             // FAILED //
@@ -98,7 +101,7 @@ namespace rak
             {
                 // Notify creature of failure to record/discard as needed //
                 creature.SoThisFailed(currentStep);
-                ActionStep[] steps = CreatureConstants.GetExceptionActions(taskType, currentStep.failReason);
+                ActionStep[] steps = CreatureConstants.GetExceptionActions(taskType, currentStep.failReason,creature);
                 if (steps != null)
                 {
                     _previousActionSteps = currentActionSteps;

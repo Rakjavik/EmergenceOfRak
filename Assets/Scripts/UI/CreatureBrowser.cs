@@ -1,6 +1,8 @@
 ﻿using rak.creatures;
+using rak.creatures.memory;
 using rak.world;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 namespace rak.UI
@@ -27,6 +29,7 @@ namespace rak.UI
         public TMP_Dropdown creatureDropDown;
         public TMP_Text detailText;
         public TMP_Text clockText;
+        public TMP_Text[] memoryText;
         private bool initialized = false;
         private CreatureBrowserWindow currentWindow;
         private Creature selectedCreature;
@@ -39,10 +42,10 @@ namespace rak.UI
             creatureMap = null;
             if(startingWindow == CreatureBrowserWindow.Creature_Detail_List)
             {
-                InitializeCreatureList(Area.GetAllThings().ToArray());
+                InitializeCreatureList(Area.GetAllCreatures().ToArray());
             }
         }
-        private void InitializeCreatureList(Thing[] allThingsInArea)
+        private void InitializeCreatureList(Creature[] allThingsInArea)
         {
             if (initialized) Debug.LogWarning("Initialize called on CreatureBrowser when already initialized");
             creatureDropDown.ClearOptions();
@@ -54,7 +57,7 @@ namespace rak.UI
                 {
                     TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(allThingsInArea[count].thingName);
                     options.Add(option);
-                    tempMap.Add((Creature)allThingsInArea[count]);
+                    tempMap.Add(allThingsInArea[count]);
                 }
             }
             creatureMap = tempMap.ToArray();
@@ -79,6 +82,45 @@ namespace rak.UI
             Initialize(CreatureBrowserWindow.Creature_Detail_List);
         }
 
+        private void RefreshMemoryText()
+        {
+            int maxRows = 25;
+            int maxColumns = memoryText.Length;
+            if(selectedCreature != null && selectedCreature.IsInitialized())
+            {
+                
+                MemoryInstance[] shortTermMemory = selectedCreature.GetShortTermMemory();
+                int count = 0;
+                for (int column = 0; column < maxColumns; column++)
+                {
+                    StringBuilder columnText = new StringBuilder();
+                    for (int row = 0; row < maxRows; row++)
+                    {
+                        if (shortTermMemory[count] != null)
+                        {
+                            if (shortTermMemory[count].subject.GetThing() != null)
+                            {
+                                columnText.Append(shortTermMemory[count].subject.GetThing().name + "\n");
+                            }
+                            else
+                            {
+                                columnText.Append("Destroyed\n");
+                            }
+
+                        }
+                        else
+                        {
+                            columnText.Append("Empty\n");
+                        }
+                        if(row+1 == maxRows)
+                        {
+                            memoryText[column].text = columnText.ToString();
+                        }
+                        count++;
+                    }
+                }
+            }
+        }
         public void RefreshMainText()
         {
             if(selectedCreature != null && selectedCreature.IsInitialized())
@@ -100,9 +142,13 @@ namespace rak.UI
             }
             int cc = World.CurrentArea.ActiveCreatureCount;
             int tc = World.CurrentArea.ActiveThingCount;
-            clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + Area.GetFriendlyLocalTime()+"\n";
+            clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + Area.GetFriendlyLocalTime()+
+                " Elapsed-" + Area.GetElapsedNumberOfHours() + "\n";
             clockText.text += "Deaths Flight-" + World.CurrentArea.DeathsByFlight + 
                 " Hunger-" + World.CurrentArea.DeathsByHunger;
+
+            // TODO this is ghetto //
+            RefreshMemoryText();
         }
 
         public void SetFocusObject(object focus)

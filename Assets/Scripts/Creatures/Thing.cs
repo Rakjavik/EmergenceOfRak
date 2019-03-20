@@ -13,7 +13,8 @@ namespace rak
         #region ENUMS
         public enum BOOL_FILTERS { USEABLE, CONSUMEABLE, USE_LOCATE_TARGET }
         public enum Base_Types { CREATURE, PLANT, NON_ORGANIC }
-        public enum Thing_Types {Fruit,Wood,Gnat,House }
+        public enum Thing_Types {Fruit,Wood,Gnat,House,FruitTree }
+        public enum Thing_Produces { NA, Food }
 
         #endregion
 
@@ -23,7 +24,9 @@ namespace rak
         public string thingName { get; protected set; }
         public Base_Types baseType { get; private set; }
         public Thing_Types thingType { get; private set; }
+        public Thing_Produces produces { get; private set; }
         public float age { get; private set; }
+        public float maxAge { get; private set; }
         private int weight;
         public float bornAt { get; private set; }
         private bool useable;
@@ -59,12 +62,15 @@ namespace rak
         {
             this.name = name;
             this.thingName = name;
+            // Default to no production //
+            produces = Thing_Produces.NA;
             if (name.Equals("fruit"))
             {
                 baseType = Base_Types.PLANT;
                 thingType = Thing_Types.Fruit;
                 weight = 1;
                 age = 0;
+                maxAge = 60*15;
                 bornAt = Time.time;
                 available = true;
                 if (baseType == Base_Types.PLANT)
@@ -78,6 +84,20 @@ namespace rak
                     useable = false;
                 }
             }
+            else if (name.Equals("FruitTree"))
+            {
+                baseType = Base_Types.PLANT;
+                thingType = Thing_Types.FruitTree;
+                produces = Thing_Produces.Food;
+                name = "FruitTree";
+                weight = 500;
+                age = 0;
+                maxAge = int.MaxValue;
+                bornAt = Time.time;
+                available = false;
+                consumeable = false;
+                useable = false;
+            }
             else
             {
                 baseType = Base_Types.CREATURE;
@@ -85,6 +105,7 @@ namespace rak
                 name = "Gnat";
                 weight = 1;
                 age = 0;
+                maxAge = int.MaxValue;
                 bornAt = Time.time;
                 available = true;
                 if (baseType == Base_Types.PLANT)
@@ -103,10 +124,15 @@ namespace rak
         public void ManualUpdate(float delta)
         {
             age += delta;
-            // Destory if out of bounds //
+            // Move to top if out of bounds //
             if (transform.position.y < Area.MinimumHeight)
             {
                 transform.position = new Vector3(transform.position.x,Area.MaximumHeight,transform.position.z);
+            }
+            if(age >= maxAge)
+            {
+                Debug.Log("Death by age - " + name);
+                DestroyThisThing();
             }
         }
 

@@ -43,7 +43,6 @@ public class RAKWeather : MonoBehaviour
     private void setWeather(WeatherType weather)
     {
         this.currentWeather = weather;
-        Light sunlight = sun.GetComponent<Light>();
         if (currentWeather == WeatherType.Clear)
         {
             skyboxMat = RAKUtilities.getMaterial(RAKUtilities.MATERIAL_SKYBOX_SUNSET);
@@ -52,7 +51,6 @@ public class RAKWeather : MonoBehaviour
             windAudio.volume = 0;
             windZone.windMain = 0;
             audioSource.volume = 0;
-            sunlight.intensity = 1;
         }
         else if (currentWeather == WeatherType.Overcast)
         {
@@ -63,7 +61,6 @@ public class RAKWeather : MonoBehaviour
             audioSource.volume = .4f;
             windZone.mode = WindZoneMode.Directional;
             windZone.windMain = 1;
-            sunlight.intensity = .3f;
         }
         else if (currentWeather == WeatherType.DownPour)
         {
@@ -74,7 +71,6 @@ public class RAKWeather : MonoBehaviour
             audioSource.volume = .8f;
             windZone.mode = WindZoneMode.Spherical;
             windZone.windMain = 2;
-            sunlight.intensity = 1;
         }
         if (currentWeather != WeatherType.Clear)
         {

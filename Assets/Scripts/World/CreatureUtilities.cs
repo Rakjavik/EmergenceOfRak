@@ -67,15 +67,25 @@ namespace rak.world
             }
             Debug.Log("Updates have been staggered");
         }
-        public static Thing[] GetThingsWithinProximityOf(Thing requester, float distance)
+        public static Thing[] GetThingsWithinProximityOf(Thing requester, float distance,Thing[] allThings)
         {
             List<Thing> returnList = new List<Thing>();
-            foreach (Thing thing in Area.GetAllThings())
+            foreach (Thing thing in allThings)
             {
                 if (thing == requester) continue;
-                if (Vector3.Distance(thing.transform.position, requester.transform.position) <= distance)
+                Vector3 thingMatchingY = new Vector3(thing.transform.position.x, 
+                    requester.transform.position.y, thing.transform.position.z);
+                if (Vector3.Distance(thingMatchingY, requester.transform.position) <= distance)
                     returnList.Add(thing);
             }
+            // DEBUG //
+            /*if (returnList.Count > 0)
+            {
+                foreach(Thing inRange in returnList)
+                    Debug.LogWarning("Things in prox - " + inRange.name + 
+                        " dist-" + Vector3.Distance(requester.transform.position,inRange.transform.position));
+            }*/
+
             return returnList.ToArray();
         }
         public static GridSector[] GetPiecesOfTerrainCreatureCanSee(Creature requester,float distance, 

@@ -179,6 +179,7 @@
     <Compile Include="Assets\Scripts\Creatures\FruitTree.cs" />
     <Compile Include="Assets\Scripts\Creatures\Inventory.cs" />
     <Compile Include="Assets\Scripts\Creatures\Memory\Memory.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Memory\MemoryInstance.cs" />
     <Compile Include="Assets\Scripts\Creatures\MiscVariables.cs" />
     <Compile Include="Assets\Scripts\Creatures\Need.cs" />
     <Compile Include="Assets\Scripts\Creatures\Needs.cs" />

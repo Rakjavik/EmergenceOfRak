@@ -43,16 +43,11 @@ namespace rak
                 return;
             }
             ActionStep.FailReason failReason = currentTask.GetPreviousStepsFailReason();
-            // Previous task was failed //
+            // DEPRECATED? Previous task was failed //
             if (failReason != ActionStep.FailReason.NA)
             {
-                if (neededTask == Tasks.CreatureTasks.EAT &&
-                    failReason == ActionStep.FailReason.NoneKnown)
-                {
-                    neededTask = Tasks.CreatureTasks.EXPLORE;
-                }
+                
             }
-            ActionStep[] steps = CreatureConstants.GetTaskList(neededTask);
             startNewTask(neededTask);
         }
         private void startNewTask(Tasks.CreatureTasks neededTask)

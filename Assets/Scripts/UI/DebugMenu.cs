@@ -33,7 +33,7 @@ public class DebugMenu : MonoBehaviour, Menu
     private static void appendDebugLine(string line)
     {
         _debugText += "\n" + line;
-        Debug.Log(line);
+        //Debug.Log(line);
         if (_debugText.Length > maxStringLength)
         {
             _debugText = _debugText.Substring(removeThisManyWhenMaxed);

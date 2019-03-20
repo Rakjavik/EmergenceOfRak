@@ -139,7 +139,7 @@ public class RAKTerrainObject : MonoBehaviour, Resource
                 sizeOverride = new Vector3(5, 15, 5);
                 break;
             case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_1:
-                maxSteepness = 500;
+                maxSteepness = 35;
                 minimiumDistanceBetweenObjects = 20;
                 minDistFromEdge = 0;
                 resourceType = ResourceType.Matter;
@@ -177,6 +177,56 @@ public class RAKTerrainObject : MonoBehaviour, Resource
                 freeRotate = false;
                 numberOfTimesToSearchForLocation = 250;
                 sizeOverride = new Vector3(5, 15, 5);
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_1:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 20;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 3;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = Vector3.zero;
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_2:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 20;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 3;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = Vector3.zero;
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_3:
+                maxSteepness = 15;
+                minimiumDistanceBetweenObjects = 20;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 2;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = Vector3.zero;
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 20;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 3;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = Vector3.zero;
+                break;
+            case RAKUtilities.NON_TERRAIN_OBJECT_FRUIT_TREE:
+                maxSteepness = 35;
+                minimiumDistanceBetweenObjects = 20;
+                minDistFromEdge = 0;
+                resourceType = ResourceType.Matter;
+                heightOffset = 3;
+                freeRotate = false;
+                numberOfTimesToSearchForLocation = 250;
+                sizeOverride = Vector3.zero;
                 break;
         }
     }

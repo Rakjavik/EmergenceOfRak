@@ -28,6 +28,7 @@ namespace rak
         public const string NON_TERRAIN_OBJECT_LOW_POLY_BUSH_2 = "Bush-2-Green";
         public const string NON_TERRAIN_OBJECT_LOW_POLY_BUSH_3 = "Bush-3-Green";
         public const string NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4 = "Bush-4-Green";
+        public const string NON_TERRAIN_OBJECT_FRUIT_TREE = "FruitTree";
         public const string AUDIO_CLIP_RAIN_LIGHT = "rain_light";
         public const string AUDIO_CLIP_WIND_MEDIUM = "wind_normal1";
         public const string MATERIAL_SKYBOX_FOREST = "forest";
@@ -46,7 +47,8 @@ namespace rak
             NON_TERRAIN_OBJECT_TREE01,
             NON_TERRAIN_OBJECT_TREE02,
             NON_TERRAIN_OBJECT_TREE03,
-            NON_TERRAIN_OBJECT_TREE04_3PACK
+            NON_TERRAIN_OBJECT_TREE04_3PACK,
+            NON_TERRAIN_OBJECT_FRUIT_TREE
         };
         public static int GetNonTerrainObjectIndex(string objectName)
         {

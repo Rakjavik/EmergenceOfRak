@@ -10,8 +10,9 @@ namespace rak
         public enum Actions { None, Wait, Locate, MoveTo, Use, Add, Eat, Land, Sleep }
         public enum FailReason
         {
-            NA, NoneKnown, InfinityDistance, MoveToWithNoDestination,
-            FailureAddingToInventory, ExceededTimeLimit, CouldntGetToTarget
+            NA, NoKnownFoodProducer, InfinityDistance, MoveToWithNoDestination,
+            FailureAddingToInventory, ExceededTimeLimit, CouldntGetToTarget,
+            NoKnownFood
         }
 
         private Actions action;
@@ -92,7 +93,7 @@ namespace rak
                     if (target == null)
                     {
                         // Target doesn't know of any consumables //
-                        failReason = FailReason.NoneKnown;
+                        failReason = FailReason.NoKnownFood;
                         status = Tasks.TASK_STATUS.Failed;
                         return;
                     }
@@ -176,7 +177,8 @@ namespace rak
                         status = Tasks.TASK_STATUS.Failed;
                         return;
                     }
-
+                    if (associatedTask == Tasks.CreatureTasks.MOVE_AND_OBSERVE)
+                        performer.RequestObservationUpdate();
                     // Raycast if we're close enough to the target to where we should be able to see it //
                     float distanceBeforeRayCastCheckOnTarget = performer.miscVariables
                         [MiscVariables.CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below];
@@ -186,7 +188,6 @@ namespace rak
                         distanceToCompleteArrival = performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached();
                     else
                         distanceToCompleteArrival = 50;
-                    //if (associatedTask == Tasks.TASKS.EXPLORE)
                     if (performer.getDistanceFromDestination() <= distanceToCompleteArrival)
                     {
                         status = Tasks.TASK_STATUS.Complete;
@@ -303,6 +304,10 @@ namespace rak
         public bool isStatus(Tasks.TASK_STATUS status)
         {
             return this.status == status;
+        }
+        public void ResetAgentDestionation()
+        {
+            creatureAgentDestinationHasBeenSet = false;
         }
         #endregion
     }

@@ -6,7 +6,7 @@ namespace rak
 {
     public class FruitTree : Thing
     {
-        private float spawnsThingEvery = 180;
+        private float spawnsThingEvery = 360;
         private float timeSincelastSpawned { get; set; }
         private List<GameObject> fruitInstances { get; set; }
 
@@ -21,14 +21,14 @@ namespace rak
             if(timeSincelastSpawned == -1)
                 timeSincelastSpawned = Random.Range(0, spawnsThingEvery);
             timeSincelastSpawned += Time.deltaTime;
-            if(timeSincelastSpawned >= spawnsThingEvery)
+            if(timeSincelastSpawned >= spawnsThingEvery && fruitInstances.Count == -1)
             {
                 Vector3 newPosition = new Vector3(Random.Range(-5,5), 10, Random.Range(-5, 5));
                 newPosition += transform.position;
                 GameObject fruit = World.CurrentArea.addThingToWorld("fruit", newPosition, false);
                 fruitInstances.Add(fruit);
                 timeSincelastSpawned = 0;
-                Debug.Log("Fruit from tree - " + gameObject.name);
+                //Debug.Log("Fruit from tree - " + gameObject.name);
             }
         }
     }

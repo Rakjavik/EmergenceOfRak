@@ -24,26 +24,32 @@ public partial class RAKTerrainMaster
                 {RAKUtilities.NON_TERRAIN_OBJECT_HOUSE1,RAKUtilities.NON_TERRAIN_OBJECT_HOUSE2,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_1,
                 RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_2,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_3,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_4,
                 RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_1,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_2,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_3,
-                RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4},
+                RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4,RAKUtilities.NON_TERRAIN_OBJECT_FRUIT_TREE},
                 new int[] {
                 5, // House1
                 5, // House2
-                1, // Tree01
-                1, // Tree02
-                1, // Tree03
-                1, // Tree04
-                20, // Bush01
-                0, // Bush02
-                0, // Bush03
-                0 // Bush04
+                0, // Tree01
+                0, // Tree02
+                0, // Tree03
+                0, // Tree04
+                0, // Bush01
+                20, // Bush02
+                20, // Bush03
+                0, // Bush04
+                20 // Fruit Tree
                 });
             biome.depth = 80;
             biome.numberOfTrees = 0;
             biome.offsetX = UnityEngine.Random.Range(0, 100);
             biome.offsetY = UnityEngine.Random.Range(0, 100);
-            biome.scale = UnityEngine.Random.Range(1, 3);
+            biome.scale = UnityEngine.Random.Range(1, 1.5f);
             biome.type = BIOMETYPE.Forest;
             return biome;
+        }
+        public void GetNewOffsets()
+        {
+            offsetX = UnityEngine.Random.Range(0, 100);
+            offsetY = UnityEngine.Random.Range(0, 100);
         }
         public RAKBiome(string[] prefabNames, int[] objectCounts)
         {

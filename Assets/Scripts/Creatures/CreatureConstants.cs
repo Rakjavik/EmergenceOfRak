@@ -77,7 +77,7 @@ namespace rak.creatures
             Dictionary<Needs.NEEDTYPE, Need> currentNeeds = new Dictionary<Needs.NEEDTYPE, Need>();
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
-                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .25f, false));
+                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .1f, false));
                 currentNeeds.Add(Needs.NEEDTYPE.REPRODUCTION, new Need(Needs.NEEDTYPE.REPRODUCTION, 1, false));
                 currentNeeds.Add(Needs.NEEDTYPE.SLEEP, new Need(Needs.NEEDTYPE.SLEEP, 100f, true));
                 currentNeeds.Add(Needs.NEEDTYPE.TEMPERATURE, new Need(Needs.NEEDTYPE.TEMPERATURE, 1, false));
@@ -112,7 +112,7 @@ namespace rak.creatures
                     1, // Size 
                     1, // Growth
                     1, // Insulation
-                    10, // Amount of Food Required
+                    1, // Amount of Food Required
                     10, // Speed
                     1, // Reproduction Rate
                     1, // Gestation Time
@@ -313,14 +313,14 @@ namespace rak.creatures
 
         public static float GetMaxAllowedTime(ActionStep.Actions action)
         {
-            float maxAllowed = .30f;
+            float maxAllowed = 30f; // Default to 30 seconds
             if (action == ActionStep.Actions.Eat)
             {
-                maxAllowed = 1f; // 1 minute
+                maxAllowed = 60f; // 1 minute
             }
             else if (action == ActionStep.Actions.Land)
             {
-                maxAllowed = 1f; // one minute
+                maxAllowed = 60f; // one minute
             }
             else if (action == ActionStep.Actions.Sleep)
             {
@@ -360,6 +360,11 @@ namespace rak.creatures
                 steps[0] = new ActionStep(ActionStep.Actions.Locate, task, Thing.Base_Types.PLANT);
                 steps[1] = new ActionStep(ActionStep.Actions.MoveTo, task);
             }
+            else if (task == Tasks.CreatureTasks.MOVE_AND_OBSERVE)
+            {
+                steps = new ActionStep[1];
+                steps[0] = new ActionStep(ActionStep.Actions.MoveTo, task,30);
+            }
             return steps;
         }
 
@@ -368,7 +373,8 @@ namespace rak.creatures
             return Tasks.CreatureTasks.EXPLORE;
         }
         // EXCEPTION ACTIONS, Do these when tasks fail for a certain reason //
-        public static ActionStep[] GetExceptionActions(Tasks.CreatureTasks task, ActionStep.FailReason failReason)
+        public static ActionStep[] GetExceptionActions(Tasks.CreatureTasks task, ActionStep.FailReason failReason,
+            Creature creature)
         {
             Tasks.CreatureTasks exceptionTask = Tasks.CreatureTasks.NONE;
             // Couldn't locate Sleeping spot //
@@ -377,15 +383,49 @@ namespace rak.creatures
                 exceptionTask = Tasks.CreatureTasks.EXPLORE;
             }
             // Don't know of any food //
-            if (task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoneKnown)
+            if (task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoKnownFoodProducer)
             {
                 exceptionTask = Tasks.CreatureTasks.EXPLORE;
             }
+            else if (task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoKnownFood)
+            {
+                exceptionTask = Tasks.CreatureTasks.MOVE_AND_OBSERVE;
+            }
             ActionStep[] steps = GetTaskList(exceptionTask);
             // If we're exploring looking for food, only explore for a little bit //
-            if (task == Tasks.CreatureTasks.EAT && exceptionTask == Tasks.CreatureTasks.EXPLORE)
+            if (task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoKnownFoodProducer)
             {
-                steps[1].OverrideMaxTimeAllowed(6f);
+                //steps[1].OverrideMaxTimeAllowed(6f);
+            }
+            else if (task == Tasks.CreatureTasks.EAT && failReason == ActionStep.FailReason.NoKnownFood)
+            {
+                Thing[] foodProducers = creature.GetKnownConsumeableProducers();
+                
+                List<Thing> validThings = new List<Thing>();
+                for (int count = 0; count < foodProducers.Length; count++)
+                {
+                    Thing producer = foodProducers[count];
+                    //Debug.LogWarning("Distance - " + Vector3.Distance(producer.transform.position, creature.transform.position));
+                    if(Vector3.Distance(producer.transform.position,creature.transform.position) > 300)
+                    {
+                        validThings.Add(producer);
+                    }
+                }
+                Thing foodProducer = null;
+                if(validThings.Count > 0)
+                {
+                    foodProducer = validThings[Random.Range(0, validThings.Count)];
+                }
+                if (foodProducer != null)
+                {
+                    steps[0].SetTargetPosition(foodProducer.transform.position);
+                    creature.SetNavMeshAgentDestination(foodProducer.transform.position);
+                }
+                else
+                {
+                    //Debug.LogWarning("NO valid producers");
+                    return GetExceptionActions(Tasks.CreatureTasks.EAT, ActionStep.FailReason.NoKnownFoodProducer, creature);
+                }
             }
             return steps;
         }

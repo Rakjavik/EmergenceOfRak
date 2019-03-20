@@ -74,7 +74,11 @@ public partial class RAKTerrainMaster : MonoBehaviour
             // If no save data available, go ahead and generate a new terrain //
             if (!saveDataAvail) //  generate //
             {
-                td = generateTerrain(width, height, currentBiome.depth, currentBiome.scale, currentBiome.offsetX, currentBiome.offsetY);
+                TerrainData previousTD = null;
+                if (count > 0)
+                    currentBiome.GetNewOffsets();
+                td = generateTerrain(width, height, currentBiome.depth, currentBiome.scale, currentBiome.offsetX, 
+                    currentBiome.offsetY);
                 generateSplatPrototypes(td);
             }
             // Save data is available //
@@ -234,6 +238,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
         TerrainData data = new TerrainData();
         data.heightmapResolution = width;
         data.size = new Vector3(width, depth, height);
+        float[,] previousTDHeights = null;
         data.SetHeights(0, 0, generateHeights(width, height, scale, offsetX, offsetY));
         return data;
     }
@@ -368,9 +373,12 @@ public partial class RAKTerrainMaster : MonoBehaviour
                 }
                 if (locationValid)
                 {
-                    details[currentDetailCount] = (GameObject)Instantiate(prefab, new Vector3(x + terrain.transform.position.x, y + detailHeight, z + terrain.transform.position.z),
+                    details[currentDetailCount] = (GameObject)Instantiate(prefab, new Vector3
+                        (x + terrain.transform.position.x, y + detailHeight, z + terrain.transform.position.z),
                         Quaternion.identity);//, 3);
+                    details[currentDetailCount].gameObject.name = prefab.name;
                     details[currentDetailCount].transform.SetParent(terrain.transform);
+                    Debug.LogWarning("Instantiated - " + details[currentDetailCount].name);
                     //details[currentDetailCount].GetComponent<RAKTerrainObject>().setPrefabObjectName(prefab.name);
                     //details[currentDetailCount].transform.position = new Vector3(x + terrain.transform.position.x, y + detailHeight, z + terrain.transform.position.z);
                     if (!terrainObject.freeRotate)
@@ -382,7 +390,6 @@ public partial class RAKTerrainMaster : MonoBehaviour
                         details[currentDetailCount].transform.rotation = Quaternion.Euler(new Vector3(UnityEngine.Random.Range(0, 360),
                             UnityEngine.Random.Range(0, 360), UnityEngine.Random.Range(0, 360)));
                     }
-
                 }
                 currentDetailCount++;
             }
@@ -555,7 +562,8 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     private float[,] generateHeights(int width, int height, float scale, float offsetX, float offsetY)
     {
-        float[,] heights = new float[width, height];
+        float[,] heights;
+        heights = new float[width, height];
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -627,11 +635,11 @@ public partial class RAKTerrainMaster : MonoBehaviour
                         }
                         else if (nCount == 1) // RIGHT
                         {
-                            seamStartPoints[countLong] = thisTerrainsEdge[countLong, 0];
+                            seamStartPoints[countLong] = targetTerrainsEdge[countLong, 0];
                         }
                         else if (nCount == 2) // DOWN
                         {
-                            seamStartPoints[countLong] = thisTerrainsEdge[0, countLong];
+                            seamStartPoints[countLong] = targetTerrainsEdge[0, countLong];
                         }
                         else if (nCount == 3) // UP
                         {
@@ -646,16 +654,16 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     else if (nCount == 1) // RIGHT
                     {
                         seam(thisTerrainsEdge, seamStartPoints);
-                        seam(targetTerrainsEdge, seamStartPoints);
+                        //seam(targetTerrainsEdge, seamStartPoints);
                     }
                     else if (nCount == 2) // DOWN
                     {
                         thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
                         seam(thisTerrainsEdge, seamStartPoints);
                         thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
-                        targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
-                        seam(targetTerrainsEdge, seamStartPoints);
-                        targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
+                        //targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
+                        //seam(targetTerrainsEdge, seamStartPoints);
+                        //targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
                     }
                     else if (nCount == 3) // UP
                     {
@@ -681,20 +689,20 @@ public partial class RAKTerrainMaster : MonoBehaviour
         }
         return newArray;
     }
-    private void seam(float[,] edge, float[] seamPoints)
+    private void seam(float[,] edge, float[] destSeamPoints)
     {
         int longSize = edge.GetLength(0);
         int shortSize = edge.GetLength(1);
 
         for (int longCount = 0; longCount < longSize; longCount++)
         {
-            float step = (seamPoints[longCount] - edge[longCount, shortSize - 1]) / shortSize;
+            float step = (destSeamPoints[longCount] - edge[longCount, shortSize - 1]) / shortSize;
             for (int shortCount = 0; shortCount < shortSize; shortCount++)
             {
                 if (shortCount > 0)
                     edge[longCount, shortCount] = edge[longCount, shortCount - 1] + step;
                 else
-                    edge[longCount, shortCount] = seamPoints[longCount];
+                    edge[longCount, shortCount] = destSeamPoints[longCount];
             }
         }
     }
