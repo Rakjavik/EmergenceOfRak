@@ -85,6 +85,7 @@ namespace rak
             // LOCATE //
             if (action == Actions.Locate)
             {
+                performer.RequestObservationUpdate();
                 // LOCATE EAT //
                 if (associatedTask == Tasks.CreatureTasks.EAT)
                 {

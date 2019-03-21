@@ -107,7 +107,11 @@ namespace rak.creatures
         }
         private void Initialize(string name, Area area)
         {
-            if (initialized) return;
+            if (initialized)
+            {
+                Debug.LogError("Call to initialize when already initialized");
+                return;
+            }
             initialize(name);
             this.currentArea = area;
             taskManager = new TaskManager(this);
@@ -188,10 +192,6 @@ namespace rak.creatures
                         awaitingObservation = false;
                     }
                 }
-                if (!CreatureConstants.CreatureIsIncapacitatedState(currentState))
-                {
-                    observeSurroundings();
-                }
                 // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
                 if (currentState == CREATURE_STATE.IDLE)
                 {
@@ -247,6 +247,10 @@ namespace rak.creatures
         {
             agent.OnCollisionExit(collision);
         }
+        private void OnDisable()
+        {
+            thingsWithinProximityCache.Dispose();
+        }
         #endregion
 
         public Rigidbody GetCreatureAgentBody()
@@ -283,7 +287,7 @@ namespace rak.creatures
                     failedStep.failReason == ActionStep.FailReason.InfinityDistance)
                 {
                     AddMemory(Verb.MOVEDTO, failedStep._targetThing, true);
-                    Debug.LogWarning("Memory of couldnt move to " + failedStep._targetThing.thingName);
+                    //Debug.LogWarning("Memory of couldnt move to " + failedStep._targetThing.thingName);
                 }
             }
         }
@@ -291,19 +295,13 @@ namespace rak.creatures
         private void observeSurroundings()
         {
             // Observe Things //
-            /*
-            float thingDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
-            Thing[] allThingsCopy = Area.GetAllThingsCopy();
-            Thing[] thingsWithinProximity = CreatureUtilities.GetThingsWithinProximityOf(this, thingDistance,
-                Area.GetAllThingsSync().ToArray());
-            */
             if (lastObserved < observeEvery || awaitingObservation || !initialized)
                 return;
             lastObserved = 0;
             ObserveJob job = new ObserveJob();
             job.observeDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
             job.origin = transform.position;
-            job.allThings = Area.GetHistoricalThings();
+            job.allThings = Area.GetBlittableThings();
             job.thingsWithinReach = thingsWithinProximityCache;
             observeHandle = job.Schedule();
             Area.AddJobHandle(observeHandle);

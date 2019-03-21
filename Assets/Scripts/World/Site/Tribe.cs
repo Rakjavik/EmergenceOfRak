@@ -57,7 +57,7 @@ namespace rak.world
 
         public Thing[] GetThingsOwnedByTribe()
         {
-            Thing[] allThings = Area.GetAllThingsSync().ToArray();
+            Thing[] allThings = Area.GetAllThings().ToArray();
             List<Thing> owned = new List<Thing>();
 
             foreach (Thing thing in allThings)

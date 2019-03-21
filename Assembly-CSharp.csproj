@@ -165,6 +165,7 @@
     <Compile Include="Assets\Scripts\Creatures\Agent\BrakePart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\BuildingAnimation.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\CreatureAgent.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\EngineMovementVariable.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\EngineMovementVariables.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\EnginePart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\Part.cs" />

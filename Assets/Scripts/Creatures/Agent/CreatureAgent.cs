@@ -260,61 +260,6 @@ namespace rak.creatures
             return Vector3.Distance(creature.transform.position, Destination);
         }
 
-
-        /*public float GetDistanceFromGround()
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(creature.transform.position, Vector3.down, out hit))
-            {
-                float hitY = hit.point.y;
-                return creature.transform.position.y - hitY;
-            }
-            return Mathf.Infinity;
-        }
-
-        public Vector3 GetNextDownYCollisionPoint()
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(creature.transform.position, Vector3.down, out hit))
-            {
-                return hit.point;
-            }
-            else
-            {
-                Vector3 dontMoveKeepSustainHeight = creature.transform.position;
-                dontMoveKeepSustainHeight.y = sustainHeight;
-                return dontMoveKeepSustainHeight;
-            }
-        }
-
-        public Vector2 GetDistanceFromCollisionLeftRight()
-        {
-            Vector2 returnPoints = new Vector2();
-            Transform creaturePosition = creature.transform;
-            RaycastHit hit;
-            float distanceLeft = float.MaxValue, distanceRight = float.MaxValue;
-            float rayLength = 2;
-            if (Physics.Raycast(creaturePosition.position, -creature.transform.right, out hit, rayLength))
-            {
-                if (DEBUG)
-                    Debug.DrawLine(creaturePosition.position, hit.point, Color.white, .5f);
-                distanceLeft = Vector3.Distance(creaturePosition.position, hit.point);
-            }
-            else
-            {
-                return new Vector2(Mathf.Infinity, 0);
-            }
-            if (Physics.Raycast(creaturePosition.position, creature.transform.right, out hit, rayLength))
-            {
-                if (DEBUG)
-                    Debug.DrawLine(creaturePosition.position, hit.point, Color.white, .5f);
-                distanceRight = Vector3.Distance(creaturePosition.position, hit.point);
-            }
-            returnPoints.x = distanceLeft;
-            returnPoints.y = distanceRight;
-            return returnPoints;
-        }*/
-        
         private void _RaycastTrajectory()
         {
             int trajIndex = (int)CreatureUtilities.RayCastDirection.VELOCITY;

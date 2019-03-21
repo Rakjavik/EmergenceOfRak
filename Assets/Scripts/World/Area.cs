@@ -1,7 +1,6 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
 using System.Collections.Generic;
-using System.Text;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -12,6 +11,7 @@ namespace rak.world
     public class Area
     {
         private static List<Thing> allThings;
+        private static Dictionary<System.Guid, Thing> thingMasterList;
         private static List<JobHandle> jobHandles;
         public static void AddJobHandle(JobHandle handle)
         {
@@ -22,7 +22,6 @@ namespace rak.world
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
         private static List<Thing> _removeTheseThings = new List<Thing>();
-        private static readonly object _allThingsLock = new object();
         private static float updateSunEvery = .1f;
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
@@ -31,13 +30,8 @@ namespace rak.world
 
         public static Thing GetThingByGUID(System.Guid guid)
         {
-            for(int count = 0; count < allThings.Count; count++)
-            {
-                if(allThings[count].guid == guid)
-                {
-                    return allThings[count];
-                }
-            }
+            if(thingMasterList.ContainsKey(guid))
+                return thingMasterList[guid];
             return null;
         }
 
@@ -58,18 +52,17 @@ namespace rak.world
         }
         public static readonly float dayLength = 240;
 
-        public static void AddThingToAllThingsSync(Thing thingToAdd)
+        public static void AddThingToAllThings(Thing thingToAdd)
         {
-            lock (_allThingsLock)
-            {
-                allThings.Add(thingToAdd);
-            }
+            allThings.Add(thingToAdd);
+            thingMasterList.Add(thingToAdd.guid, thingToAdd);
+            //Debug.LogWarning("Adding " + thingToAdd.name);
         }
-        public static NativeArray<BlittableThing> GetHistoricalThings()
+        public static NativeArray<BlittableThing> GetBlittableThings()
         {
             return allThingsHistoricCache;
         }
-        private static void updateAllHistoricThings()
+        private static void updateAllBlittableThings()
         {
             long start = System.DateTime.Now.ToBinary();
             for(int count = 0; count < jobHandles.Count; count++)
@@ -91,25 +84,19 @@ namespace rak.world
             }
             //Debug.Log("Area cache update time - " + (System.DateTime.Now.ToBinary() - start));
         }
-        public static List<Thing> GetAllThingsSync()
+        public static List<Thing> GetAllThings()
         {
-            lock (_allThingsLock)
-            {
-                return allThings;
-            }
+            return allThings;
         }
         public static List<Creature> GetAllCreatures()
         {
             List<Creature> returnList = new List<Creature>();
-            lock (_allThingsLock)
+            List<Thing> allThingsLocal = GetAllThings();
+            foreach (Thing thing in allThingsLocal)
             {
-                List<Thing> allThingsLocal = GetAllThingsSync();
-                foreach (Thing thing in allThingsLocal)
+                if(thing is Creature)
                 {
-                    if(thing is Creature)
-                    {
-                        returnList.Add((Creature)thing);
-                    }
+                    returnList.Add((Creature)thing);
                 }
             }
             return returnList;
@@ -169,17 +156,22 @@ namespace rak.world
             FruitTree[] trees = GameObject.FindObjectsOfType<FruitTree>();
             for(int count = 0; count < trees.Length; count++)
             {
-                AddThingToAllThingsSync(trees[count]);
                 trees[count].initialize("FruitTree");
+                AddThingToAllThings(trees[count]);
             }
             Debug.LogWarning("Updates balanced");
         }
         public void Initialize(Tribe tribe)
         {
-            if (initialized) return;
+            if (initialized)
+            {
+                Debug.LogError("Area called to initialize when already initialized");
+                return;
+            }
             initialized = true;
             jobHandles = new List<JobHandle>();
             allThingsHistoricCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
+            thingMasterList = new Dictionary<System.Guid, Thing>();
             if (debug) // DEBUG
             {
                 InitializeDebug(tribe);
@@ -212,68 +204,27 @@ namespace rak.world
                     Thing thing = terrainObject.gameObject.GetComponent<Thing>();
                     if (thing != null)
                     {
-                        allThings.Add(thing);
                         thing.initialize(thing.name);
+                        AddThingToAllThings(thing);
                     }
                 }
             }
             int populationToCreate = tribe.GetPopulation();
-            int MAXPOP = 200;
+            int MAXPOP = 300;
             if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)
             {
-                addCreatureToWorld("Gnat");
+                AddCreatureToWorld("Gnat");
             }
         }
 
-        public void Update(float delta)
-        {
-            sinceLastSunUpdated += delta;
-            // AREA OWNS THE MASTER LOCK ON ALL THINGS //
-            lock (_allThingsLock)
-            {
-                foreach (Thing thing in allThings)
-                {
-                    thing.ManualUpdate(delta);
-                    if (thing is Creature)
-                    {
-                        Creature creature = (Creature)thing;
-                        if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
-                        {
-                            _removeTheseThings.Add(creature);
-                            creature.DestroyAllParts();
-                            Debug.LogWarning("Removed a dead creature");
-                            DebugMenu.AppendDebugLine("Removed a dead creature", creature);
-                        }
-                    }
-                }
-                foreach (Thing thing in _removeTheseThings)
-                {
-                    allThings.Remove(thing);
-                    thing.gameObject.SetActive(false);
-                    thing.transform.SetParent(disabledContainer.transform);
-                }
-                _removeTheseThings = new List<Thing>();
-                updateAllHistoricThings();
-            }
-            foreach (Tribe tribe in tribesPresent)
-            {
-                tribe.Update();
-            }
-            AreaLocalTime += delta;
-            if(sinceLastSunUpdated > updateSunEvery)
-            {
-                float timeOfDay = (AreaLocalTime) % dayLength;
-                sun.rotation = Quaternion.Euler(new Vector3((timeOfDay/dayLength)*360, 0,0));
-                sinceLastSunUpdated = 0;
-            }
-        }
+        
 
         public Thing[] findConsumeable(CONSUMPTION_TYPE consumptionType)
         {
             List<Thing> things = new List<Thing>();
-            List<Thing> allThingsLocal = GetAllThingsSync();
+            List<Thing> allThingsLocal = GetAllThings();
             {
                 foreach (Thing thing in allThingsLocal)
                 {
@@ -285,7 +236,7 @@ namespace rak.world
             }
             return things.ToArray();
         }
-        public void addCreatureToWorld(string nameOfPrefab)
+        public void AddCreatureToWorld(string nameOfPrefab)
         {
             addCreatureToWorld(nameOfPrefab, GetRandomGridSector().GetRandomPositionInSector,false);
         }
@@ -311,7 +262,7 @@ namespace rak.world
                 float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
-            AddThingToAllThingsSync(newThing.GetComponent<Thing>());
+            AddThingToAllThings(newThing.GetComponent<Thing>());
         }
 
         private void addCreatureToWorld(string nameOfPrefab, Vector3 position, bool generatePosition)
@@ -334,7 +285,7 @@ namespace rak.world
                 float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
-            AddThingToAllThingsSync(newThing.GetComponent<Thing>());
+            AddThingToAllThings(newThing.GetComponent<Thing>());
         }
         public RAKTerrain GetClosestTerrainToPoint(Vector3 point)
         {
@@ -358,15 +309,12 @@ namespace rak.world
             {
                 newThing.transform.position = GetRandomPositionOnNavMesh();
             }
-            AddThingToAllThingsSync(newThing.GetComponent<Thing>());
+            AddThingToAllThings(newThing.GetComponent<Thing>());
             return newThing;
         }
         public void RemoveThingFromWorld(Thing thing)
         {
-            lock (_allThingsLock)
-            {
-                _removeTheseThings.Add(thing);
-            }
+            _removeTheseThings.Add(thing);
         }
         public Vector3 GetRandomPositionOnNavMesh(Vector3 startPosition,float maxDistance)
         {
@@ -421,16 +369,10 @@ namespace rak.world
             index = Random.Range(0, sectorsInTerrain.Length);
             return sectorsInTerrain[index];
         }
+
         private void dumpDisabledObjectsToDisk()
         {
-            List<BlittableThing> makeIntoHistory = new List<BlittableThing>();
-            for(int count = 0; count < disabledContainer.transform.childCount; count++)
-            {
-                Thing thing = disabledContainer.transform.GetChild(count).GetComponent<Thing>();
-                //makeIntoHistory.Add(new BlittableThing(thing));
-                GameObject.Destroy(thing.gameObject);
-            }
-            string json = JsonUtility.ToJson(makeIntoHistory.ToArray());
+            throw new System.NotImplementedException();
         }
         public int ActiveCreatureCount { get
             {
@@ -463,5 +405,47 @@ namespace rak.world
             }
             return deaths;
         }
+
+        #region MONO METHODS
+        public void Update(float delta)
+        {
+            sinceLastSunUpdated += delta;
+            // AREA OWNS THE MASTER LOCK ON ALL THINGS //
+            foreach (Thing thing in allThings)
+            {
+                thing.ManualUpdate(delta);
+                if (thing is Creature)
+                {
+                    Creature creature = (Creature)thing;
+                    if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
+                    {
+                        _removeTheseThings.Add(creature);
+                        creature.DestroyAllParts();
+                        Debug.LogWarning("Removed a dead creature");
+                        DebugMenu.AppendDebugLine("Removed a dead creature", creature);
+                    }
+                }
+            }
+            foreach (Thing thing in _removeTheseThings)
+            {
+                allThings.Remove(thing);
+                thing.gameObject.SetActive(false);
+                thing.transform.SetParent(disabledContainer.transform);
+            }
+            _removeTheseThings = new List<Thing>();
+            updateAllBlittableThings();
+            foreach (Tribe tribe in tribesPresent)
+            {
+                tribe.Update();
+            }
+            AreaLocalTime += delta;
+            if (sinceLastSunUpdated > updateSunEvery)
+            {
+                float timeOfDay = (AreaLocalTime) % dayLength;
+                sun.rotation = Quaternion.Euler(new Vector3((timeOfDay / dayLength) * 360, 0, 0));
+                sinceLastSunUpdated = 0;
+            }
+        }
+        #endregion
     }
 }

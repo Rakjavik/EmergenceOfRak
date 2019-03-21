@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace rak.creatures
 {
-    public class EngineMovementVariables : PartEngineVariables
+
+    public class EngineMovementVariables
     {
         public MovementState CurrentState { get; set; }
         public float MaxForce { get; set; }
@@ -16,8 +17,7 @@ namespace rak.creatures
         private Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables;
 
         public EngineMovementVariables(CreatureAgent agent,
-            Direction flightDirection, Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables) :
-            base(Vector3.zero, PartMovesWith.NA)
+            Direction flightDirection, Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables)
         {
             this.miscVariables = miscVariables;
             this.flightDirection = flightDirection;
@@ -26,7 +26,6 @@ namespace rak.creatures
         public void Initialize(CreatureAgent attachedAgent, Creature creature,
             Rigidbody attachedBody)
         {
-            currentConstraints = attachedBody.constraints;
             CurrentState = MovementState.UNINITIALIZED;
             if (flightDirection == Direction.Y)
                 MaxForce = attachedAgent.maxForce.y;
