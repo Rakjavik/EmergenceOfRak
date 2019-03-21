@@ -21,7 +21,7 @@ namespace rak
             if(timeSincelastSpawned == -1)
                 timeSincelastSpawned = Random.Range(0, spawnsThingEvery);
             timeSincelastSpawned += Time.deltaTime;
-            if(timeSincelastSpawned >= spawnsThingEvery && fruitInstances.Count == -1)
+            if(timeSincelastSpawned >= spawnsThingEvery)// && fruitInstances.Count == -1)
             {
                 Vector3 newPosition = new Vector3(Random.Range(-5,5), 10, Random.Range(-5, 5));
                 newPosition += transform.position;

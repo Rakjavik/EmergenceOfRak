@@ -5,7 +5,7 @@ namespace rak.creatures
 {
     public abstract class CreatureConstants
     {
-        public static bool IsThisFarAwayFromWallsIfNotFixIt(float distance, Vector3 point)
+        /*public static bool IsThisFarAwayFromWallsIfNotFixIt(float distance, Vector3 point)
         {
             return IsThisFarAwayFromAnyWalls(distance, point, true);
         }
@@ -58,7 +58,7 @@ namespace rak.creatures
         {
             if (point == Vector3.zero) return false;
             return IsThisFarAwayFromAnyWalls(distance, point, false);
-        }
+        }*/
 
         public static bool CreatureIsIncapacitatedState(Creature.CREATURE_STATE state)
         {

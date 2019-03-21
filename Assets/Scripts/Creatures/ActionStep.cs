@@ -109,25 +109,7 @@ namespace rak
                 // LOCATE SLEEP //
                 else if (associatedTask == Tasks.CreatureTasks.SLEEP)
                 {
-                    // Search for target ground //
-                    float boxSizeMult = performer.miscVariables[MiscVariables.CreatureMiscVariables.Agent_Locate_Sleep_Area_BoxCast_Size_Multipler];
-                    Vector3 raycastHit = performer.BoxCastNotMeGetClosestPoint(5, Vector3.down);
-
-                    if (raycastHit != Vector3.positiveInfinity)
-                    {
-                        raycastHit.y = performer.transform.position.y;
-                        _targetPosition = raycastHit;
-                        performer.GetCreatureAgent().SetDestination(_targetPosition);
-                        creatureAgentDestinationHasBeenSet = true;
-                        status = Tasks.TASK_STATUS.Complete;
-                        return;
-                    }
-                    else
-                    {
-                        // Get's picked up by the TaskManager Update() //
-                        status = Tasks.TASK_STATUS.Failed;
-                        failReason = FailReason.InfinityDistance;
-                    }
+                    
                 }
                 // LOCATE EXPLORE //
                 else if (associatedTask == Tasks.CreatureTasks.EXPLORE)
@@ -164,7 +146,7 @@ namespace rak
                 if (!creatureAgentDestinationHasBeenSet)
                 {
                     failReason = FailReason.MoveToWithNoDestination;
-                    Debug.LogError("ERROR MoveTo with no destination");
+                    Debug.LogWarning("ERROR MoveTo with no destination");
                     status = Tasks.TASK_STATUS.Failed;
                     return;
                 }
@@ -194,7 +176,7 @@ namespace rak
                         return;
                     }
                     // Haven't arrived yet
-                    else if (_targetThing != null)
+                    /*else if (_targetThing != null)
                     {
                         // Check if we're close enough to start raycasting //
                         if (performer.getDistanceFromDestination() < distanceBeforeRayCastCheckOnTarget)
@@ -217,7 +199,7 @@ namespace rak
                         {
                             performer.GetCreatureAgent().SetIgnoreCollisions(false);
                         }
-                    }
+                    }*/
                 }
             }
             // ADD //

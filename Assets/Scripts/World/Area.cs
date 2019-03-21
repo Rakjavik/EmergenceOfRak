@@ -1,8 +1,9 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
-using rak.UI;
 using System.Collections.Generic;
 using System.Text;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -11,12 +12,35 @@ namespace rak.world
     public class Area
     {
         private static List<Thing> allThings;
+        private static List<JobHandle> jobHandles;
+        public static void AddJobHandle(JobHandle handle)
+        {
+            jobHandles.Add(handle);
+        }
+        private static NativeArray<BlittableThing> allThingsHistoricCache;
+        private static readonly int MAX_CONCURRENT_THINGS = 10000;
+        // How many entries in the cache before empty structs are placed //
+        public static int AllThingsCacheEntriesFilled { get; private set; }
         private static List<Thing> _removeTheseThings = new List<Thing>();
         private static readonly object _allThingsLock = new object();
         private static float updateSunEvery = .1f;
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
+        private static bool initialized = false;
         public static float AreaLocalTime { get; private set; }
+
+        public static Thing GetThingByGUID(System.Guid guid)
+        {
+            for(int count = 0; count < allThings.Count; count++)
+            {
+                if(allThings[count].guid == guid)
+                {
+                    return allThings[count];
+                }
+            }
+            return null;
+        }
+
         public static string GetFriendlyLocalTime()
         {
             float timeInDay = AreaLocalTime % dayLength;
@@ -41,19 +65,37 @@ namespace rak.world
                 allThings.Add(thingToAdd);
             }
         }
+        public static NativeArray<BlittableThing> GetHistoricalThings()
+        {
+            return allThingsHistoricCache;
+        }
+        private static void updateAllHistoricThings()
+        {
+            long start = System.DateTime.Now.ToBinary();
+            for(int count = 0; count < jobHandles.Count; count++)
+            {
+                jobHandles[count].Complete();
+            }
+            jobHandles = new List<JobHandle>();
+            //allThingsHistoricCache.Dispose();
+            //allThingsHistoricCache = new NativeArray<BlittableThing>(allThings.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            AllThingsCacheEntriesFilled = allThings.Count;
+            for (int count = 0; count < AllThingsCacheEntriesFilled; count++)
+            {
+                allThingsHistoricCache[count] = allThings[count].GetBlittableThing();
+            }
+            // Fill Rest of cache with empty entries //
+            for (int count = 0; count < allThingsHistoricCache.Length- AllThingsCacheEntriesFilled; count++)
+            {
+                allThingsHistoricCache[AllThingsCacheEntriesFilled + count] = BlittableThing.GetNewEmptyThing();
+            }
+            //Debug.Log("Area cache update time - " + (System.DateTime.Now.ToBinary() - start));
+        }
         public static List<Thing> GetAllThingsSync()
         {
             lock (_allThingsLock)
             {
                 return allThings;
-            }
-        }
-        // TODO implement
-        public static Thing[] GetAllThingsCopy()
-        {
-            lock (_allThingsLock)
-            {
-                return allThings.ToArray();
             }
         }
         public static List<Creature> GetAllCreatures()
@@ -100,6 +142,8 @@ namespace rak.world
         }
         private void InitializeDebug(Tribe tribe)
         {
+            int NUMBEROFGNATS = 1;
+
             sitesPresent.Add(new Site("Home of DeGnats"));
             tribesPresent.Add(tribe);
             tribe.Initialize();
@@ -110,13 +154,13 @@ namespace rak.world
             creatureContainer = new GameObject("CreatureContainer");
             if (disabledContainer == null)
                 disabledContainer = new GameObject("DisabledContainer");
-            for (int i = 0; i < 0; i++)
+            /*for (int i = 0; i < 0; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f,15f), Random.Range(10f, 200));
                 addThingToWorld("fruit",position,false);
                     
-            }
-            for (int i = 0; i < 200; i++)
+            }*/
+            for (int i = 0; i < NUMBEROFGNATS; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
                 addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), position, false, tribe);
@@ -132,6 +176,10 @@ namespace rak.world
         }
         public void Initialize(Tribe tribe)
         {
+            if (initialized) return;
+            initialized = true;
+            jobHandles = new List<JobHandle>();
+            allThingsHistoricCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
             if (debug) // DEBUG
             {
                 InitializeDebug(tribe);
@@ -170,7 +218,7 @@ namespace rak.world
                 }
             }
             int populationToCreate = tribe.GetPopulation();
-            int MAXPOP = 100;
+            int MAXPOP = 200;
             if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)
@@ -207,6 +255,7 @@ namespace rak.world
                     thing.transform.SetParent(disabledContainer.transform);
                 }
                 _removeTheseThings = new List<Thing>();
+                updateAllHistoricThings();
             }
             foreach (Tribe tribe in tribesPresent)
             {
@@ -374,11 +423,11 @@ namespace rak.world
         }
         private void dumpDisabledObjectsToDisk()
         {
-            List<HistoricalThing> makeIntoHistory = new List<HistoricalThing>();
+            List<BlittableThing> makeIntoHistory = new List<BlittableThing>();
             for(int count = 0; count < disabledContainer.transform.childCount; count++)
             {
                 Thing thing = disabledContainer.transform.GetChild(count).GetComponent<Thing>();
-                makeIntoHistory.Add(new HistoricalThing(thing));
+                //makeIntoHistory.Add(new BlittableThing(thing));
                 GameObject.Destroy(thing.gameObject);
             }
             string json = JsonUtility.ToJson(makeIntoHistory.ToArray());

@@ -1,6 +1,8 @@
 using rak.creatures.memory;
 using rak.world;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace rak.creatures
@@ -11,9 +13,12 @@ namespace rak.creatures
         public enum CREATURE_STATE { IDLE, MOVE, WAIT, DEAD, SLEEP }
         public enum CREATURE_DEATH_CAUSE { FlightCollision, Hunger, NA }
 
+        public static readonly int CLOSE_OBJECT_CACHE_SIZE = 100;
+
         public bool DEBUGSCENE = false;
         public float TESTVAR1 = 150;
         public float TESTVAR2 = 0.00001f;
+
         public bool RunDebugMethod = false;
         public BASE_SPECIES baseSpecies;
         public CREATURE_DEATH_CAUSE CauseOfDeath { get
@@ -27,9 +32,12 @@ namespace rak.creatures
         private CREATURE_STATE currentState;
         private CREATURE_DEATH_CAUSE causeOfDeath = CREATURE_DEATH_CAUSE.NA;
         private float lastUpdated = 0;
-        private float lastObserved { get; set; }
-        private float observeEvery { get; set; }
+        private float observeEvery = 2.5f;
+        private float lastObserved = 2.5f;
         private bool initialized = false;
+        private JobHandle observeHandle;
+        private bool awaitingObservation = false;
+        private NativeArray<BlittableThing> thingsWithinProximityCache;
 
         private Species species;
         private SpeciesPhysicalStats creaturePhysicalStats;
@@ -47,7 +55,7 @@ namespace rak.creatures
         {
             return initialized;
         }
-        public bool IsTargetInFrontOfMe(Thing target)
+        /*public bool IsTargetInFrontOfMe(Thing target)
         {
             bool found = false;
             RaycastHit hit;
@@ -75,7 +83,7 @@ namespace rak.creatures
                 }
             }
             return found;
-        }
+        }*/
         public bool IsLanding()
         {
             return agent.IsLanding();
@@ -99,7 +107,8 @@ namespace rak.creatures
         }
         private void Initialize(string name, Area area)
         {
-            base.initialize(name);
+            if (initialized) return;
+            initialize(name);
             this.currentArea = area;
             taskManager = new TaskManager(this);
             inventory = new Inventory(this);
@@ -122,8 +131,8 @@ namespace rak.creatures
             miscVariables = MiscVariables.GetCreatureMiscVariables(this);
             memberOfTribe = null;
             knownGridSectorsVisited = new Dictionary<GridSector, bool>();
-            lastObserved = Random.Range(0,Time.time);
-            observeEvery = 2.5f;
+            thingsWithinProximityCache = new NativeArray<BlittableThing>(CLOSE_OBJECT_CACHE_SIZE, Allocator.Persistent);
+            lastObserved = Random.Range(0, observeEvery);
             initialized = true;
         }
         public void PlayOneShot()
@@ -160,21 +169,28 @@ namespace rak.creatures
                 taskManager.clearAllTasks();
                 RunDebugMethod = false;
             }
-            if (!initialized && DEBUGSCENE)
-            {
-                Initialize("TestCreature", World.CurrentArea);
-            }
+            
             float delta = Time.deltaTime;
             base.ManualUpdate(delta);
             agent.Update();
             lastUpdated += delta;
+            lastObserved += delta;
             if (lastUpdated > creaturePhysicalStats.updateEvery)
             {
+                long start = System.DateTime.Now.ToBinary();
                 lastUpdated = 0;
+                if (awaitingObservation)
+                {
+                    if (observeHandle.IsCompleted)
+                    {
+                        observeHandle.Complete();
+                        updateThingsWithinProximityAndDisposeCache();
+                        awaitingObservation = false;
+                    }
+                }
                 if (!CreatureConstants.CreatureIsIncapacitatedState(currentState))
                 {
-                    if(Time.time - lastObserved > observeEvery)
-                        observeSurroundings();
+                    observeSurroundings();
                 }
                 // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
                 if (currentState == CREATURE_STATE.IDLE)
@@ -211,6 +227,8 @@ namespace rak.creatures
                 // CREATURE PHYSICAL STATS UPDATES //
                 if (currentState != CREATURE_STATE.DEAD)
                     creaturePhysicalStats.Update();
+                long diff = System.DateTime.Now.ToBinary() - start;
+                //Debug.Log("Update took " + diff);
             }
         }
         private void OnCollisionEnter(Collision collision)
@@ -253,9 +271,9 @@ namespace rak.creatures
         {
             return inventory.removeThing(thing);
         }
-        public bool AddMemory(MemoryInstance memory)
+        public bool AddMemory(Verb verb, Thing subject, bool invertVerb)
         {
-            return species.memory.AddMemory(memory);
+            return species.memory.AddMemory(verb,subject.GetBlittableThing(),invertVerb);
         }
         public void SoThisFailed(ActionStep failedStep)
         {
@@ -264,23 +282,48 @@ namespace rak.creatures
                 if (failedStep.failReason == ActionStep.FailReason.CouldntGetToTarget ||
                     failedStep.failReason == ActionStep.FailReason.InfinityDistance)
                 {
-                    AddMemory(new MemoryInstance(Verb.MOVEDTO, failedStep._targetThing, true));
+                    AddMemory(Verb.MOVEDTO, failedStep._targetThing, true);
                     Debug.LogWarning("Memory of couldnt move to " + failedStep._targetThing.thingName);
                 }
             }
         }
+
         private void observeSurroundings()
         {
             // Observe Things //
+            /*
             float thingDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
             Thing[] allThingsCopy = Area.GetAllThingsCopy();
             Thing[] thingsWithinProximity = CreatureUtilities.GetThingsWithinProximityOf(this, thingDistance,
                 Area.GetAllThingsSync().ToArray());
-            foreach (Thing thing in thingsWithinProximity)
+            */
+            if (lastObserved < observeEvery || awaitingObservation || !initialized)
+                return;
+            lastObserved = 0;
+            ObserveJob job = new ObserveJob();
+            job.observeDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
+            job.origin = transform.position;
+            job.allThings = Area.GetHistoricalThings();
+            job.thingsWithinReach = thingsWithinProximityCache;
+            observeHandle = job.Schedule();
+            Area.AddJobHandle(observeHandle);
+            awaitingObservation = true;
+        }
+        private void updateThingsWithinProximityAndDisposeCache()
+        {
+            long start = System.DateTime.Now.ToBinary();
+            int iterations;
+            if (Area.AllThingsCacheEntriesFilled > CLOSE_OBJECT_CACHE_SIZE)
+                iterations = CLOSE_OBJECT_CACHE_SIZE;
+            else
+                iterations = Area.AllThingsCacheEntriesFilled;
+            for (int count = 0; count < iterations; count++)
             {
-                //Debug.LogWarning("Saw " + thing.name);
-                species.memory.AddMemory(new MemoryInstance(Verb.SAW, thing, false));
+                if(!thingsWithinProximityCache[count].IsEmpty())
+                    species.memory.AddMemory(Verb.SAW, thingsWithinProximityCache[count], false);
             }
+            //Debug.Log("Memories took " + (System.DateTime.Now.ToBinary() - start));
+            start = System.DateTime.Now.ToBinary();
             float areaDistance = Grid.ELEMENT_SIZE.sqrMagnitude*2;
             // Observe Areas //
             GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
@@ -298,10 +341,8 @@ namespace rak.creatures
                     knownGridSectorsVisited[currentSector] = true;
                 }
             }
-            //Debug.LogWarning("Observation");
-            lastObserved = Time.time;
         }
-        public Vector3 BoxCastNotMeGetClosestPoint(float sizeMult, Vector3 direction)
+        /*public Vector3 BoxCastNotMeGetClosestPoint(float sizeMult, Vector3 direction)
         {
             RaycastHit[] hits = Physics.BoxCastAll(transform.position, Vector3.one * sizeMult, direction);
             Vector3 closest = Vector3.positiveInfinity;
@@ -321,7 +362,7 @@ namespace rak.creatures
             }
             Debug.DrawLine(transform.position, closest, Color.green, .5f);
             return closest;
-        }
+        }*/
         public MemoryInstance[] HasAnyMemoriesOf(Verb verb, CONSUMPTION_TYPE consumptionType)
         {
             return species.memory.HasAnyMemoriesOf(verb, consumptionType);
@@ -381,11 +422,12 @@ namespace rak.creatures
             if(listToPickFrom.Count > 0)
                 return listToPickFrom[(int)Random.Range(0, listToPickFrom.Count)].GetRandomPositionInSector;
             // If the list is empty, the creature needs to update the sector it is in //
-            else
+            /*else
             {
                 observeSurroundings();
                 return GetRandomKnownSectorPosition();
-            }
+            }*/
+            return Vector3.zero;
         }
         public GridSector GetClosestUnexploredSector()
         {

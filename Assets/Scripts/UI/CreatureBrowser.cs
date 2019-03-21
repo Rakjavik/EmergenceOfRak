@@ -96,7 +96,7 @@ namespace rak.UI
                     StringBuilder columnText = new StringBuilder();
                     for (int row = 0; row < maxRows; row++)
                     {
-                        if (shortTermMemory[count] != null)
+                        if (shortTermMemory[count].verb != Verb.NA)
                         {
                             if (shortTermMemory[count].subject.GetThing() != null)
                             {

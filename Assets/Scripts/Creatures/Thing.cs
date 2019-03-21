@@ -12,7 +12,7 @@ namespace rak
     {
         #region ENUMS
         public enum BOOL_FILTERS { USEABLE, CONSUMEABLE, USE_LOCATE_TARGET }
-        public enum Base_Types { CREATURE, PLANT, NON_ORGANIC }
+        public enum Base_Types { CREATURE, PLANT, NON_ORGANIC, NA }
         public enum Thing_Types {Fruit,Wood,Gnat,House,FruitTree }
         public enum Thing_Produces { NA, Food }
 
@@ -27,8 +27,16 @@ namespace rak
         public Thing_Produces produces { get; private set; }
         public float age { get; private set; }
         public float maxAge { get; private set; }
-        private int weight;
         public float bornAt { get; private set; }
+        public Guid guid { get; private set; }
+
+        private BlittableThing blittableThing = BlittableThing.GetNewEmptyThing();
+        public BlittableThing GetBlittableThing()
+        {
+            blittableThing.RefreshValue(this);
+            return blittableThing;
+        }
+        private int weight;
         private bool useable;
         private bool consumeable;
         private bool available;
@@ -45,10 +53,8 @@ namespace rak
             {
                 Debug.Log("Destroying - " + gameObject.name);
                 DestroyThisThing();
-                MemoryInstance eating = new MemoryInstance(Verb.ATE, this, false);
-                MemoryInstance itemGone = new MemoryInstance(Verb.SAW, this, true);
-                consumer.AddMemory(eating);
-                consumer.AddMemory(itemGone);
+                consumer.AddMemory(Verb.ATE,this,false);
+                consumer.AddMemory(Verb.SAW,this,true);
                 return true;
             }
             else
@@ -60,6 +66,7 @@ namespace rak
 
         public void initialize(string name)
         {
+            guid = Guid.NewGuid();
             this.name = name;
             this.thingName = name;
             // Default to no production //

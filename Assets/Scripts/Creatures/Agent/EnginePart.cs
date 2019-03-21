@@ -10,12 +10,13 @@ namespace rak.creatures
         
         // Constant Force component control for X Y and Z Axis //
         private EngineMovementVariables[] engineMovementVariables;
+        private float baseUpdateEvery;
 
         public EnginePart(CreaturePart creaturePart,Transform transform, CreatureLocomotionType partMovementType,
             float updateEvery) 
             : base(creaturePart,transform,updateEvery)
         {
-
+            baseUpdateEvery = updateEvery;
         }
 
         public void InitializeMovementPart()
@@ -365,6 +366,8 @@ namespace rak.creatures
             if(attachedAgent.locomotionType == CreatureLocomotionType.Flight)
             {
                 Flight(action);
+                UpdateEvery = baseUpdateEvery + (30 - attachedBody.velocity.magnitude) * .01f;
+                //Debug.Log(UpdateEvery);
             }
             else if (attachedAgent.locomotionType == CreatureLocomotionType.StandardForwardBack)
             {
