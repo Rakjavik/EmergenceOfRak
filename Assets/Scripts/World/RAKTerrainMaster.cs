@@ -378,7 +378,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
                         Quaternion.identity);//, 3);
                     details[currentDetailCount].gameObject.name = prefab.name;
                     details[currentDetailCount].transform.SetParent(terrain.transform);
-                    Debug.LogWarning("Instantiated - " + details[currentDetailCount].name);
+                    //Debug.LogWarning("Instantiated - " + details[currentDetailCount].name);
                     //details[currentDetailCount].GetComponent<RAKTerrainObject>().setPrefabObjectName(prefab.name);
                     //details[currentDetailCount].transform.position = new Vector3(x + terrain.transform.position.x, y + detailHeight, z + terrain.transform.position.z);
                     if (!terrainObject.freeRotate)

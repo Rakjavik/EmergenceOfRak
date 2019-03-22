@@ -6,8 +6,6 @@ using UnityEngine;
 
 namespace rak
 {
-
-
     public class Thing : MonoBehaviour
     {
         #region ENUMS
@@ -131,11 +129,6 @@ namespace rak
         public void ManualUpdate(float delta)
         {
             age += delta;
-            // Move to top if out of bounds //
-            if (transform.position.y < Area.MinimumHeight)
-            {
-                transform.position = new Vector3(transform.position.x,Area.MaximumHeight,transform.position.z);
-            }
             if(age >= maxAge)
             {
                 Debug.Log("Death by age - " + name);

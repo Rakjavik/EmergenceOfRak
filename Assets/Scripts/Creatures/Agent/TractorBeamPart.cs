@@ -19,9 +19,9 @@ namespace rak.creatures
             this.beamStrength = beamStrength;
         }
 
-        public override void UpdateDerivedPart(ActionStep.Actions action)
+        public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
-            base.UpdateDerivedPart(action);
+            base.UpdateDerivedPart(action,delta);
             if(action == ActionStep.Actions.Add)
             {
                 // Need to lock //

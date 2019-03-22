@@ -147,7 +147,7 @@ namespace rak
                 if (!creatureAgentDestinationHasBeenSet)
                 {
                     failReason = FailReason.MoveToWithNoDestination;
-                    Debug.LogWarning("ERROR MoveTo with no destination");
+                    //Debug.LogWarning("ERROR MoveTo with no destination");
                     status = Tasks.TASK_STATUS.Failed;
                     return;
                 }

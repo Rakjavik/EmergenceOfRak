@@ -76,12 +76,12 @@ namespace rak.creatures.memory
             for (int count = 0; count < shortTermMemory.Length; count++)
             {
                 MemoryInstance memory = shortTermMemory[count];
+                bool currentMemoryinvertVerb = memory.GetInvertVerb();
                 if (memory.verb == Verb.NA) continue;
-                if (memory.verb == Verb.SAW && memory.invertVerb == false &&
-                    memory.subject.GetThing() != null && memory.subject.GetThing()
-                    .produces == Thing.Thing_Produces.Food)
+                if (memory.verb == Verb.SAW && currentMemoryinvertVerb == false &&
+                    memory.subject != System.Guid.Empty && Area.GetThingByGUID(memory.subject).produces == Thing.Thing_Produces.Food)
                 {
-                    Thing currentThing = memory.subject.GetThing();
+                    Thing currentThing = Area.GetThingByGUID(memory.subject);
                     float currentDistance = Vector3.Distance(origin, currentThing.transform.position);
                     float closestDistance = float.MaxValue;
                     if(closest != null)
@@ -129,12 +129,13 @@ namespace rak.creatures.memory
             for(int count = 0; count < shortTermMemory.Length; count++)
             {
                 MemoryInstance memory = shortTermMemory[count];
+                bool currentMemoryInvertVerb = memory.GetInvertVerb();
                 if (memory.verb == Verb.NA) continue;
-                if (memory.verb == Verb.SAW && memory.invertVerb == false && 
-                    memory.subject.GetThing() != null && memory.subject.GetThing()
+                if (memory.verb == Verb.SAW && currentMemoryInvertVerb == false && 
+                    memory.subject != System.Guid.Empty && Area.GetThingByGUID(memory.subject)
                     .matchesConsumptionType(consumptionType))
                 {
-                    memoriesOfFood.Add(memory.subject.GetThing());
+                    memoriesOfFood.Add(Area.GetThingByGUID(memory.subject));
                 }
             }
             return memoriesOfFood.ToArray();
@@ -145,10 +146,10 @@ namespace rak.creatures.memory
             for(int count = 0; count < shortTermMemory.Length; count++)
             {
                 if (shortTermMemory[count].verb == Verb.NA) continue;
-                Thing currentThing = shortTermMemory[count].subject.GetThing();
+                Thing currentThing = Area.GetThingByGUID(shortTermMemory[count].subject);
                 if (currentThing != null && currentThing.produces == Thing.Thing_Produces.Food)
                 {
-                    producers.Add(shortTermMemory[count].subject.GetThing());
+                    producers.Add(Area.GetThingByGUID(shortTermMemory[count].subject));
                 }
             }
             return producers.ToArray();
@@ -157,11 +158,19 @@ namespace rak.creatures.memory
         {
             return isRecentMemory(verb, subject.GetBlittableThing(), invertVerb).verb != Verb.NA;
         }
-
+        public bool AddMemory(MemoryInstance memory)
+        {
+            Thing memorySubject = Area.GetThingByGUID(memory.subject);
+            if(memorySubject == null)
+            {
+                return false;
+            }
+            return AddMemory(memory.verb, memorySubject.GetBlittableThing(), memory.GetInvertVerb());
+        }
         public bool AddMemory(Verb verb,BlittableThing subject,bool invertVerb)
         {
             MemoryInstance recentSubjectMemory = isRecentMemory(verb, subject, invertVerb);
-            if (recentSubjectMemory.verb != Verb.NA)
+            if (!recentSubjectMemory.IsEmpty())
             {
                 recentSubjectMemory.AddIteration();
                 return true;
@@ -175,7 +184,7 @@ namespace rak.creatures.memory
                     Debug.Break();
                     Debug.Log("Null subject to add memory " + verb.ToString());
                 }
-                shortTermMemory[currentMemoryIndex].ReplaceMemory(verb, subject, invertVerb);
+                shortTermMemory[currentMemoryIndex].ReplaceMemory(verb, subject.GetGuid(), invertVerb);
                 currentMemoryIndex++;
                 return true;
             }
@@ -216,12 +225,12 @@ namespace rak.creatures.memory
             List<MemoryInstance> foundThings = new List<MemoryInstance>();
             foreach(MemoryInstance memory in shortTermMemory)
             {
-                if (memory.verb != Verb.NA && memory.subject.GetThing() == thing)
+                if (!memory.IsEmpty() && memory.subject.Equals(thing.guid))
                     foundThings.Add(memory);
             }
             foreach(MemoryInstance memory in longTermMemory)
             {
-                if (memory.subject.GetThing() == thing)
+                if (memory.subject.Equals(thing.guid))
                     foundThings.Add(memory);
             }
             return foundThings.ToArray();
@@ -238,7 +247,8 @@ namespace rak.creatures.memory
                 if(shortTermMemory[count].verb != Verb.NA)
                 {
                     if (shortTermMemory[count].verb == verb &&
-                        shortTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
+                        Area.GetThingByGUID(shortTermMemory[count].subject)
+                        .matchesConsumptionType(consumptionType))
                     { 
                         memories.Add(shortTermMemory[count]);
                     }
@@ -246,7 +256,8 @@ namespace rak.creatures.memory
                 for(count = 0; count < longTermMemory.Count; count++)
                 {
                     if(longTermMemory[count].verb == verb &&
-                        longTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
+                        Area.GetThingByGUID(longTermMemory[count].subject)
+                        .matchesConsumptionType(consumptionType))
                     {
                         memories.Add(longTermMemory[count]);
                     }
@@ -260,7 +271,8 @@ namespace rak.creatures.memory
             {
                 if (shortTermMemory[count].verb == Verb.NA) continue;
                 if (shortTermMemory[count].verb == Verb.SAW &&
-                    shortTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
+                    Area.GetThingByGUID(shortTermMemory[count].subject)
+                    .matchesConsumptionType(consumptionType))
                 {
                     return shortTermMemory[count];
                 }
@@ -268,9 +280,9 @@ namespace rak.creatures.memory
             for (int count = 0; count < longTermMemory.Count; count++)
             {
                 if(longTermMemory[count].verb == Verb.SAW &&
-                    longTermMemory[count].subject.GetThing().matchesConsumptionType(consumptionType))
+                    Area.GetThingByGUID(longTermMemory[count].subject)
+                    .matchesConsumptionType(consumptionType))
                 {
-                    Debug.LogWarning("I remember food - " + longTermMemory[count].subject.GetThing().thingName);
                     return longTermMemory[count];
                 }
             }
@@ -282,7 +294,7 @@ namespace rak.creatures.memory
             {
                 if (shortTermMemory[count].verb != Verb.NA)
                 {
-                    if (shortTermMemory[count].IsSameAs(verb,subject,invertVerb))
+                    if (shortTermMemory[count].IsSameAs(verb,subject.GetGuid(),invertVerb))
                     {
                         return shortTermMemory[count];
                     }

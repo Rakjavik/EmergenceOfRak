@@ -45,9 +45,9 @@ namespace rak.creatures
         {
             ignoreStuckFor = time;
         }
-        public override void UpdateDerivedPart(ActionStep.Actions action)
+        public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
-            base.UpdateDerivedPart(action);
+            base.UpdateDerivedPart(action,delta);
             if (action == ActionStep.Actions.MoveTo)
             {
                 // Currently Deactivated //
@@ -56,7 +56,7 @@ namespace rak.creatures
                     bool activate = false;
 
                     // STUCK //
-                    if (true == false)
+                    if (attachedAgent.IsStuck())
                     {
                         if (ignoreStuckFor <= 0)
                         {
@@ -87,7 +87,7 @@ namespace rak.creatures
                             miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel])
                         {
                             Vector3 turnNeeded = getDifferenceFromLookAtTargetRotationViaVelocity().eulerAngles;
-                            
+
                             if ((turnNeeded.x > 45 && turnNeeded.x < 315) ||
                                 (turnNeeded.z > 45 && turnNeeded.z < 315))
                             {
@@ -104,7 +104,7 @@ namespace rak.creatures
                     {
                         ActivateShield();
                     }
-                    
+
                 }
                 // Currently Activated //
                 else
@@ -135,7 +135,7 @@ namespace rak.creatures
                             break;
                         }
                     }
-                    if(activate)
+                    if (activate)
                         ActivateShield();
                 }
             }

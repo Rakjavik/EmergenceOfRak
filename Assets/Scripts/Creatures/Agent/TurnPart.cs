@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Jobs;
+using UnityEngine;
 
 namespace rak.creatures
 {
@@ -11,6 +12,7 @@ namespace rak.creatures
         private HingeJoint joint;
         private Rigidbody inchBody;
         private Rigidbody attachedToBody;
+        
         public Direction hingeAxis { get; private set; }
 
         public TurnPartInching(CreaturePart creaturePart, Transform transform,
@@ -22,6 +24,7 @@ namespace rak.creatures
             this.hingeAxis = hingeAxis;
             attachedToBody = hingeAttachedTo.gameObject.AddComponent<Rigidbody>();
             Initialize(hingeAxis);
+            
         }
 
         private void Initialize(Direction hingeAxis)
@@ -46,31 +49,25 @@ namespace rak.creatures
         {
             return inchBody;
         }
-        public override void UpdateDerivedPart(ActionStep.Actions action)
+        public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
-            base.UpdateDerivedPart(action);
+            base.UpdateDerivedPart(action,delta);
         }
     }
     public class TurnPartRotation : TurnPart
     {
+        private TurnPartRotationJob job;
         public TurnPartRotation(CreaturePart creaturePart, Transform transform,
             CreatureTurnType turnType, float updateEvery) :
             base(creaturePart, transform, CreatureTurnType.Inch, updateEvery)
         {
-
+            job = new TurnPartRotationJob();
         }
 
-        public override void UpdateDerivedPart(ActionStep.Actions action)
+        public override void UpdateDerivedPart(ActionStep.Actions action, float delta)
         {
-            base.UpdateDerivedPart(action);
-            if (attachedAgent.locomotionType == CreatureLocomotionType.Flight)
-            {
-                if (attachedAgent.IsLanding())
-                {
-                    RightRotation();
-                    return;
-                }
-            }
+            base.UpdateDerivedPart(action, delta);
+            
             Quaternion newRotation;
             Vector3 _direction = (attachedAgent.Destination - parentCreature.transform.position).normalized;
             if (_direction != Vector3.zero)

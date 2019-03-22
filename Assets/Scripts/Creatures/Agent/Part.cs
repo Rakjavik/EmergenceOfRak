@@ -46,14 +46,14 @@ namespace rak.creatures
         }
 
         // Called from Agent Object //
-        public void Update()
+        public void Update(float delta)
         {
             if (!Enabled) return;
             sinceLastUpdate += Time.deltaTime;
             if (sinceLastUpdate >= UpdateEvery)
             {
                 sinceLastUpdate = 0;
-                UpdateDerivedPart(attachedAgent.GetCurrentCreatureAction());
+                UpdateDerivedPart(attachedAgent.GetCurrentCreatureAction(),delta);
             }
         }
         public void SetUpdateStaggerTime(float staggeredTime)
@@ -62,7 +62,7 @@ namespace rak.creatures
         }
 
         // Implemented in more derived classes //
-        public virtual void UpdateDerivedPart(ActionStep.Actions action) { }
+        public virtual void UpdateDerivedPart(ActionStep.Actions action,float delta) { }
 
         public Transform GetPartTransform() { return PartTransform; }
 

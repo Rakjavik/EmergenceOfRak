@@ -24,9 +24,9 @@ namespace rak.creatures
             verifyParticlesAreOff();
         }
 
-        public override void UpdateDerivedPart(ActionStep.Actions currentCreatureAction)
+        public override void UpdateDerivedPart(ActionStep.Actions currentCreatureAction,float delta)
         {
-            base.UpdateDerivedPart(currentCreatureAction);
+            base.UpdateDerivedPart(currentCreatureAction,delta);
             if (currentCreatureAction == ActionStep.Actions.Add)
             {
                 if (target == null)

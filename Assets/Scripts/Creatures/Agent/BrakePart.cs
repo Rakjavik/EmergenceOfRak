@@ -25,9 +25,9 @@ namespace rak.creatures
             }
         }
 
-        public override void UpdateDerivedPart(ActionStep.Actions action)
+        public override void UpdateDerivedPart(ActionStep.Actions action, float delta)
         {
-            base.UpdateDerivedPart(action);
+            base.UpdateDerivedPart(action,delta);
             Vector3 percentToBrake = attachedAgent.CurrentBrakeAmountRequest;
             //Debug.LogWarning("Applying brake - " + percentToBrake);
             if (percentToBrake.x < 0) percentToBrake.x = 0;

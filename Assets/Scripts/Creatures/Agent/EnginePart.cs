@@ -94,7 +94,7 @@ namespace rak.creatures
             }
         }
 
-        IEnumerator Flight(ActionStep.Actions currentCreatureAction)
+        IEnumerator Flight(ActionStep.Actions currentCreatureAction,float delta)
         {
             if (currentCreatureAction == ActionStep.Actions.MoveTo)
             {
@@ -163,9 +163,9 @@ namespace rak.creatures
                         engineMovementVariables[(int)Direction.X].SetState(MovementState.IDLE);
                 }
             }
-            engineMovementVariables[(int)Direction.X].Update(Time.deltaTime);
-            engineMovementVariables[(int)Direction.Y].Update(Time.deltaTime);
-            engineMovementVariables[(int)Direction.Z].Update(Time.deltaTime);
+            engineMovementVariables[(int)Direction.X].Update(delta);
+            engineMovementVariables[(int)Direction.Y].Update(delta);
+            engineMovementVariables[(int)Direction.Z].Update(delta);
             //Vector3 currentForce = cf.relativeForce;
             float x = engineMovementVariables[(int)Direction.X].CurrentForce;
             float y = engineMovementVariables[(int)Direction.Y].CurrentForce;
@@ -196,13 +196,13 @@ namespace rak.creatures
 
         public void OnCollisionExit(Collision collision) { }
 
-        public override void UpdateDerivedPart(ActionStep.Actions action)
+        public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
             if (attachedBody.isKinematic) return;
             if(attachedAgent.locomotionType == CreatureLocomotionType.Flight)
             {
 
-                attachedAgent.creature.StartCoroutine(Flight(action));
+                attachedAgent.creature.StartCoroutine(Flight(action,delta));
                 UpdateEvery = baseUpdateEvery + (25 - attachedBody.velocity.magnitude) * .01f;
                 //Debug.Log(UpdateEvery);
             }

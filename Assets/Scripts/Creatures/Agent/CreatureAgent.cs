@@ -61,7 +61,11 @@ namespace rak.creatures
 
         private Transform _transform;
         // TODO OPTIMIZE //
-        private Dictionary<float, float> distancesMoved = new Dictionary<float, float>();
+        private const int DISTANCE_ARRAY_SIZE = 5;
+        private float[] distancesMoved = new float[DISTANCE_ARRAY_SIZE];
+        private float distanceMovedLastUpdated;
+        private const float UPDATE_DISTANCE_EVERY = .1f;
+        private int distanceMovedIndex = 0;
         private Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables;
         
 
@@ -458,7 +462,7 @@ namespace rak.creatures
         {
             float stuckIfDistanceMovedLessThan =
                 miscVariables[MiscVariables.AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_One_Sec];
-            float distanceMoved = GetDistanceMovedInLast(.1f);
+            float distanceMoved = GetDistanceMovedInLastFive();
             //Debug.LogWarning("Moved - " + distanceMoved);
             return distanceMoved <= stuckIfDistanceMovedLessThan && Time.time > 1;
         }
@@ -466,45 +470,34 @@ namespace rak.creatures
         public void Update()
         {
             if (!Active) return;
-            lastUpdate += Time.deltaTime;
-            
+            float delta = Time.deltaTime;
+            lastUpdate += delta;
+            distanceMovedLastUpdated += delta;
             // Part updates //
             foreach (Part part in allParts)
             {
-                part.Update();
+                part.Update(delta);
             }
-            DistanceMovedLastUpdate = Vector3.Distance(positionLastUpdate, creature.transform.position);
-            if(Time.time > .01f)
-                distancesMoved.Add(Time.time, DistanceMovedLastUpdate);
-            positionLastUpdate = creature.transform.position;
+            if (distanceMovedLastUpdated >= UPDATE_DISTANCE_EVERY)
+            {
+                DistanceMovedLastUpdate = Vector3.Distance(positionLastUpdate, creature.transform.position);
+                distancesMoved[distanceMovedIndex] = DistanceMovedLastUpdate;
+                distanceMovedIndex++;
+                if (distanceMovedIndex == distancesMoved.Length)
+                    distanceMovedIndex = 0;
+                positionLastUpdate = creature.transform.position;
+                distanceMovedLastUpdated = 0;
+            }
         }
         #endregion MONO METHODS
-        public float GetDistanceMovedInLast(float seconds)
+        public float GetDistanceMovedInLastFive()
         {
-            int removeEntryIfOlderThenSeconds = 5;
-            List<float> timesTooOld = new List<float>();
-            float beginningTime = Time.time - seconds;
-            float distanceMovedInThatTime = 0;
-            foreach (float time in distancesMoved.Keys)
+            float sum = 0;
+            for(int count = 0; count < distancesMoved.Length; count++)
             {
-                if (time < beginningTime)
-                {
-                    if(Time.time - time > removeEntryIfOlderThenSeconds)
-                    {
-                        timesTooOld.Add(time);
-                    }
-                }
-                distanceMovedInThatTime += distancesMoved[time];
+                sum += distancesMoved[count];
             }
-            if(timesTooOld.Count > 0)
-            {
-                foreach(float key in timesTooOld)
-                {
-                    distancesMoved.Remove(key);
-                }
-            }
-
-            return distanceMovedInThatTime;
+            return sum;
         }
     }
     public enum CreaturePart { LEG , FOOT, BODY, ENGINE_Z, ENGINE_Y, ENGINE_X, BRAKE, SHIELD,

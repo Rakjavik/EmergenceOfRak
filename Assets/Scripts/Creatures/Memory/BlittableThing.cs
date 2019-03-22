@@ -9,33 +9,37 @@ namespace rak.creatures.memory
     {
         private Guid guid;
         private Thing.Base_Types baseType;
+        public Thing.Thing_Produces produces;
         private float age;
         private float bornAt;
         public Vector3 position;
 
-        private BlittableThing(Thing thing)
+        public BlittableThing(Thing.Base_Types baseType,Guid guid,float age,float bornAt,Vector3 position,
+            Thing.Thing_Produces produces)
         {
-            //Debug.LogWarning("Constructing " + thing.name);
-            if (thing == null || thing.guid == Guid.Empty)
+            if (guid.Equals(Guid.Empty))
             {
-                baseType = Thing.Base_Types.NA;
-                age = -1;
-                bornAt = -1;
-                position = Vector3.zero;
-                guid = Guid.Empty;
+                this.baseType = Thing.Base_Types.NA;
+                this.age = -1;
+                this.bornAt = -1;
+                this.position = Vector3.zero;
+                this.guid = Guid.Empty;
+                this.produces = Thing.Thing_Produces.NA;
             }
             else
             {
-                guid = thing.guid;
-                baseType = thing.baseType;
-                age = thing.age;
-                bornAt = thing.bornAt;
-                position = thing.transform.position;
+                this.guid = guid;
+                this.baseType = baseType;
+                this.age = age;
+                this.bornAt = bornAt;
+                this.position = position;
+                this.produces = produces;
             }
         }
+        
         public static BlittableThing GetNewEmptyThing()
         {
-            return new BlittableThing(null);
+            return new BlittableThing(Thing.Base_Types.NA,Guid.Empty,-1,-1,Vector3.zero,Thing.Thing_Produces.NA);
         }
         public Thing GetThing()
         {
@@ -53,10 +57,13 @@ namespace rak.creatures.memory
             bornAt = thing.bornAt;
             position = thing.transform.position;
         }
-
+        public void SetToEmpty()
+        {
+            guid = Guid.Empty;
+        }
         public bool IsEmpty()
         {
-            if(guid == Guid.Empty)
+            if(guid.Equals(Guid.Empty))
                 return true;
 
             return false;

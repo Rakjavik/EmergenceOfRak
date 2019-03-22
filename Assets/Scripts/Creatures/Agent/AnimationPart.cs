@@ -30,7 +30,7 @@ namespace rak.creatures
             visible = true;
         }
 
-        public override void UpdateDerivedPart(ActionStep.Actions currentCreatureAction)
+        public override void UpdateDerivedPart(ActionStep.Actions currentCreatureAction,float delta)
         {
             if (!animateDuringThis(currentCreatureAction))
             {

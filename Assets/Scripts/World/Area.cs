@@ -64,9 +64,8 @@ namespace rak.world
         {
             return allThingsBlittableCache;
         }
-        private static void updateAllBlittableThings()
+        private static void updateAllBlittableThingsCache()
         {
-            long start = System.DateTime.Now.ToBinary();
             for(int count = 0; count < jobHandles.Count; count++)
             {
                 jobHandles[count].Complete();
@@ -77,7 +76,6 @@ namespace rak.world
             {
                 allThingsBlittableCache[count] = allThings[count].GetBlittableThing();
             }
-            Debug.Log("Area cache update time - " + (System.DateTime.Now.ToBinary() - start));
         }
         public static List<Thing> GetAllThings()
         {
@@ -125,6 +123,7 @@ namespace rak.world
         private void InitializeDebug(Tribe tribe)
         {
             int NUMBEROFGNATS = 1;
+            float SPAWNFRUITEVERY = 50;
 
             sitesPresent.Add(new Site("Home of DeGnats"));
             tribesPresent.Add(tribe);
@@ -152,6 +151,7 @@ namespace rak.world
             for(int count = 0; count < trees.Length; count++)
             {
                 trees[count].initialize("FruitTree");
+                trees[count].spawnsThingEvery = SPAWNFRUITEVERY;
                 AddThingToAllThings(trees[count]);
             }
             Debug.LogWarning("Updates balanced");
@@ -401,31 +401,21 @@ namespace rak.world
             return deaths;
         }
 
-        #region MONO METHODS
-        public void Update(float delta)
+        public void update(float delta)
         {
+            world.StartCoroutine(updateCoroutine(Time.deltaTime));
+        }
+        private System.Collections.IEnumerator updateCoroutine(float delta)
+        { 
             sinceLastSunUpdated += delta;
-            // AREA OWNS THE MASTER LOCK ON ALL THINGS //
-            foreach (Thing thing in allThings)
+            
+            for (int count = 0; count < _removeTheseThings.Count; count++)
             {
-                thing.ManualUpdate(delta);
-                if (thing is Creature)
-                {
-                    Creature creature = (Creature)thing;
-                    if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
-                    {
-                        _removeTheseThings.Add(creature);
-                        creature.DestroyAllParts();
-                        Debug.LogWarning("Removed a dead creature");
-                        DebugMenu.AppendDebugLine("Removed a dead creature", creature);
-                    }
-                }
-            }
-            foreach (Thing thing in _removeTheseThings)
-            {
-                allThings.Remove(thing);
-                thing.gameObject.SetActive(false);
-                thing.transform.SetParent(disabledContainer.transform);
+                Thing singleThing = _removeTheseThings[count];
+                allThings.Remove(singleThing);
+                singleThing.GetBlittableThing().SetToEmpty();
+                singleThing.gameObject.SetActive(false);
+                singleThing.transform.SetParent(disabledContainer.transform);
             }
             _removeTheseThings = new List<Thing>();
             
@@ -443,10 +433,32 @@ namespace rak.world
             timeSinceUpdatedThings += Time.deltaTime;
             if (timeSinceUpdatedThings > updateThingsEvery)
             {
-                updateAllBlittableThings();
+                updateAllBlittableThingsCache();
                 timeSinceUpdatedThings = 0;
             }
+
+            // THING UPDATES //
+            int batchSize = allThings.Count / World.THING_PROCESS_BATCH_SIZE_DIVIDER;
+            if (batchSize == 0) batchSize = 1;
+            for (int count = 0; count < allThings.Count; count++)
+            {
+                Thing thing = allThings[count];
+                thing.ManualUpdate(delta);
+                if (thing is Creature)
+                {
+                    Creature creature = (Creature)thing;
+                    creature.ManualCreatureUpdate(delta);
+                    if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
+                    {
+                        _removeTheseThings.Add(creature);
+                        creature.DestroyAllParts();
+                        Debug.LogWarning("Removed a dead creature");
+                        DebugMenu.AppendDebugLine("Removed a dead creature", creature);
+                    }
+                }
+                if (count % batchSize == 0)
+                    yield return null;
+            }
         }
-        #endregion
     }
 }

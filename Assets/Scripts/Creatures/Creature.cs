@@ -138,7 +138,7 @@ namespace rak.creatures
         }
 
         #region Mono Methods
-        public void Update()
+        /*public void Update()
         {
             if (RunDebugMethod)
             {
@@ -155,6 +155,58 @@ namespace rak.creatures
             {
                 lastUpdated = 0;
                 
+                // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
+                if (currentState == CREATURE_STATE.IDLE)
+                {
+                    debug("Creature is idle, looking for new task");
+                    taskManager.GetNewTask(this);
+                    if (taskManager.hasTask())
+                    {
+                        currentState = CREATURE_STATE.WAIT;
+                    }
+                }
+                // CREATURE IS NOT IDLE //
+                else
+                {
+                    debug("Performing current tasks - " + taskManager.getCurrentTaskType());
+                    taskManager.PerformCurrentTask();
+                    // Task was cancelled, mark creature as idle to get a new task next update //
+                    if (taskManager.GetCurrentTaskStatus() == Tasks.TASK_STATUS.Cancelled &&
+                        currentState != CREATURE_STATE.IDLE)
+                    {
+                        ChangeState(CREATURE_STATE.IDLE);
+                    }
+                    if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
+                        if (DEBUGSCENE)
+                            Debug.DrawLine(transform.position, agent.Destination, Color.cyan, 1f);
+
+                }
+                //Debug.LogWarning("Current state - " + currentState);
+                if (!taskManager.hasTask() && !CreatureConstants.CreatureIsIncapacitatedState(currentState))
+                {
+                    debug("No task found, marking Idle");
+                    currentState = CREATURE_STATE.IDLE;
+                }
+                // CREATURE PHYSICAL STATS UPDATES //
+                if (currentState != CREATURE_STATE.DEAD)
+                    creaturePhysicalStats.Update();
+            }
+        }*/
+
+        public void ManualCreatureUpdate(float delta)
+        {
+            if (RunDebugMethod)
+            {
+                taskManager.clearAllTasks();
+                RunDebugMethod = false;
+            }
+            agent.Update();
+            lastUpdated += delta;
+            lastObserved += delta;
+            if (lastUpdated > creaturePhysicalStats.updateEvery)
+            {
+                lastUpdated = 0;
+
                 // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
                 if (currentState == CREATURE_STATE.IDLE)
                 {
@@ -265,21 +317,22 @@ namespace rak.creatures
             jobFor.allThings = Area.GetBlittableThings();
             jobFor.observeDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
             jobFor.origin = transform.position;
-            jobFor.thingsWithinReach = new NativeArray<BlittableThing>(jobFor.allThings.Length,Allocator.TempJob);
+            jobFor.memories = new NativeArray<MemoryInstance>(jobFor.allThings.Length,Allocator.Persistent);
             observeHandle = jobFor.Schedule(jobFor.allThings.Length, 1);
             Area.AddJobHandle(observeHandle);
-            yield return null;
+            yield return new WaitUntil(() => observeHandle.IsCompleted);
             observeHandle.Complete();
             updateThingsWithinProximityAndDisposeCache();
         }
         private void updateThingsWithinProximityAndDisposeCache()
         {
-            for (int count = 0; count < jobFor.thingsWithinReach.Length; count++)
+            for (int count = 0; count < jobFor.memories.Length; count++)
             {
-                if(!jobFor.thingsWithinReach[count].IsEmpty())
-                    species.memory.AddMemory(Verb.SAW, jobFor.thingsWithinReach[count], false);
+                MemoryInstance memory = jobFor.memories[count];
+                if(!memory.IsEmpty())
+                    species.memory.AddMemory(memory);
             }
-            jobFor.thingsWithinReach.Dispose();
+            jobFor.memories.Dispose();
             float areaDistance = Grid.ELEMENT_SIZE.sqrMagnitude*2;
             // Observe Areas //
             GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(

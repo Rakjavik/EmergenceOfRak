@@ -96,11 +96,14 @@ namespace rak.UI
                     StringBuilder columnText = new StringBuilder();
                     for (int row = 0; row < maxRows; row++)
                     {
-                        if (shortTermMemory[count].verb != Verb.NA)
+                        if (!shortTermMemory[count].subject.Equals(System.Guid.Empty))
                         {
-                            if (shortTermMemory[count].subject.GetThing() != null)
+                            if (Area.GetThingByGUID(shortTermMemory[count].subject) != null)
                             {
-                                columnText.Append(shortTermMemory[count].subject.GetThing().name + "\n");
+                                if (shortTermMemory[count].GetInvertVerb())
+                                    columnText.Append("!");
+                                columnText.Append(shortTermMemory[count].verb.ToString() + "-" + 
+                                    Area.GetThingByGUID(shortTermMemory[count].subject).name + "\n");
                             }
                             else
                             {

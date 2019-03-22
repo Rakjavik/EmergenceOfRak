@@ -8,7 +8,7 @@ public struct ObserveJobFor : IJobParallelFor
     [ReadOnly]
     public NativeArray<BlittableThing> allThings;
     [WriteOnly]
-    public NativeArray<BlittableThing> thingsWithinReach;
+    public NativeArray<MemoryInstance> memories;
 
     public Vector3 origin;
     public float observeDistance;
@@ -18,9 +18,12 @@ public struct ObserveJobFor : IJobParallelFor
         float distanceFromThing = Vector3.Distance(allThings[index].position, origin);
         if (distanceFromThing <= observeDistance && distanceFromThing > 1)
         {
-            thingsWithinReach[index] = allThings[index];
+            memories[index] = new MemoryInstance(Verb.SAW,allThings[index].GetGuid(), false);
         }
-
+        else
+        {
+            memories[index] = MemoryInstance.GetNewEmptyMemory();
+        }
     }
 }
 
