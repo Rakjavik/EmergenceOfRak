@@ -60,6 +60,7 @@ namespace rak.creatures
         public float DistanceMovedLastUpdate { get; private set; }
 
         private Transform _transform;
+        // TODO OPTIMIZE //
         private Dictionary<float, float> distancesMoved = new Dictionary<float, float>();
         private Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables;
         

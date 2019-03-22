@@ -33,7 +33,7 @@ namespace rak.creatures
         private CREATURE_STATE currentState;
         private CREATURE_DEATH_CAUSE causeOfDeath = CREATURE_DEATH_CAUSE.NA;
         private float lastUpdated = 0;
-        private float observeEvery = 2.5f;
+        private float observeEvery = 5f;
         private float lastObserved = 2.5f;
         private ObserveJobFor jobFor;
         private bool initialized = false;
@@ -57,35 +57,6 @@ namespace rak.creatures
         {
             return initialized;
         }
-        /*public bool IsTargetInFrontOfMe(Thing target)
-        {
-            bool found = false;
-            RaycastHit hit;
-            Vector3 origin = transform.position;
-            Vector3 destination = target.transform.position - transform.position;
-            if (Physics.Raycast(origin, destination, out hit))
-            {
-
-                Thing possibleHit = hit.collider.GetComponent<Thing>();
-                if (possibleHit == null)
-                    possibleHit = hit.collider.GetComponentInParent<Thing>();
-                if (possibleHit != null)
-                {
-                    if (possibleHit == target)
-                    {
-                        if (DEBUGSCENE)
-                            Debug.DrawLine(origin, hit.point, Color.yellow, .5f);
-                        found = true;
-                    }
-                    else
-                    {
-                        if (DEBUGSCENE)
-                            Debug.DrawLine(origin, hit.point, Color.gray, .5f);
-                    }
-                }
-            }
-            return found;
-        }*/
         public bool IsLanding()
         {
             return agent.IsLanding();

@@ -17,12 +17,14 @@ namespace rak.world
         {
             jobHandles.Add(handle);
         }
-        private static NativeArray<BlittableThing> allThingsHistoricCache;
+        private static NativeArray<BlittableThing> allThingsBlittableCache;
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
         private static List<Thing> _removeTheseThings = new List<Thing>();
         private static float updateSunEvery = .1f;
+        private static float timeSinceUpdatedThings = 0;
+        private static float updateThingsEvery = 1f;
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
         private static bool initialized = false;
@@ -60,7 +62,7 @@ namespace rak.world
         }
         public static NativeArray<BlittableThing> GetBlittableThings()
         {
-            return allThingsHistoricCache;
+            return allThingsBlittableCache;
         }
         private static void updateAllBlittableThings()
         {
@@ -70,19 +72,12 @@ namespace rak.world
                 jobHandles[count].Complete();
             }
             jobHandles = new List<JobHandle>();
-            //allThingsHistoricCache.Dispose();
-            //allThingsHistoricCache = new NativeArray<BlittableThing>(allThings.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             AllThingsCacheEntriesFilled = allThings.Count;
             for (int count = 0; count < AllThingsCacheEntriesFilled; count++)
             {
-                allThingsHistoricCache[count] = allThings[count].GetBlittableThing();
+                allThingsBlittableCache[count] = allThings[count].GetBlittableThing();
             }
-            // Fill Rest of cache with empty entries //
-            for (int count = 0; count < allThingsHistoricCache.Length- AllThingsCacheEntriesFilled; count++)
-            {
-                allThingsHistoricCache[AllThingsCacheEntriesFilled + count] = BlittableThing.GetNewEmptyThing();
-            }
-            //Debug.Log("Area cache update time - " + (System.DateTime.Now.ToBinary() - start));
+            Debug.Log("Area cache update time - " + (System.DateTime.Now.ToBinary() - start));
         }
         public static List<Thing> GetAllThings()
         {
@@ -170,7 +165,7 @@ namespace rak.world
             }
             initialized = true;
             jobHandles = new List<JobHandle>();
-            allThingsHistoricCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
+            allThingsBlittableCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
             thingMasterList = new Dictionary<System.Guid, Thing>();
             if (debug) // DEBUG
             {
@@ -210,7 +205,7 @@ namespace rak.world
                 }
             }
             int populationToCreate = tribe.GetPopulation();
-            int MAXPOP = 300;
+            int MAXPOP = 200;
             if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)
@@ -433,7 +428,7 @@ namespace rak.world
                 thing.transform.SetParent(disabledContainer.transform);
             }
             _removeTheseThings = new List<Thing>();
-            updateAllBlittableThings();
+            
             foreach (Tribe tribe in tribesPresent)
             {
                 tribe.Update();
@@ -444,6 +439,12 @@ namespace rak.world
                 float timeOfDay = (AreaLocalTime) % dayLength;
                 sun.rotation = Quaternion.Euler(new Vector3((timeOfDay / dayLength) * 360, 0, 0));
                 sinceLastSunUpdated = 0;
+            }
+            timeSinceUpdatedThings += Time.deltaTime;
+            if (timeSinceUpdatedThings > updateThingsEvery)
+            {
+                updateAllBlittableThings();
+                timeSinceUpdatedThings = 0;
             }
         }
         #endregion

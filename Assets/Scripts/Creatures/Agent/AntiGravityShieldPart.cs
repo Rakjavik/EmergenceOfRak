@@ -56,7 +56,7 @@ namespace rak.creatures
                     bool activate = false;
 
                     // STUCK //
-                    if (attachedAgent.IsStuck())
+                    if (true == false)
                     {
                         if (ignoreStuckFor <= 0)
                         {
