@@ -92,6 +92,7 @@ namespace rak.world
             RAKTerrain terrain)
         {
             List<GridSector> elementsWithinRange = new List<GridSector>();
+            if (terrain == null) Debug.Break();
             GridSector[] elements = terrain.GetGridElements();
             foreach (GridSector element in elements)
             {

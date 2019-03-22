@@ -1,4 +1,5 @@
 ﻿using rak.world;
+using System.Collections;
 using UnityEngine;
 
 namespace rak.creatures
@@ -93,14 +94,16 @@ namespace rak.creatures
             }
         }
 
-        private void Flight(ActionStep.Actions currentCreatureAction)
+        IEnumerator Flight(ActionStep.Actions currentCreatureAction)
         {
             if (currentCreatureAction == ActionStep.Actions.MoveTo)
             {
                 Vector3 relativeVel = attachedBody.transform.InverseTransformDirection(attachedBody.velocity);
                 float distFromGround = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.DOWN);
+                yield return null;
                 float distanceFromFirstZHit = attachedAgent.GetDistanceBeforeCollision(
                     CreatureUtilities.RayCastDirection.FORWARD);
+                yield return null;
                 float objectBlockDistance = miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Halt_Forward_Movement_If_Object_Is_Distance];
                 bool objectBlockingForward = distanceFromFirstZHit < objectBlockDistance;
                 //Debug.LogWarning("Distance from first z- " + distanceFromFirstZHit);
@@ -198,9 +201,8 @@ namespace rak.creatures
             if (attachedBody.isKinematic) return;
             if(attachedAgent.locomotionType == CreatureLocomotionType.Flight)
             {
-                
-                
-                Flight(action);
+
+                attachedAgent.creature.StartCoroutine(Flight(action));
                 UpdateEvery = baseUpdateEvery + (25 - attachedBody.velocity.magnitude) * .01f;
                 //Debug.Log(UpdateEvery);
             }
