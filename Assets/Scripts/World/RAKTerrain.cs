@@ -5,6 +5,7 @@ using System;
 using DigitalRuby.RainMaker;
 using UnityEngine.AI;
 using rak;
+using rak.world;
 
 [Serializable]
 public class RAKTerrain : MonoBehaviour
@@ -18,6 +19,7 @@ public class RAKTerrain : MonoBehaviour
     private RAKTree[] rakTrees;
     private RAKTerrainMaster.RAKBiome biome;
     private Grid grid;
+    private bool initialized = false;
 
     public void initialize(RAKTerrainMaster terrainMaster)
     {
@@ -25,6 +27,7 @@ public class RAKTerrain : MonoBehaviour
         this.terrainMaster = terrainMaster;
         terrain = GetComponent<Terrain>();
         grid = null;
+        initialized = true;
     }
     
     public void generateTreeGOs()
@@ -170,7 +173,8 @@ public class RAKTerrain : MonoBehaviour
     {
         if(grid == null)
         {
-            grid = new Grid(this);
+            if(initialized)
+                grid = new Grid(this);
         }
         return grid.GetGridElements();
     }

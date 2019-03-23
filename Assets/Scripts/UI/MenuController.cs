@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace rak.UI
 {
-    public enum RootMenu { CreatureBrowser, WorldBrowser,DebugMenu }
+    public enum RootMenu { CreatureBrowser, WorldBrowser,DebugMenu,StartMenu }
     public interface Menu
     {
         void Initialize();

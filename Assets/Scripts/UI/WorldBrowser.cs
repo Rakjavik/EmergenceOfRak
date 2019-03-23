@@ -56,7 +56,7 @@ namespace rak.UI
             if (selectedCell)
                 LoadCell(selectedCell);
         }
-        public void LoadCell(HexCell cell)
+        private void LoadCell(HexCell cell)
         {
             world.LoadArea(cell);
         }

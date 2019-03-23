@@ -17,6 +17,7 @@ namespace rak.UI
         private float _ignoreInputs = 0f;
         private Vector3 _lastMousePosition;
         private bool _moveWithMouse = false;
+        private bool _stopCameraMovement = false;
 
         public static void SetFollowTarget(Transform target)
         {
@@ -29,8 +30,16 @@ namespace rak.UI
             _lastMousePosition = Input.mousePosition;
         }
         // Update is called once per frame
+        private void toggleMovement()
+        {
+            _stopCameraMovement = !_stopCameraMovement;
+        }
         void Update()
         {
+            if (Input.GetKeyUp(KeyCode.Space))
+            {
+                toggleMovement();
+            }
             if (_target == null)
             {
                 _target = CreatureBrowser.SelectedCreature.transform;
@@ -38,6 +47,7 @@ namespace rak.UI
             }
             else
             {
+                if (_stopCameraMovement) return;
                 transform.position = Vector3.Lerp(transform.position, _target.position+cameraOffset, Time.deltaTime*3f);
                 transform.LookAt(_target);
                 Vector3 positionForward;

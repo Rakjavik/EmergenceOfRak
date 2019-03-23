@@ -29,6 +29,9 @@ namespace rak.creatures
                 return CREATURE_DEATH_CAUSE.NA;
             } }
         public Dictionary<MiscVariables.CreatureMiscVariables, float> miscVariables { get; private set; }
+        public GridSector currentSector { get; private set; }
+        public bool Visible { get; private set; }
+        public bool InView { get; private set; }
 
         private CREATURE_STATE currentState;
         private CREATURE_DEATH_CAUSE causeOfDeath = CREATURE_DEATH_CAUSE.NA;
@@ -39,8 +42,7 @@ namespace rak.creatures
         private bool initialized = false;
         private JobHandle observeHandle;
         private bool awaitingObservation = false;
-        public bool inView { get; private set; }
-        //private BlittableThing[] thingsWithinProximity;
+        private Transform mainCamera;
 
         private Species species;
         private SpeciesPhysicalStats creaturePhysicalStats;
@@ -110,7 +112,9 @@ namespace rak.creatures
             memberOfTribe = null;
             knownGridSectorsVisited = new Dictionary<GridSector, bool>();
             lastObserved = Random.Range(0, observeEvery);
-            inView = true;
+            Visible = true;
+            mainCamera = Camera.main.transform;
+            InView = true;
             initialized = true;
         }
         public void PlayOneShot()
@@ -139,20 +143,25 @@ namespace rak.creatures
             StartCoroutine(observeSurroundings());
         }
 
-        #region Mono Methods
-        private void SetInView(bool inView)
+        public void SetInView(bool inView)
         {
-            if (this.inView == inView) return;
+            
             if (!inView)
-                agent.GetRigidBody().isKinematic = true;
-            else
             {
-                agent.GetRigidBody().isKinematic = false;
-                agent.GetRigidBody().velocity = Vector3.zero;
+                SetVisible(false);
             }
-            this.inView = inView;
+            this.InView = inView;
             //Debug.LogWarning("Inview - " + inView);
         }
+        public void SetVisible(bool visible)
+        {
+            if (visible)
+                agent.GetRigidBody().isKinematic = false;
+            else
+                agent.GetRigidBody().isKinematic = true;
+            this.Visible = visible;
+        }
+        #region
         private void OnBecameVisible()
         {
             SetInView(true);
@@ -163,14 +172,16 @@ namespace rak.creatures
         }
         public void ManualCreatureUpdate(float delta)
         {
-            agent.Update(delta,inView);
+            agent.Update(delta,Visible);
+            updateCurrentGridSector();
             lastUpdated += delta;
             lastObserved += delta;
             if (DEBUGSCENE && RunDebugMethod)
             {
                 RunDebugMethod = false;
-                SetInView(!inView);
+                SetInView(!Visible);
             }
+            
             if (lastUpdated > creaturePhysicalStats.updateEvery)
             {
                 lastUpdated = 0;
@@ -275,11 +286,6 @@ namespace rak.creatures
             if (lastObserved < observeEvery || awaitingObservation || !initialized)
                 yield break;
             lastObserved = 0;
-            /*ObserveJob job = new ObserveJob();
-            job.observeDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
-            job.origin = transform.position;
-            job.allThings = Area.GetBlittableThings();
-            job.thingsWithinReach = thingsWithinProximityCache;*/
 
             jobFor = new ObserveJobFor();
             jobFor.allThings = Area.GetBlittableThings();
@@ -292,6 +298,7 @@ namespace rak.creatures
             observeHandle.Complete();
             updateThingsWithinProximityAndDisposeCache();
         }
+
         private void updateThingsWithinProximityAndDisposeCache()
         {
             for (int count = 0; count < jobFor.memories.Length; count++)
@@ -301,11 +308,14 @@ namespace rak.creatures
                     species.memory.AddMemory(memory);
             }
             jobFor.memories.Dispose();
-            float areaDistance = Grid.ELEMENT_SIZE.sqrMagnitude*2;
+        }
+        private void updateCurrentGridSector()
+        {
             // Observe Areas //
+            float areaDistance = Grid.CurrentElementSize.sqrMagnitude * 2;
             GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
-                this, areaDistance, currentArea.GetClosestTerrainToPoint(transform.position));
-            GridSector currentSector = currentArea.GetCurrentGridSector(transform);
+                this, areaDistance, RAKTerrainMaster.GetClosestTerrainToPoint(transform.position));
+            currentSector = Area.GetCurrentGridSector(transform);
 
             foreach (GridSector element in closeAreas)
             {
@@ -319,6 +329,7 @@ namespace rak.creatures
                 }
             }
         }
+
         public MemoryInstance[] HasAnyMemoriesOf(Verb verb, CONSUMPTION_TYPE consumptionType)
         {
             return species.memory.HasAnyMemoriesOf(verb, consumptionType);

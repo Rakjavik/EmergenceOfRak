@@ -469,13 +469,13 @@ namespace rak.creatures
             return distanceMoved <= stuckIfDistanceMovedLessThan && Time.time > 1;
         }
         // Called from Creature Object //
-        public void Update(float delta, bool inView)
+        public void Update(float delta, bool visible)
         {
             if (!Active) return;
             lastUpdate += delta;
             distanceMovedLastUpdated += delta;
             // If In View update everything normally //
-            if (inView)
+            if (visible)
             {
                 // Part updates //
                 foreach (Part part in allParts)
@@ -491,6 +491,21 @@ namespace rak.creatures
                 {
                     creature.transform.position = Vector3.MoveTowards(creature.transform.position, Destination, 
                         velocityWhenMovingWithoutPhysics*delta);
+                    GridSector currentSector = creature.currentSector;
+                    // TODO get current sector working correctly to correct height when not visible
+                    if (currentSector != null)
+                    {
+                        float terrainY = creature.currentSector.GetTerrainHeightFromGlobalPos(creature.transform.position);
+                        Debug.LogWarning("Terrainy - " + terrainY);
+                    }
+                    for (int count = 0; count < allParts.Count; count++)
+                    {
+                        if (allParts[count] is AnimationPart &&
+                            ((AnimationPart)allParts[count]).PartType == CreaturePart.SHIELD)
+                            allParts[count].Update(delta);
+                        else if (allParts[count] is AntiGravityShieldPart)
+                            allParts[count].Update(delta);
+                    }
                 }
                 else if (currentAction == ActionStep.Actions.Add)
                 {

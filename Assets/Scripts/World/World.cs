@@ -78,6 +78,10 @@ namespace rak.world
         }
         private void Awake()
         {
+            Initialize();
+        }
+        private void Initialize()
+        {
             ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower().Contains("debug");
             if (ISDEBUGSCENE && !_initialized)
             {

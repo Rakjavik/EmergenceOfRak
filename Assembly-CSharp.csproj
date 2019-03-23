@@ -210,6 +210,7 @@
     <Compile Include="Assets\Scripts\World\Area.cs" />
     <Compile Include="Assets\Scripts\World\Civilization.cs" />
     <Compile Include="Assets\Scripts\World\CreatureUtilities.cs" />
+    <Compile Include="Assets\Scripts\World\Grid.cs" />
     <Compile Include="Assets\Scripts\World\GridSector.cs" />
     <Compile Include="Assets\Scripts\World\HexWorld\EdgeVertices.cs" />
     <Compile Include="Assets\Scripts\World\HexWorld\HexCell.cs" />

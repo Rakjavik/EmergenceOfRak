@@ -1,78 +1,67 @@
 ﻿using rak;
 using UnityEngine;
 
-public class Grid
-{
-    public static readonly Vector2 ELEMENT_SIZE = new Vector2(128, 128);
-
-    private GridSector[] elements;
-
-    public Grid(RAKTerrain terrain)
-    {
-        Vector3 terrainSize = terrain.terrain.terrainData.size;
-        int numberOfXElements = (int)(terrainSize.x / ELEMENT_SIZE.x);
-        int numberOfZElements = (int)(terrainSize.z / ELEMENT_SIZE.y);
-        elements = new GridSector[numberOfXElements * numberOfZElements];
-        int elementCount = 0;
-        Vector3 terrainPosition = terrain.transform.position;
-        for(int x = 0; x < numberOfXElements; x++)
-        {
-            for(int z = 0; z < numberOfZElements; z++)
-            {
-                Vector2 elementWorldPosition = new Vector2(terrainPosition.x + x * ELEMENT_SIZE.x,
-                    terrainPosition.z + z * ELEMENT_SIZE.y);
-                Vector2 elementWorldPositionEnd = new Vector2(
-                    elementWorldPosition.x + ELEMENT_SIZE.x, elementWorldPosition.y + ELEMENT_SIZE.y);
-                elements[elementCount] = new GridSector(new Vector2(x, z),
-                    elementWorldPosition, elementWorldPositionEnd,terrain.name,terrain);
-                elementCount++;
-            }
-        }
-        Debug.Log("Grid generation complete");
-    }
-
-    public GridSector[] GetGridElements() { return elements; }
-}
-
 public class GridSector
 {
-    public GridSector(Vector2 gridPosition, Vector2 worldPositionStart, 
+    public Vector2 relativePositionStart { get; private set; }
+    public Vector2 relativeWorldPositionEnd { get; private set; }
+    public string name { get; private set; }
+    public Vector2 gridPosition { get; private set; }
+
+    private float[,] terrainHeights;
+    private RAKTerrain parentTerrain = null;
+
+    public GridSector(Vector2 gridPosition, Vector2 relativePositionStart, 
         Vector2 worldPositionEnd,string terrainName,RAKTerrain terrain)
     {
         name = (terrainName + "-" + gridPosition.x + "-" + gridPosition.y);
         this.gridPosition = gridPosition;
-        this.worldPositionStart = worldPositionStart;
-        this.worldPositionEnd = worldPositionEnd;
+        this.relativePositionStart = relativePositionStart;
+        this.relativeWorldPositionEnd = worldPositionEnd;
         this.parentTerrain = terrain;
         float y = 0;
-        Vector3 start = new Vector3(worldPositionStart.x, y, worldPositionStart.y);
-        Vector3 end = new Vector3(worldPositionEnd.x, y, worldPositionEnd.y);
+        Vector3 start = new Vector3(
+            relativePositionStart.x%Grid.CurrentElementSize.x, y, relativePositionStart.y % Grid.CurrentElementSize.y);
+        Vector3 end = new Vector3(
+            worldPositionEnd.x % Grid.CurrentElementSize.x, y, worldPositionEnd.y % Grid.CurrentElementSize.y);
+        Debug.LogWarning("Start-End -- " + start + "-" + end);
+        terrainHeights = terrain.terrain.terrainData.GetHeights((int)relativePositionStart.x, (int)relativePositionStart.y,
+            (int)Grid.CurrentElementSize.x, (int)Grid.CurrentElementSize.y);
         Debug.DrawLine(start, new Vector3(end.x,y,start.z), Color.yellow, 3);
         Debug.DrawLine(end, new Vector3(end.x, y, start.z), Color.yellow, 3);
     }
-
-    public Vector2 gridPosition { get; private set; }
-    private RAKTerrain parentTerrain = null;
+    public float GetTerrainHeightFromGlobalPos(Vector3 globalPosition)
+    {
+        Vector2 flatten = new Vector2(
+            globalPosition.x%RAKTerrainMaster.TileSize, globalPosition.z % RAKTerrainMaster.TileSize);
+        Vector2 diff = flatten - relativePositionStart;
+        int x = (int)diff.x;
+        int y = (int)diff.y;
+        if(x >= terrainHeights.GetLength(0) || y >= terrainHeights.GetLength(1) || y < 0 || x < 0)
+        {
+            Debug.LogWarning("X-Y - " + x + "-" + y);
+            return 0;
+        }
+        return terrainHeights[x, y];
+    }
     public Vector3 GetRandomPositionInSector { get
         {
-            float x = Random.Range(0, Grid.ELEMENT_SIZE.x);
-            float z = Random.Range(0, Grid.ELEMENT_SIZE.y);
-            float y = parentTerrain.GetHeightAt(new Vector2(worldPositionStart.x + x, worldPositionStart.y + z));
-            return new Vector3(worldPositionStart.x+x, y, worldPositionStart.y+z);
+            float x = Random.Range(0, Grid.CurrentElementSize.x);
+            float z = Random.Range(0, Grid.CurrentElementSize.y);
+            float y = parentTerrain.GetHeightAt(new Vector2(relativePositionStart.x + x, relativePositionStart.y + z));
+            return new Vector3(relativePositionStart.x+x, y, relativePositionStart.y+z);
         } }
     public Vector3 GetSectorPosition { get
         {
-            Vector3 position = new Vector3(worldPositionStart.x+(Grid.ELEMENT_SIZE.x/2), 6, worldPositionStart.y + 
-                (Grid.ELEMENT_SIZE.y / 2));
+            Vector3 position = new Vector3(relativePositionStart.x+(Grid.CurrentElementSize.x/2), 6, relativePositionStart.y + 
+                (Grid.CurrentElementSize.y / 2));
             //Debug.LogWarning("Position of sector - " + heightY);
             return position;
         } }
-    public Vector2 worldPositionStart { get; private set; }
-    public Vector2 worldPositionEnd { get; private set; }
-    public string name { get; private set; }
+    
 
     public Vector2 GetTwoDLerpOfSector()
     {
-        return Vector2.Lerp(worldPositionStart, worldPositionEnd,.5f);
+        return Vector2.Lerp(relativePositionStart, relativeWorldPositionEnd,.5f);
     }
 }

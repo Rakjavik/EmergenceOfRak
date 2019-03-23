@@ -21,21 +21,21 @@ public partial class RAKTerrainMaster : MonoBehaviour
     private static HexCell cell; // Hexcell that represents the terrain being generated
     private static Area area; // Area holds all variables related to the local representation of the HexCell
     private static World world;
-    private RAKTerrain[] terrain; // Terrain objects for this Area
+    private static RAKTerrain[] terrain; // Terrain objects for this Area
     
     [Header("Tree Prefabs needed for Terrain Generation")]
     public GameObject[] treePrefabs;
     [Header("Ground Textures needed for Terrain Generation")]
     public Texture[] grassTextures;
-    public float GetTerrainHeightAt(Vector2 position,RAKTerrain terrain)
+    public static float GetTerrainHeightAt(Vector2 position,RAKTerrain terrain)
     {
         return terrain.GetHeightAt(position);
     }
     private static RAKWeather sun;
     private static RAKBiome currentBiome;
-    private static int tileSize = 256; // Size of each Terrain piece
-    private int width = tileSize+1; // Terrain width/height needs a plus one due to Unity being weird
-    private int height = tileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
+    public static int TileSize = 256; // Size of each Terrain piece
+    private int width = TileSize+1; // Terrain width/height needs a plus one due to Unity being weird
+    private int height = TileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
     private int worldSize = 16; // Number of total terrain objects
 
     private void InitializeDebugTerrain(World world,HexCell cell)
@@ -230,7 +230,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
         {
             int y = index / (worldSize / 4);
             int x = index - y * (worldSize / 4);
-            terrain[index].transform.position = new Vector3(x * tileSize, 0, y * tileSize);
+            terrain[index].transform.position = new Vector3(x * TileSize, 0, y * TileSize);
         }
     }
     private TerrainData generateTerrain(int width, int height, int depth, float scale, float offsetX, float offsetY)
@@ -367,7 +367,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     }
                     if (tries >= maxTries)
                     {
-                        Debug.LogWarning(debugString + " - " + terrainObject.name);
+                        //Debug.LogWarning(debugString + " - " + terrainObject.name);
                         break;
                     }
                 }
@@ -578,13 +578,13 @@ public partial class RAKTerrainMaster : MonoBehaviour
     {
         for (int terrainCount = 0; terrainCount < terrain.Length; terrainCount++) // Loop through each piece of terrain
         {
-            Terrain singleTerrain = this.terrain[terrainCount].getTerrainComponenet();
+            Terrain singleTerrain = RAKTerrainMaster.terrain[terrainCount].getTerrainComponenet();
             Terrain[] neighbors = terrain[terrainCount].neighbors;
             for (int nCount = 0; nCount < neighbors.Length; nCount++)
             {
                 // Only do right and down //
                 if (nCount == 0 || nCount == 3) continue;
-                float[] seamStartPoints = new float[tileSize];
+                float[] seamStartPoints = new float[TileSize];
                 float[,] thisTerrainsEdge = null;
                 float[,] targetTerrainsEdge = null;
 
@@ -593,41 +593,41 @@ public partial class RAKTerrainMaster : MonoBehaviour
                 if (neighbors[nCount] != null)
                 {
                     int height, width;
-                    width = tileSize / startSmoothingAt;
-                    height = tileSize;
+                    width = TileSize / startSmoothingAt;
+                    height = TileSize;
 
                     // LEFT
                     if (nCount == 0)
                     {
                         startPoint = new Vector2(0, 0); // Where to insert new heights
                         thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, width, height);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(tileSize-width, 0, width, height);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(TileSize-width, 0, width, height);
                     }
                     // RIGHT
                     else if (nCount == 1)
                     {
-                        startPoint = new Vector2(tileSize-width, 0);
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(tileSize-width, 0, width, height);
+                        startPoint = new Vector2(TileSize-width, 0);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(TileSize-width, 0, width, height);
                         targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, width, height);
                     }
                     // DOWN
                     else if (nCount == 2)
                     {
                         // WIDTH/HEIGHT REVERSED //
-                        startPoint = new Vector2(0, tileSize-width);
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, tileSize-width, tileSize, width);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, tileSize, width);
+                        startPoint = new Vector2(0, TileSize-width);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, TileSize-width, TileSize, width);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, TileSize, width);
                     }
                     // UP
                     else if (nCount == 3)
                     {
                         // WIDTH/HEIGHT REVERSED //
                         startPoint = new Vector2(0, 0);
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, tileSize, width);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, tileSize, tileSize, 1);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, TileSize, width);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, TileSize, TileSize, 1);
                     }
                     // CALCULATE SEAMS
-                    for (int countLong = 0; countLong < tileSize; countLong++)
+                    for (int countLong = 0; countLong < TileSize; countLong++)
                     {
                         if (nCount == 0) // LEFT
                         {
@@ -753,7 +753,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
     {
         return (worldSize / 4) * height;
     }
-    public RAKTerrain GetClosestTerrainToPoint(Vector3 point)
+    public static RAKTerrain GetClosestTerrainToPoint(Vector3 point)
     {
         RAKTerrain closest = null;
         float closestDistance = 20000;

@@ -1,5 +1,6 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
+using rak.UI;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -18,13 +19,22 @@ namespace rak.world
             jobHandles.Add(handle);
         }
         private static NativeArray<BlittableThing> allThingsBlittableCache;
-        private static readonly int MAX_CONCURRENT_THINGS = 10000;
+
+
+        private static readonly int MAX_CONCURRENT_THINGS = 1000;
+        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 0;
+        private static readonly int MAX_VISIBLE_CREATURES = 0;
+        private static readonly int MAXPOP = 1;
+        
+        
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
         private static List<Thing> _removeTheseThings = new List<Thing>();
         private static float updateSunEvery = .1f;
         private static float timeSinceUpdatedThings = 0;
         private static float updateThingsEvery = 1f;
+        private static float updateCreatureDistanceSightEvery = 1;
+        private static float timeSinceLastCreatureDistanceSightCheck = 0;
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
         private static bool initialized = false;
@@ -123,7 +133,7 @@ namespace rak.world
         }
         private void InitializeDebug(Tribe tribe)
         {
-            int NUMBEROFGNATS = 2;
+            int NUMBEROFGNATS = 1;
             float SPAWNFRUITEVERY = 50;
 
             sitesPresent.Add(new Site("Home of DeGnats"));
@@ -159,7 +169,7 @@ namespace rak.world
         }
         public void Initialize(Tribe tribe)
         {
-            int MAXPOP = 300;
+            
             if (initialized)
             {
                 Debug.LogError("Area called to initialize when already initialized");
@@ -236,7 +246,7 @@ namespace rak.world
         }
         public void AddCreatureToWorld(string nameOfPrefab)
         {
-            addCreatureToWorld(nameOfPrefab, GetRandomGridSector().GetRandomPositionInSector,false);
+            addCreatureToWorld(nameOfPrefab, Vector3.zero,true);
         }
 
         private void addCreatureToWorldDEBUG(string nameOfPrefab, Vector3 position, 
@@ -257,7 +267,7 @@ namespace rak.world
                 float x = Random.Range(0, areaSize.x);
                 float z = Random.Range(0, areaSize.z);
                 Vector2 targetSpawn = new Vector2(x, z);
-                float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
+                float y = RAKTerrainMaster.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
             AddThingToAllThings(newThing.GetComponent<Thing>());
@@ -280,14 +290,14 @@ namespace rak.world
                 float x = Random.Range(0, areaSize.x);
                 float z = Random.Range(0, areaSize.z);
                 Vector2 targetSpawn = new Vector2(x, z);
-                float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
+                float y = RAKTerrainMaster.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 newThing.transform.position = new Vector3(x, y, z);
             }
             AddThingToAllThings(newThing.GetComponent<Thing>());
         }
-        public RAKTerrain GetClosestTerrainToPoint(Vector3 point)
+        public static RAKTerrain GetClosestTerrainToPoint(Vector3 point)
         {
-            return world.masterTerrain.GetClosestTerrainToPoint(point);
+            return RAKTerrainMaster.GetClosestTerrainToPoint(point);
         }
         public void addThingToWorld(string nameOfPrefab)
         {
@@ -323,7 +333,7 @@ namespace rak.world
                 float x = Random.Range(startPosition.x-maxDistance, startPosition.x+maxDistance);
                 float z = Random.Range(startPosition.z - maxDistance, startPosition.z + maxDistance);
                 Vector2 targetSpawn = new Vector2(x, z);
-                float y = world.masterTerrain.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
+                float y = RAKTerrainMaster.GetTerrainHeightAt(targetSpawn, GetClosestTerrainToPoint(targetSpawn));
                 Vector3 randomPosition = new Vector3(x, y, z);
                 NavMeshHit hit;
                 if (NavMesh.SamplePosition(randomPosition, out hit, maxDistance, NavMesh.AllAreas))
@@ -340,23 +350,9 @@ namespace rak.world
         {
             return GetRandomPositionOnNavMesh(Vector3.zero, 1000);
         }
-        public GridSector GetCurrentGridSector(Transform transform)
+        public static GridSector GetCurrentGridSector(Transform transform)
         {
-            RAKTerrain closestTerrain = world.masterTerrain.GetClosestTerrainToPoint(transform.position);
-            GridSector[] sectors = closestTerrain.GetGridElements();
-            float closestDist = Mathf.Infinity;
-            int indexOfClosest = -1;
-            for (int count = 0; count < sectors.Length; count++)
-            {
-                float currentDistance = Vector3.Distance(transform.position, sectors[count].GetSectorPosition);
-                if (currentDistance < closestDist)
-                {
-                    closestDist = currentDistance;
-                    indexOfClosest = count;
-                }
-            }
-            
-            return sectors[indexOfClosest];
+            return Grid.GetGridSectorAt(transform.position);
         }
         public GridSector GetRandomGridSector()
         {
@@ -406,12 +402,15 @@ namespace rak.world
 
         public void update(float delta)
         {
-            world.StartCoroutine(updateCoroutine(Time.deltaTime));
+            if(initialized)
+                world.StartCoroutine(updateCoroutine(Time.deltaTime));
         }
         private System.Collections.IEnumerator updateCoroutine(float delta)
         { 
             sinceLastSunUpdated += delta;
-            
+            timeSinceLastCreatureDistanceSightCheck += delta;
+
+
             for (int count = 0; count < _removeTheseThings.Count; count++)
             {
                 Thing singleThing = _removeTheseThings[count];
@@ -443,8 +442,11 @@ namespace rak.world
             // THING UPDATES //
             int batchSize = allThings.Count / World.THING_PROCESS_BATCH_SIZE_DIVIDER;
             if (batchSize == 0) batchSize = 1;
+            int numberOfVisibleThings = 0;
             for (int count = 0; count < allThings.Count; count++)
             {
+                delta = Time.deltaTime;
+                Vector3 cameraPosition = mainCamera.transform.position;
                 Thing thing = allThings[count];
                 thing.ManualUpdate(delta);
                 if (thing is Creature)
@@ -456,7 +458,30 @@ namespace rak.world
                         _removeTheseThings.Add(creature);
                         creature.DestroyAllParts();
                         Debug.LogWarning("Removed a dead creature");
-                        DebugMenu.AppendDebugLine("Removed a dead creature", creature);
+                    }
+                    if (creature.InView)
+                    {
+                        float distanceFromCamera = Vector3.Distance(cameraPosition, creature.transform.position);
+                            
+                        if (distanceFromCamera > MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA)
+                        {
+                            if (creature.Visible)
+                            {
+                                creature.SetVisible(false);
+                            }
+                        }
+                        else
+                        {
+                            if (!creature.Visible)
+                            {
+                                if(numberOfVisibleThings < MAX_VISIBLE_CREATURES)
+                                    creature.SetVisible(true);
+                                    
+                            }
+                        }
+                        if (creature.Visible)
+                            numberOfVisibleThings++;
+                        timeSinceLastCreatureDistanceSightCheck = 0;
                     }
                 }
                 if (count % batchSize == 0)

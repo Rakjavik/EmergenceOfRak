@@ -32,7 +32,7 @@ namespace rak.UI
         public TMP_Text[] memoryText;
         private bool initialized = false;
         private CreatureBrowserWindow currentWindow;
-        private Creature selectedCreature;
+        private static Creature selectedCreature;
         private Creature[] creatureMap;
         private float timeSinceLastUpdate = 0;
         private float updateEvery = .5f;
@@ -84,6 +84,7 @@ namespace rak.UI
 
         private void RefreshMemoryText()
         {
+            
             int maxRows = 25;
             int maxColumns = memoryText.Length;
             if(selectedCreature != null && selectedCreature.IsInitialized())

@@ -34,6 +34,7 @@ namespace rak
             blittableThing.RefreshValue(this);
             return blittableThing;
         }
+        protected Rigidbody rb;
         private int weight;
         private bool useable;
         private bool consumeable;
@@ -64,6 +65,7 @@ namespace rak
 
         public void initialize(string name)
         {
+            rb = null;
             guid = Guid.NewGuid();
             this.name = name;
             this.thingName = name;
@@ -71,6 +73,7 @@ namespace rak
             produces = Thing_Produces.NA;
             if (name.Equals("fruit"))
             {
+                rb = GetComponent<Rigidbody>();
                 baseType = Base_Types.PLANT;
                 thingType = Thing_Types.Fruit;
                 weight = 1;
@@ -129,7 +132,13 @@ namespace rak
         public void ManualUpdate(float delta)
         {
             age += delta;
-            if(age >= maxAge)
+            if (rb != null && !rb.IsSleeping())
+            {
+                if (transform.position.y < Area.MinimumHeight)
+                    transform.position = new 
+                        Vector3(transform.position.x, Area.MaximumHeight, transform.position.z);
+            }
+            if (age >= maxAge)
             {
                 Debug.Log("Death by age - " + name);
                 DestroyThisThing();
