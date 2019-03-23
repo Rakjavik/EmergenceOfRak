@@ -12,6 +12,7 @@ namespace rak.creatures
 
         // Movement destination //
         public Vector3 Destination { get; private set; }
+        public float velocityWhenMovingWithoutPhysics { get; private set; }
         public float TimeToCollisionAtCurrentVel { get; private set; }
         private float _timeUpdatedCollisionAtVel = 0;
         private float[] distanceToCollision = new float[5];
@@ -416,6 +417,7 @@ namespace rak.creatures
                 }
             }
             ignoreIncomingCollisions = false;
+            velocityWhenMovingWithoutPhysics = 5f;
             initialized = true;
         }
 
@@ -467,16 +469,37 @@ namespace rak.creatures
             return distanceMoved <= stuckIfDistanceMovedLessThan && Time.time > 1;
         }
         // Called from Creature Object //
-        public void Update()
+        public void Update(float delta, bool inView)
         {
             if (!Active) return;
-            float delta = Time.deltaTime;
             lastUpdate += delta;
             distanceMovedLastUpdated += delta;
-            // Part updates //
-            foreach (Part part in allParts)
+            // If In View update everything normally //
+            if (inView)
             {
-                part.Update(delta);
+                // Part updates //
+                foreach (Part part in allParts)
+                {
+                    part.Update(delta);
+                }
+            }
+            // If not in view, manually move without physics //
+            else
+            {
+                ActionStep.Actions currentAction = creature.GetCurrentAction();
+                if (currentAction == ActionStep.Actions.MoveTo)
+                {
+                    creature.transform.position = Vector3.MoveTowards(creature.transform.position, Destination, 
+                        velocityWhenMovingWithoutPhysics*delta);
+                }
+                else if (currentAction == ActionStep.Actions.Add)
+                {
+                    for(int count = 0; count < allParts.Count; count++)
+                    {
+                        if (allParts[count] is TractorBeamPart)
+                            allParts[count].Update(delta);
+                    }
+                }
             }
             if (distanceMovedLastUpdated >= UPDATE_DISTANCE_EVERY)
             {

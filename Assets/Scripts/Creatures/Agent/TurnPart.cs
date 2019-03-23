@@ -56,12 +56,11 @@ namespace rak.creatures
     }
     public class TurnPartRotation : TurnPart
     {
-        private TurnPartRotationJob job;
+
         public TurnPartRotation(CreaturePart creaturePart, Transform transform,
             CreatureTurnType turnType, float updateEvery) :
             base(creaturePart, transform, CreatureTurnType.Inch, updateEvery)
         {
-            job = new TurnPartRotationJob();
         }
 
         public override void UpdateDerivedPart(ActionStep.Actions action, float delta)

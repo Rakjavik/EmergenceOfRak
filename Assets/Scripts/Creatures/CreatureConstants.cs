@@ -200,7 +200,7 @@ namespace rak.creatures
                 main.startDelay = 0;
                 main.startLifetime = .3f;
                 main.startSpeed = new ParticleSystem.MinMaxCurve(10, 20);
-                main.startSize = .1f;
+                main.startSize = .01f;
                 main.startColor = Color.yellow;
                 ParticleSystem.EmissionModule emission = ps.emission;
                 emission.rateOverTime = 750;
@@ -214,7 +214,7 @@ namespace rak.creatures
                 shape.arcMode = ParticleSystemShapeMultiModeValue.BurstSpread;
                 shape.arcSpread = 0;
                 shape.rotation = new Vector3(90, 0, 0);
-                shape.scale = new Vector3(.4f, .4f, 1);
+                shape.scale = new Vector3(.04f, .04f, .1f);
                 shape.randomDirectionAmount = 1;
                 ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
                 renderer.renderMode = ParticleSystemRenderMode.Stretch;

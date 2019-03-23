@@ -28,6 +28,7 @@ namespace rak.world
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
         private static bool initialized = false;
+        private static Camera mainCamera;
         public static float AreaLocalTime { get; private set; }
 
         public static Thing GetThingByGUID(System.Guid guid)
@@ -122,7 +123,7 @@ namespace rak.world
         }
         private void InitializeDebug(Tribe tribe)
         {
-            int NUMBEROFGNATS = 1;
+            int NUMBEROFGNATS = 2;
             float SPAWNFRUITEVERY = 50;
 
             sitesPresent.Add(new Site("Home of DeGnats"));
@@ -158,6 +159,7 @@ namespace rak.world
         }
         public void Initialize(Tribe tribe)
         {
+            int MAXPOP = 300;
             if (initialized)
             {
                 Debug.LogError("Area called to initialize when already initialized");
@@ -167,6 +169,7 @@ namespace rak.world
             jobHandles = new List<JobHandle>();
             allThingsBlittableCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
             thingMasterList = new Dictionary<System.Guid, Thing>();
+            mainCamera = Camera.main;
             if (debug) // DEBUG
             {
                 InitializeDebug(tribe);
@@ -205,7 +208,7 @@ namespace rak.world
                 }
             }
             int populationToCreate = tribe.GetPopulation();
-            int MAXPOP = 200;
+            
             if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)

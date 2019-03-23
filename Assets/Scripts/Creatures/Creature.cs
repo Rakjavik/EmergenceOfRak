@@ -39,6 +39,7 @@ namespace rak.creatures
         private bool initialized = false;
         private JobHandle observeHandle;
         private bool awaitingObservation = false;
+        public bool inView { get; private set; }
         //private BlittableThing[] thingsWithinProximity;
 
         private Species species;
@@ -109,6 +110,7 @@ namespace rak.creatures
             memberOfTribe = null;
             knownGridSectorsVisited = new Dictionary<GridSector, bool>();
             lastObserved = Random.Range(0, observeEvery);
+            inView = true;
             initialized = true;
         }
         public void PlayOneShot()
@@ -138,71 +140,37 @@ namespace rak.creatures
         }
 
         #region Mono Methods
-        /*public void Update()
+        private void SetInView(bool inView)
         {
-            if (RunDebugMethod)
+            if (this.inView == inView) return;
+            if (!inView)
+                agent.GetRigidBody().isKinematic = true;
+            else
             {
-                taskManager.clearAllTasks();
-                RunDebugMethod = false;
+                agent.GetRigidBody().isKinematic = false;
+                agent.GetRigidBody().velocity = Vector3.zero;
             }
-            
-            float delta = Time.deltaTime;
-            base.ManualUpdate(delta);
-            agent.Update();
-            lastUpdated += delta;
-            lastObserved += delta;
-            if (lastUpdated > creaturePhysicalStats.updateEvery)
-            {
-                lastUpdated = 0;
-                
-                // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
-                if (currentState == CREATURE_STATE.IDLE)
-                {
-                    debug("Creature is idle, looking for new task");
-                    taskManager.GetNewTask(this);
-                    if (taskManager.hasTask())
-                    {
-                        currentState = CREATURE_STATE.WAIT;
-                    }
-                }
-                // CREATURE IS NOT IDLE //
-                else
-                {
-                    debug("Performing current tasks - " + taskManager.getCurrentTaskType());
-                    taskManager.PerformCurrentTask();
-                    // Task was cancelled, mark creature as idle to get a new task next update //
-                    if (taskManager.GetCurrentTaskStatus() == Tasks.TASK_STATUS.Cancelled &&
-                        currentState != CREATURE_STATE.IDLE)
-                    {
-                        ChangeState(CREATURE_STATE.IDLE);
-                    }
-                    if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
-                        if (DEBUGSCENE)
-                            Debug.DrawLine(transform.position, agent.Destination, Color.cyan, 1f);
-
-                }
-                //Debug.LogWarning("Current state - " + currentState);
-                if (!taskManager.hasTask() && !CreatureConstants.CreatureIsIncapacitatedState(currentState))
-                {
-                    debug("No task found, marking Idle");
-                    currentState = CREATURE_STATE.IDLE;
-                }
-                // CREATURE PHYSICAL STATS UPDATES //
-                if (currentState != CREATURE_STATE.DEAD)
-                    creaturePhysicalStats.Update();
-            }
-        }*/
-
+            this.inView = inView;
+            //Debug.LogWarning("Inview - " + inView);
+        }
+        private void OnBecameVisible()
+        {
+            SetInView(true);
+        }
+        private void OnBecameInvisible()
+        {
+            SetInView(false);
+        }
         public void ManualCreatureUpdate(float delta)
         {
-            if (RunDebugMethod)
-            {
-                taskManager.clearAllTasks();
-                RunDebugMethod = false;
-            }
-            agent.Update();
+            agent.Update(delta,inView);
             lastUpdated += delta;
             lastObserved += delta;
+            if (DEBUGSCENE && RunDebugMethod)
+            {
+                RunDebugMethod = false;
+                SetInView(!inView);
+            }
             if (lastUpdated > creaturePhysicalStats.updateEvery)
             {
                 lastUpdated = 0;

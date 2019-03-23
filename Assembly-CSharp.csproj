@@ -195,7 +195,6 @@
     <Compile Include="Assets\Scripts\HexCoordinates.cs" />
     <Compile Include="Assets\Scripts\Jobs\ObserveJob.cs" />
     <Compile Include="Assets\Scripts\Jobs\ObserveJobFor.cs" />
-    <Compile Include="Assets\Scripts\Jobs\TurnPartRotationJob.cs" />
     <Compile Include="Assets\Scripts\RAKAudioClip.cs" />
     <Compile Include="Assets\Scripts\RAKCarouselMenu.cs" />
     <Compile Include="Assets\Scripts\RAKMeshBaker.cs" />
