@@ -338,43 +338,6 @@ namespace rak.creatures
             }
             return TimeToCollisionAtCurrentVel;
         }
-        /*private Vector3 GetBeforeCollision()
-        {
-
-            Transform worldOrigin = creature.transform;
-            Vector3 relativeVel =
-                rigidbody.transform.InverseTransformDirection(rigidbody.velocity);
-            RaycastHit hit;
-            float distanceZ = float.MaxValue, distanceX = float.MaxValue;
-            
-            
-            Vector3 direction;
-            if (relativeVel.x > 0)
-                direction = creature.transform.right;
-            else
-                direction = -creature.transform.right;
-            rayLength = miscVariables[MiscVariables.AgentMiscVariables.Agent_Detect_Collision_X_Distance];
-            if (Physics.Raycast(worldOrigin.position + direction, direction, out hit, rayLength))
-            {
-                if(DEBUG)
-                    Debug.DrawLine(worldOrigin.position + direction, hit.point, Color.blue, .5f);
-                distanceX = Vector3.Distance(worldOrigin.position, hit.point);
-            }
-            if (distanceX < 0) distanceX = 0;
-            if (distanceZ < 0) distanceZ = 0;
-            if(_inTime)
-                return new Vector3(distanceX/relativeVel.x, -1, distanceZ/relativeVel.z);
-            else
-                return new Vector3(distanceX, -1, distanceZ);
-        }
-        public Vector3 GetDistanceBeforeCollision()
-        {
-            GetBeforeCollision();
-        }
-        public Vector3 GetTimeBeforeCollision()
-        {
-            return GetBeforeCollision(true,false);
-        }*/
         #endregion CALCULATION METHODS
 
         // CONSTRUCTOR //
@@ -492,11 +455,12 @@ namespace rak.creatures
                     creature.transform.position = Vector3.MoveTowards(creature.transform.position, Destination, 
                         velocityWhenMovingWithoutPhysics*delta);
                     GridSector currentSector = creature.currentSector;
-                    // TODO get current sector working correctly to correct height when not visible
+
                     if (currentSector != null)
                     {
                         float terrainY = creature.currentSector.GetTerrainHeightFromGlobalPos(creature.transform.position);
-                        Debug.LogWarning("Terrainy - " + terrainY);
+                        creature.transform.position = new Vector3(creature.transform.position.x, terrainY+sustainHeight, creature
+                            .transform.position.z);
                     }
                     for (int count = 0; count < allParts.Count; count++)
                     {

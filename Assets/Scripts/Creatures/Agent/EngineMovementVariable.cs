@@ -11,12 +11,7 @@ namespace rak.creatures
         public Direction FlightDirection { get; private set; }
         public float CurrentForce { get; private set; }
 
-        private float startupRunningFor;
-        
-        private float startUpTimeInMin;
-
-        public EngineMovementVariable(Direction flightDirection,Vector3 maxForce,float minimumForceToHover,
-            float startUpTimeInMin)
+        public EngineMovementVariable(Direction flightDirection,Vector3 maxForce,float minimumForceToHover)
         {
             this.FlightDirection = flightDirection;
             if (FlightDirection == Direction.Y)
@@ -30,16 +25,8 @@ namespace rak.creatures
                 MinForce = minimumForceToHover;
             else
                 MinForce = -MaxForce;
-            this.startUpTimeInMin = startUpTimeInMin;
             CurrentForce = 0;
             CurrentState = MovementState.STARTING;
-            startupRunningFor = .01f;
-        }
-
-        public void InitiateStartupSequence()
-        {
-            SetState(MovementState.STARTING);
-            startupRunningFor += Time.deltaTime;
         }
 
         public void SetState(MovementState requestedState)
@@ -82,17 +69,5 @@ namespace rak.creatures
             CurrentState = requestedState;
         }
 
-        public void Update(float delta)
-        {
-            if(startupRunningFor > 0)
-            {
-                startupRunningFor += delta;
-                if(startupRunningFor > startUpTimeInMin)
-                {
-                    SetState(MovementState.IDLE);
-                    startupRunningFor = 0;
-                }
-            }
-        }
     }
 }

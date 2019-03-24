@@ -1,6 +1,5 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
-using rak.UI;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -22,9 +21,9 @@ namespace rak.world
 
 
         private static readonly int MAX_CONCURRENT_THINGS = 1000;
-        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 0;
-        private static readonly int MAX_VISIBLE_CREATURES = 0;
-        private static readonly int MAXPOP = 1;
+        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 5;
+        private static readonly int MAX_VISIBLE_CREATURES = 1;
+        private static readonly int MAXPOP = 2;
         
         
         // How many entries in the cache before empty structs are placed //
@@ -33,7 +32,6 @@ namespace rak.world
         private static float updateSunEvery = .1f;
         private static float timeSinceUpdatedThings = 0;
         private static float updateThingsEvery = 1f;
-        private static float updateCreatureDistanceSightEvery = 1;
         private static float timeSinceLastCreatureDistanceSightCheck = 0;
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
@@ -134,7 +132,7 @@ namespace rak.world
         private void InitializeDebug(Tribe tribe)
         {
             int NUMBEROFGNATS = 1;
-            float SPAWNFRUITEVERY = 50;
+            float SPAWNFRUITEVERY = 5000;
 
             sitesPresent.Add(new Site("Home of DeGnats"));
             tribesPresent.Add(tribe);
@@ -165,6 +163,7 @@ namespace rak.world
                 trees[count].spawnsThingEvery = SPAWNFRUITEVERY;
                 AddThingToAllThings(trees[count]);
             }
+            initialized = true;
             Debug.LogWarning("Updates balanced");
         }
         public void Initialize(Tribe tribe)
@@ -175,7 +174,6 @@ namespace rak.world
                 Debug.LogError("Area called to initialize when already initialized");
                 return;
             }
-            initialized = true;
             jobHandles = new List<JobHandle>();
             allThingsBlittableCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
             thingMasterList = new Dictionary<System.Guid, Thing>();
@@ -225,6 +223,7 @@ namespace rak.world
             {
                 AddCreatureToWorld("Gnat");
             }
+            initialized = true;
         }
 
         
@@ -352,7 +351,22 @@ namespace rak.world
         }
         public static GridSector GetCurrentGridSector(Transform transform)
         {
-            return Grid.GetGridSectorAt(transform.position);
+            Vector3 position = transform.position;
+            RAKTerrain terrain = RAKTerrainMaster.GetClosestTerrainToPoint(position);
+            GridSector[] sectors = terrain.GetGridElements();
+            for(int sectorCount = 0; sectorCount < sectors.Length; sectorCount++)
+            {
+                if(position.x > sectors[sectorCount].WorldPositionStart.x && 
+                    position.x < sectors[sectorCount].WorldPositionEnd.x)
+                {
+                    if (position.z > sectors[sectorCount].WorldPositionStart.z &&
+                    position.z < sectors[sectorCount].WorldPositionEnd.z)
+                    {
+                        return sectors[sectorCount];
+                    }
+                }
+            }
+            return null;
         }
         public GridSector GetRandomGridSector()
         {

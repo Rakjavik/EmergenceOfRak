@@ -30,6 +30,10 @@ public class RAKTerrain : MonoBehaviour
         initialized = true;
     }
     
+    public void InitializeGrid()
+    {
+        grid = new Grid(this);
+    }
     public void generateTreeGOs()
     {
         TreeInstance[] trees = terrain.terrainData.treeInstances;
@@ -156,11 +160,11 @@ public class RAKTerrain : MonoBehaviour
     {
         return biome;
     }
-    public float GetHeightAt(Vector2 worldXZ)
+    public float GetHeightAt(Vector3 globalPosition)
     {
-        Vector2 relativePos = new Vector2(worldXZ.x % 256, worldXZ.y % 256);
-        float height = terrain.terrainData.GetHeight((int) relativePos.x,(int) relativePos.y);
-        //Debug.LogWarning("Interpolated height - " + height + " at position " + relativePos);
+        int x = (int)(globalPosition.x % RAKTerrainMaster.TileSize);
+        int z = (int)(globalPosition.z % RAKTerrainMaster.TileSize);
+        float height = terrain.terrainData.GetHeight(x, z);
         return height;
     }
     private void createPlayerRainWithIntensity(float intensity,RAKPlayer player)
@@ -171,12 +175,13 @@ public class RAKTerrain : MonoBehaviour
     }
     public GridSector[] GetGridElements()
     {
-        if(grid == null)
-        {
-            if(initialized)
-                grid = new Grid(this);
-        }
         return grid.GetGridElements();
+    }
+    public Vector3 GetCenterOfTerrain()
+    {
+        Vector3 returnVector = new Vector3(transform.position.x + RAKTerrainMaster.TileSize / 2, 0,
+            transform.position.z + RAKTerrainMaster.TileSize / 2);
+        return returnVector;
     }
 }
 

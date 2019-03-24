@@ -7,18 +7,19 @@ public class Grid
     public static Vector2 CurrentElementSize;
 
 
-    private static GridSector[] elements;
-    private static int numberOfXElements;
-    private static int numberOfZElements;
-    private static Vector3 terrainSize;
+    private GridSector[] elements;
+    private int numberOfXElements;
+    private int numberOfZElements;
+    private Vector3 terrainSize;
 
     public Grid(RAKTerrain terrain)
     {
 
         terrainSize = terrain.terrain.terrainData.size;
-        CurrentElementSize = new Vector2(terrainSize.x/ELEMENT_SIZE_DIVIDER,terrainSize.z/ELEMENT_SIZE_DIVIDER);
-        numberOfXElements = (int)(terrainSize.x / CurrentElementSize.x);
-        numberOfZElements = (int)(terrainSize.z / CurrentElementSize.y);
+        CurrentElementSize = new Vector2((int)(terrainSize.x/ELEMENT_SIZE_DIVIDER),
+            (int)(terrainSize.z/ELEMENT_SIZE_DIVIDER));
+        numberOfXElements = (int)((terrainSize.x) / CurrentElementSize.x);
+        numberOfZElements = (int)((terrainSize.z) / CurrentElementSize.y);
         elements = new GridSector[numberOfXElements * numberOfZElements];
         int elementCount = 0;
         Vector3 terrainPosition = terrain.transform.position;
@@ -26,26 +27,36 @@ public class Grid
         {
             for(int z = 0; z < numberOfZElements; z++)
             {
-                Vector2 elementWorldPosition = new Vector2(x * CurrentElementSize.x,
-                    z * CurrentElementSize.y);
-                Vector2 elementWorldPositionEnd = new Vector2(
-                    elementWorldPosition.x + CurrentElementSize.x, elementWorldPosition.y + CurrentElementSize.y);
-                elements[elementCount] = new GridSector(new Vector2(x, z),
-                    elementWorldPosition, elementWorldPositionEnd,terrain.name,terrain);
+                Vector3 elementWorldPosition = new Vector3(
+                    terrain.transform.position.x + (x * CurrentElementSize.x),
+                    0,
+                    terrain.transform.position.z + (z * CurrentElementSize.y));
+                Vector3 elementWorldPositionEnd = new Vector3(
+                    elementWorldPosition.x+CurrentElementSize.x,
+                    0,
+                    elementWorldPosition.z+CurrentElementSize.y);
+                elements[elementCount] = new GridSector(new Vector2(x,z),elementWorldPosition,elementWorldPositionEnd,
+                    terrain.name,terrain);
                 elementCount++;
             }
         }
         Debug.Log("Grid generation complete");
     }
-    public static GridSector GetGridSectorAt(Vector3 globalPosition)
+    public GridSector GetGridSectorAt(Vector3 globalPosition)
     {
-        Vector2 relativePosition = new Vector2(globalPosition.x % RAKTerrainMaster.TileSize,
-            globalPosition.z % RAKTerrainMaster.TileSize);
-        int xElement = (int)(relativePosition.x / relativePosition.x);
-        int yElement = (int)(relativePosition.y / relativePosition.y);
-        int index = (xElement * numberOfZElements) + yElement;
-        Debug.LogWarning(xElement + "-" + yElement);
-        return elements[index];
+        float globalX = globalPosition.x;
+        float globalZ = globalPosition.z;
+        for(int count = 0; count < elements.Length; count++)
+        {
+            if(globalX > elements[count].WorldPositionStart.x && globalX < elements[count].WorldPositionEnd.x)
+            {
+                if (globalZ > elements[count].WorldPositionStart.z && globalZ < elements[count].WorldPositionEnd.z)
+                {
+                    return elements[count];
+                }
+            }
+        }
+        return null;
     }
     public GridSector[] GetGridElements() { return elements; }
 }

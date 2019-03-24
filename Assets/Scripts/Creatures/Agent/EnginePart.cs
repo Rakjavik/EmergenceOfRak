@@ -35,25 +35,11 @@ namespace rak.creatures
                 if (locomotionType == CreatureLocomotionType.Flight)
                 {
                     engineMovementVariables[(int)Direction.Y] = new
-                        EngineMovementVariable(Direction.Y, attachedAgent.maxForce, attachedAgent.minimumForceToHover,
-                        miscVariables[MiscVariables.AgentMiscVariables.MoveVar_Start_Up_Time_In_Minutes]);
+                        EngineMovementVariable(Direction.Y, attachedAgent.maxForce, attachedAgent.minimumForceToHover);
                     engineMovementVariables[(int)Direction.X] = new
-                        EngineMovementVariable(Direction.X, attachedAgent.maxForce, attachedAgent.minimumForceToHover,
-                        miscVariables[MiscVariables.AgentMiscVariables.MoveVar_Start_Up_Time_In_Minutes]);
+                        EngineMovementVariable(Direction.X, attachedAgent.maxForce, attachedAgent.minimumForceToHover);
                     engineMovementVariables[(int)Direction.Z] = new
-                        EngineMovementVariable(Direction.Z, attachedAgent.maxForce, attachedAgent.minimumForceToHover,
-                        miscVariables[MiscVariables.AgentMiscVariables.MoveVar_Start_Up_Time_In_Minutes]);
-                    /*
-                     * engineMovementVariables[(int)Direction.Y] = new EngineMovementVariables(
-                       attachedAgent, Direction.Y, miscVariables);
-                    engineMovementVariables[(int)Direction.Z] = new EngineMovementVariables(
-                        attachedAgent, Direction.Z, miscVariables);
-                    engineMovementVariables[(int)Direction.X] = new EngineMovementVariables(
-                        attachedAgent, Direction.X, miscVariables);
-                    engineMovementVariables[0].Initialize(attachedAgent, parentCreature, attachedBody);
-                    engineMovementVariables[1].Initialize(attachedAgent, parentCreature, attachedBody);
-                    engineMovementVariables[2].Initialize(attachedAgent, parentCreature, attachedBody);
-                    */
+                        EngineMovementVariable(Direction.Z, attachedAgent.maxForce, attachedAgent.minimumForceToHover);
                     Enabled = true;
                 }
                 // NOT IMPLEMENTED YET //
@@ -83,15 +69,7 @@ namespace rak.creatures
         {
             Debug.LogWarning("Enable call from engine class");
             if (Enabled) Debug.LogError("Call to enable part when already enabled");
-            InitiateEngineStartupSequences();
             Enabled = true;
-        }
-        private void InitiateEngineStartupSequences()
-        {
-            foreach (EngineMovementVariable movement in engineMovementVariables)
-            {
-                movement.InitiateStartupSequence();
-            }
         }
 
         IEnumerator Flight(ActionStep.Actions currentCreatureAction,float delta)
@@ -163,10 +141,6 @@ namespace rak.creatures
                         engineMovementVariables[(int)Direction.X].SetState(MovementState.IDLE);
                 }
             }
-            engineMovementVariables[(int)Direction.X].Update(delta);
-            engineMovementVariables[(int)Direction.Y].Update(delta);
-            engineMovementVariables[(int)Direction.Z].Update(delta);
-            //Vector3 currentForce = cf.relativeForce;
             float x = engineMovementVariables[(int)Direction.X].CurrentForce;
             float y = engineMovementVariables[(int)Direction.Y].CurrentForce;
             float z = engineMovementVariables[(int)Direction.Z].CurrentForce;

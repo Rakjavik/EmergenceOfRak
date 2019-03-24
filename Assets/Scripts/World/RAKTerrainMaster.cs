@@ -44,6 +44,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
         terrain = new RAKTerrain[1];
         terrain[0] = gameObject.GetComponentInChildren<RAKTerrain>();
         terrain[0].initialize(this);
+        terrain[0].InitializeGrid();
     }
     public void Initialize(World world,HexCell cell)
     {
@@ -135,6 +136,10 @@ public partial class RAKTerrainMaster : MonoBehaviour
             SaveTerrainData();
             
         // Finish loading //
+        foreach(RAKTerrain singleTerrain in terrain)
+        {
+            singleTerrain.InitializeGrid();
+        }
         RAKTerrainMaster.generateCreatures(cell,world);
         RAKTerrainMaster.sun = gameObject.AddComponent<RAKWeather>();
         RAKTerrainMaster.sun.start(transform, this, sun.gameObject);
@@ -756,10 +761,10 @@ public partial class RAKTerrainMaster : MonoBehaviour
     public static RAKTerrain GetClosestTerrainToPoint(Vector3 point)
     {
         RAKTerrain closest = null;
-        float closestDistance = 20000;
+        float closestDistance = float.MaxValue;
         foreach (RAKTerrain item in terrain)
         {
-            float distance = Vector3.Distance(point, item.transform.position);
+            float distance = Vector3.Distance(point, item.GetCenterOfTerrain());
             if (distance < closestDistance)
             {
                 closestDistance = distance;

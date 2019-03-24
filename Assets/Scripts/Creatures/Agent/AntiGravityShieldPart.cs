@@ -7,6 +7,7 @@ namespace rak.creatures
         public bool Activated { get; private set; }
         private ActionStep.Actions[] _OnDuringTheseActions;
         private float ignoreStuckFor = 0; // disable turning on while this is + 0
+        private Creature creature;
 
         public AntiGravityShieldPart(CreaturePart creaturePart, Transform transform, float updateEvery,
             Rigidbody bodyToShield, ActionStep.Actions[] actions)
@@ -18,6 +19,7 @@ namespace rak.creatures
             Activated = bodyToShield.isKinematic;
             this.attachedBody = bodyToShield;
             this._OnDuringTheseActions = actions;
+            this.creature = transform.GetComponentInParent<Creature>();
         }
 
         private void ActivateShield()
@@ -38,7 +40,8 @@ namespace rak.creatures
                 Debug.LogWarning("Call to DeActivate shield when already Deactive");
                 return;
             }
-            attachedBody.isKinematic = false;
+            if(creature.Visible && attachedBody.isKinematic == true)
+                attachedBody.isKinematic = false;
             Activated = false;
         }
         private void GotoSleep(float time)

@@ -76,6 +76,8 @@ namespace rak.world
             menuController.Initialize(RootMenu.CreatureBrowser);
             _initialized = true;
         }
+
+        // ENTRY METHOD //
         private void Awake()
         {
             Initialize();

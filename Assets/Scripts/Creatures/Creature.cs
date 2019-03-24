@@ -112,9 +112,10 @@ namespace rak.creatures
             memberOfTribe = null;
             knownGridSectorsVisited = new Dictionary<GridSector, bool>();
             lastObserved = Random.Range(0, observeEvery);
-            Visible = true;
+            Visible = false;
             mainCamera = Camera.main.transform;
-            InView = true;
+            InView = false;
+            agent.GetRigidBody().isKinematic = true;
             initialized = true;
         }
         public void PlayOneShot()
@@ -173,7 +174,6 @@ namespace rak.creatures
         public void ManualCreatureUpdate(float delta)
         {
             agent.Update(delta,Visible);
-            updateCurrentGridSector();
             lastUpdated += delta;
             lastObserved += delta;
             if (DEBUGSCENE && RunDebugMethod)
@@ -181,11 +181,10 @@ namespace rak.creatures
                 RunDebugMethod = false;
                 SetInView(!Visible);
             }
-            
             if (lastUpdated > creaturePhysicalStats.updateEvery)
             {
                 lastUpdated = 0;
-
+                updateCurrentGridSector();
                 // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
                 if (currentState == CREATURE_STATE.IDLE)
                 {
@@ -316,7 +315,7 @@ namespace rak.creatures
             GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
                 this, areaDistance, RAKTerrainMaster.GetClosestTerrainToPoint(transform.position));
             currentSector = Area.GetCurrentGridSector(transform);
-
+            //Debug.LogWarning("Current sector - " + currentSector.name);
             foreach (GridSector element in closeAreas)
             {
                 if (!knownGridSectorsVisited.ContainsKey(element))
