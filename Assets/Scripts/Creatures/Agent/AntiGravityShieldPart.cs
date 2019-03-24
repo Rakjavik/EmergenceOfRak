@@ -152,8 +152,17 @@ namespace rak.creatures
         private Quaternion getDifferenceFromLookAtTargetRotation()
         {
             Quaternion start = attachedBody.transform.rotation;
-            Quaternion desired = Quaternion.LookRotation(getNeededDirection());
-            return start * Quaternion.Inverse(desired);
+            Vector3 direction = getNeededDirection();
+            if (direction == Vector3.zero)
+            {
+                Debug.LogWarning("Needed direction zero, currentactiondestination null?");
+                return Quaternion.identity;
+            }
+            else
+            {
+                Quaternion desired = Quaternion.LookRotation(direction);
+                return start * Quaternion.Inverse(desired);
+            }
         }
         private Quaternion getDifferenceFromLookAtTargetRotationViaVelocity()
         {

@@ -67,8 +67,7 @@ namespace rak
         {
             rb = null;
             guid = Guid.NewGuid();
-            this.name = name;
-            this.thingName = name;
+            this.thingName = name + "-" + guid.ToString().Substring(0,5);
             // Default to no production //
             produces = Thing_Produces.NA;
             if (name.Equals("fruit"))

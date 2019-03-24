@@ -119,7 +119,12 @@ namespace rak
                     GridSector sector = performer.GetClosestUnexploredSector();
                     if (sector != null)
                     {
-                        Vector3 explorePoint = sector.GetRandomPositionInSector;
+                        Vector3 explorePoint = sector.GetSectorPosition();
+                        float terrainHeight = sector.GetTerrainHeightFromGlobalPos(explorePoint);
+                        explorePoint = new Vector3(
+                            explorePoint.x,
+                            terrainHeight + performer.GetCreatureAgent().GetSustainHeight(),
+                            explorePoint.z);
                         _targetPosition = explorePoint;
                     }
                     else
@@ -170,37 +175,12 @@ namespace rak
                     if (associatedTask != Tasks.CreatureTasks.EXPLORE)
                         distanceToCompleteArrival = performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached();
                     else
-                        distanceToCompleteArrival = 50;
+                        distanceToCompleteArrival = 20;
                     if (performer.getDistanceFromDestination() <= distanceToCompleteArrival)
                     {
                         status = Tasks.TASK_STATUS.Complete;
                         return;
                     }
-                    // Haven't arrived yet
-                    /*else if (_targetThing != null)
-                    {
-                        // Check if we're close enough to start raycasting //
-                        if (performer.getDistanceFromDestination() < distanceBeforeRayCastCheckOnTarget)
-                        {
-                            if (_targetThing != null)
-                            {
-                                // Raycast forward //
-                                if (!performer.IsTargetInFrontOfMe(_targetThing))
-                                {
-                                    performer.GetCreatureAgent().SetIgnoreCollisions(false);
-                                }
-                                else
-                                {
-                                    performer.GetCreatureAgent().SetIgnoreCollisions(true);
-                                }
-                            }
-                        }
-                        // Not close enough, make sure orbiting is disabled //
-                        else
-                        {
-                            performer.GetCreatureAgent().SetIgnoreCollisions(false);
-                        }
-                    }*/
                 }
             }
             // ADD //
@@ -210,8 +190,9 @@ namespace rak
                 // Tractor Beam //
                 if (agent.grabType == CreatureGrabType.TractorBeam)
                 {
+                    float distance = Vector3.Distance(_targetThing.transform.position, performer.transform.position);
                     // Touching Target //
-                    if (Vector3.Distance(_targetThing.transform.position, performer.transform.position) < .5f)
+                    if (distance < .5f)
                     {
                         if (performer.AddThingToInventory(_targetThing))
                         {

@@ -12,24 +12,72 @@ public class RAKTerrain : MonoBehaviour
 {
     private RAKTerrainMaster terrainMaster;
     public Terrain terrain;
-    public Terrain[] neighbors { get; set; }
+    public Terrain[] neighbors { get; private set; }
+    public RAKTerrain[] rakNeighbors;
     public RAKTerrainObject[] nonTerrainObjects { get; set; }
     public RAKTerrainMaster.RAKTerrainSavedData savedData { get; set; }
 
     private RAKTree[] rakTrees;
     private RAKTerrainMaster.RAKBiome biome;
     private Grid grid;
-    private bool initialized = false;
 
     public void initialize(RAKTerrainMaster terrainMaster)
     {
         Debug.LogWarning("Initialize " + name);
         this.terrainMaster = terrainMaster;
         terrain = GetComponent<Terrain>();
+        rakNeighbors = new RAKTerrain[4];
+        neighbors = new Terrain[4];
         grid = null;
-        initialized = true;
     }
     
+    public GridSector GetSectorAtPos(Vector3 position)
+    {
+        GridSector[] sectors = GetGridElements();
+        for (int sectorCount = 0; sectorCount < sectors.Length; sectorCount++)
+        {
+            if (position.x > sectors[sectorCount].WorldPositionStart.x &&
+                position.x < sectors[sectorCount].WorldPositionEnd.x)
+            {
+                if (position.z > sectors[sectorCount].WorldPositionStart.z &&
+                position.z < sectors[sectorCount].WorldPositionEnd.z)
+                {
+                    return sectors[sectorCount];
+                }
+            }
+        }
+        return null;
+    }
+    public GridSector[] GetThisGridAndNeighborGrids()
+    {
+        List<GridSector> sectors = new List<GridSector>(GetGridElements());
+        for(int count = 0; count < rakNeighbors.Length; count++)
+        {
+            if (rakNeighbors[count] == null) continue;
+            GridSector[] neighborSectors = rakNeighbors[count].GetGridElements();
+            for (int sectorCount = 0; sectorCount < neighborSectors.Length; sectorCount++)
+            {
+                if(neighborSectors[sectorCount] != null)
+                {
+                    sectors.Add(neighborSectors[sectorCount]);
+                }
+            }
+        }
+        return sectors.ToArray();
+    }
+    public void SetNeighbor(RAKTerrain neighbor,int direction)
+    {
+        if (neighbor != null)
+        {
+            Debug.LogWarning("Direction-" + direction);
+            rakNeighbors[direction] = neighbor;
+            Terrain neighborTerrain = neighbor.getTerrainComponenet();
+            if (neighborTerrain != null)
+                this.neighbors[direction] = neighbor.getTerrainComponenet();
+            else
+                Debug.LogWarning(direction + " has null terrain component");
+        }
+    }
     public void InitializeGrid()
     {
         grid = new Grid(this);
@@ -45,10 +93,11 @@ public class RAKTerrain : MonoBehaviour
             this.rakTrees[count].worldPoint = thisTreePos;
         }
     }
-    public void setNeighbors(Terrain terrainLeft,Terrain terrainRight,Terrain terrainUp,Terrain terrainDown)
+    private void setNeighbors(RAKTerrain terrainLeft, RAKTerrain terrainRight, RAKTerrain terrainUp, RAKTerrain terrainDown)
     {
-        terrain.SetNeighbors(terrainLeft, terrainUp, terrainRight, terrainDown);
-        neighbors = new Terrain[] { terrainLeft, terrainRight, terrainUp, terrainDown };
+        rakNeighbors = new RAKTerrain[] { terrainLeft, terrainRight, terrainUp, terrainDown };
+        terrain.SetNeighbors(terrainLeft.terrain, terrainUp.terrain, terrainRight.terrain, terrainDown.terrain);
+        neighbors = new Terrain[] { terrainLeft.terrain, terrainRight.terrain, terrainUp.terrain, terrainDown.terrain };
         Debug.Log(name + " Neighbors LRUD - LEFT " + terrainLeft + "-RIGHT " + terrainRight + "-UP " + terrainUp + "-DOWN" + terrainDown);
     }
     

@@ -9,6 +9,8 @@ using rak.creatures;
 
 public partial class RAKTerrainMaster : MonoBehaviour
 {
+    public enum NEIGHDIRECTION { Left,Right,Up,Down}
+
     public bool debug = World.ISDEBUGSCENE;
     public bool forceGenerate = false; // Will generate the terrain even if save data is available
     private void logDebug(string message)
@@ -136,8 +138,9 @@ public partial class RAKTerrainMaster : MonoBehaviour
             SaveTerrainData();
             
         // Finish loading //
-        foreach(RAKTerrain singleTerrain in terrain)
+        for(int count = 0; count < terrain.Length; count++)
         {
+            RAKTerrain singleTerrain = terrain[count];
             singleTerrain.InitializeGrid();
         }
         RAKTerrainMaster.generateCreatures(cell,world);
@@ -182,10 +185,11 @@ public partial class RAKTerrainMaster : MonoBehaviour
     {
         for (int index = 0; index < terrain.Length; index++)
         {
-            Terrain tLeft = null;
-            Terrain tRight = null;
-            Terrain tUp = null;
-            Terrain tDown = null;
+            Terrain[] neighborTerrain = new Terrain[4];
+            Terrain tUp = neighborTerrain[(int)NEIGHDIRECTION.Up];
+            Terrain tDown = neighborTerrain[(int)NEIGHDIRECTION.Down];
+            Terrain tLeft = neighborTerrain[(int)NEIGHDIRECTION.Left];
+            Terrain tRight = neighborTerrain[(int)NEIGHDIRECTION.Right];
             int left = index - 1;
             int right = index + 1;
             int up = index + worldSize / 4;
@@ -222,7 +226,16 @@ public partial class RAKTerrainMaster : MonoBehaviour
             {
                 tRight = terrain[right].getTerrainComponenet();
             }
-            terrain[index].setNeighbors(tLeft, tRight, tUp, tDown);
+            int[] loop = new int[4];
+            loop[(int)NEIGHDIRECTION.Down] = down;
+            loop[(int)NEIGHDIRECTION.Up] = up;
+            loop[(int)NEIGHDIRECTION.Left] = left;
+            loop[(int)NEIGHDIRECTION.Right] = right;
+            for (int count = 0; count < loop.Length; count++)
+            {
+                if(loop[count] != -1 && terrain[loop[count]] != null)
+                    terrain[index].SetNeighbor(terrain[loop[count]],count);
+            }
         }
     }
     private void mapPositions(int index)
@@ -758,20 +771,21 @@ public partial class RAKTerrainMaster : MonoBehaviour
     {
         return (worldSize / 4) * height;
     }
-    public static RAKTerrain GetClosestTerrainToPoint(Vector3 point)
+    public static RAKTerrain GetTerrainAtPoint(Vector3 point)
     {
-        RAKTerrain closest = null;
-        float closestDistance = float.MaxValue;
-        foreach (RAKTerrain item in terrain)
+        for(int count = 0; count < terrain.Length; count++)
         {
-            float distance = Vector3.Distance(point, item.GetCenterOfTerrain());
-            if (distance < closestDistance)
+            Vector3 terrainPos = terrain[count].transform.position;
+            if(point.x > terrainPos.x && point.x < terrainPos.x + TileSize)
             {
-                closestDistance = distance;
-                closest = item;
+                if (point.z > terrainPos.z && point.z < terrainPos.z + TileSize)
+                {
+                    return terrain[count];
+                }
             }
         }
-        return closest;
+        Debug.LogError("Null return for terrain request, point - " + point);
+        return null;
     }
 
     [Serializable]

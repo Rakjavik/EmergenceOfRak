@@ -148,7 +148,7 @@ namespace rak.UI
             int tc = World.CurrentArea.ActiveThingCount;
             clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + Area.GetFriendlyLocalTime()+
                 " Elapsed-" + Area.GetElapsedNumberOfHours() + "\n";
-            clockText.text += "Deaths Flight-" + World.CurrentArea.DeathsByFlight + 
+            clockText.text += "Visible-" + Area.NumberOfVisibleThings + " Deaths Flight-" + World.CurrentArea.DeathsByFlight + 
                 " Hunger-" + World.CurrentArea.DeathsByHunger;
 
             // TODO this is ghetto //

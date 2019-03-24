@@ -50,7 +50,7 @@ namespace rak.creatures
                 miscVariables.Add(AgentMiscVariables.Part_Flight_Maintain_Below_Velocity, .15f);
                 miscVariables.Add(AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel, 20);
                 miscVariables.Add(AgentMiscVariables.MoveVar_Start_Up_Time_In_Minutes, .1f);
-                miscVariables.Add(AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_One_Sec,2f);
+                miscVariables.Add(AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_One_Sec,3f);
             }
             return miscVariables;
         }

@@ -96,7 +96,7 @@ namespace rak.world
             GridSector[] elements = terrain.GetGridElements();
             foreach (GridSector element in elements)
             {
-                if(Vector3.Distance(requester.transform.position,element.GetSectorPosition) <= distance)
+                if(Vector3.Distance(requester.transform.position,element.GetSectorPosition()) <= distance)
                 {
                     elementsWithinRange.Add(element);
                 }
@@ -111,7 +111,7 @@ namespace rak.world
                 GridSector[] sectors = neighborTerrain.GetGridElements();
                 foreach (GridSector element in elements)
                 {
-                    if (Vector3.Distance(requester.transform.position, element.GetSectorPosition) <= distance)
+                    if (Vector3.Distance(requester.transform.position, element.GetSectorPosition()) <= distance)
                     {
                         elementsWithinRange.Add(element);
                     }

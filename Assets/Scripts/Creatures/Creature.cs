@@ -43,6 +43,7 @@ namespace rak.creatures
         private JobHandle observeHandle;
         private bool awaitingObservation = false;
         private Transform mainCamera;
+        private RAKTerrain currentTerrain;
 
         private Species species;
         private SpeciesPhysicalStats creaturePhysicalStats;
@@ -312,10 +313,9 @@ namespace rak.creatures
         {
             // Observe Areas //
             float areaDistance = Grid.CurrentElementSize.sqrMagnitude * 2;
-            GridSector[] closeAreas = CreatureUtilities.GetPiecesOfTerrainCreatureCanSee(
-                this, areaDistance, RAKTerrainMaster.GetClosestTerrainToPoint(transform.position));
-            currentSector = Area.GetCurrentGridSector(transform);
-            //Debug.LogWarning("Current sector - " + currentSector.name);
+            currentTerrain = RAKTerrainMaster.GetTerrainAtPoint(transform.position);
+            GridSector[] closeAreas = currentTerrain.GetThisGridAndNeighborGrids();
+            currentSector = currentTerrain.GetSectorAtPos(transform.position);
             foreach (GridSector element in closeAreas)
             {
                 if (!knownGridSectorsVisited.ContainsKey(element))
@@ -377,22 +377,6 @@ namespace rak.creatures
 
         public Vector3 GetRandomKnownSectorPosition()
         {
-            List<GridSector> listToPickFrom = new List<GridSector>();
-            foreach (GridSector sector in knownGridSectorsVisited.Keys)
-            {
-                if (knownGridSectorsVisited[sector])
-                {
-                    listToPickFrom.Add(sector);
-                }
-            }
-            if(listToPickFrom.Count > 0)
-                return listToPickFrom[(int)Random.Range(0, listToPickFrom.Count)].GetRandomPositionInSector;
-            // If the list is empty, the creature needs to update the sector it is in //
-            /*else
-            {
-                observeSurroundings();
-                return GetRandomKnownSectorPosition();
-            }*/
             return Vector3.zero;
         }
         public GridSector GetClosestUnexploredSector()
@@ -404,13 +388,14 @@ namespace rak.creatures
                 // Already visited //
                 if (knownGridSectorsVisited[sector])
                     continue;
-                float distance = Vector2.Distance(sector.GetTwoDLerpOfSector(), transform.position);
+                float distance = Vector3.Distance(sector.GetSectorPosition(), transform.position);
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;
                     closestSector = sector;
                 }
             }
+            //Debug.LogWarning("Closest - " + closestSector.name + " current - " + currentSector.name);
             return closestSector;
         }
 

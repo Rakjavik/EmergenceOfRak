@@ -263,7 +263,9 @@ namespace rak.creatures
         }
         public float GetDistanceFromDestination()
         {
-            return Vector3.Distance(creature.transform.position, Destination);
+            Vector3 destinationNoY = new Vector3(Destination.x, 0, Destination.z);
+            Vector3 positionNoY = new Vector3(creature.transform.position.x, 0, creature.transform.position.z);
+            return Vector3.Distance(positionNoY, destinationNoY);
         }
 
         private void _RaycastTrajectory()
@@ -380,7 +382,7 @@ namespace rak.creatures
                 }
             }
             ignoreIncomingCollisions = false;
-            velocityWhenMovingWithoutPhysics = 5f;
+            velocityWhenMovingWithoutPhysics = 25f;
             initialized = true;
         }
 
@@ -462,12 +464,15 @@ namespace rak.creatures
                         creature.transform.position = new Vector3(creature.transform.position.x, terrainY+sustainHeight, creature
                             .transform.position.z);
                     }
+                    // Update these parts when not visible //
                     for (int count = 0; count < allParts.Count; count++)
                     {
                         if (allParts[count] is AnimationPart &&
                             ((AnimationPart)allParts[count]).PartType == CreaturePart.SHIELD)
                             allParts[count].Update(delta);
                         else if (allParts[count] is AntiGravityShieldPart)
+                            allParts[count].Update(delta);
+                        else if (allParts[count] is TractorBeamPart)
                             allParts[count].Update(delta);
                     }
                 }

@@ -32,10 +32,18 @@ namespace rak.creatures
                 // Already locked //
                 else
                 {
-                    float distance = Vector3.Distance(targetBody.position, attachedBody.position);
-                    //Debug.LogWarning("Tractor beam on, distance - " + distance);
-                    Vector3 newPosition = Vector3.MoveTowards(targetBody.position, attachedBody.position, beamStrength*Time.deltaTime);
-                    targetBody.position = newPosition;
+                    if (targetBody != null && target != null)
+                    {
+                        float distance = Vector3.Distance(targetBody.position, attachedBody.position);
+                        //Debug.LogWarning("Tractor beam on, distance - " + distance);
+                        Vector3 newPosition = Vector3.MoveTowards(targetBody.position, attachedBody.position, beamStrength * Time.deltaTime);
+                        targetBody.position = newPosition;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Tractor beam target is invalid");
+                        Debug.Break();
+                    }
                 }
             }
             else
