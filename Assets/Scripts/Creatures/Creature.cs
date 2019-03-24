@@ -44,6 +44,7 @@ namespace rak.creatures
         private bool awaitingObservation = false;
         private Transform mainCamera;
         private RAKTerrain currentTerrain;
+        private float timeSinceLeftView = 0;
 
         private Species species;
         private SpeciesPhysicalStats creaturePhysicalStats;
@@ -147,20 +148,23 @@ namespace rak.creatures
 
         public void SetInView(bool inView)
         {
-            
-            if (!inView)
+
+            if (!inView) // Creature has left camera view
             {
-                SetVisible(false);
+                timeSinceLeftView = .01f;
             }
+            else if (timeSinceLeftView > 0)
+                timeSinceLeftView = 0;
             this.InView = inView;
-            //Debug.LogWarning("Inview - " + inView);
         }
         public void SetVisible(bool visible)
         {
             if (visible)
                 agent.GetRigidBody().isKinematic = false;
             else
+            {
                 agent.GetRigidBody().isKinematic = true;
+            }
             this.Visible = visible;
         }
         #region
@@ -177,6 +181,15 @@ namespace rak.creatures
             agent.Update(delta,Visible);
             lastUpdated += delta;
             lastObserved += delta;
+            if (timeSinceLeftView > 0)
+            {
+                timeSinceLeftView += delta;
+            }
+            if (Visible && timeSinceLeftView > Area.KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW)
+            {
+                timeSinceLeftView = 0;
+                SetVisible(false);
+            }
             if (DEBUGSCENE && RunDebugMethod)
             {
                 RunDebugMethod = false;
@@ -286,7 +299,6 @@ namespace rak.creatures
             if (lastObserved < observeEvery || awaitingObservation || !initialized)
                 yield break;
             lastObserved = 0;
-
             jobFor = new ObserveJobFor();
             jobFor.allThings = Area.GetBlittableThings();
             jobFor.observeDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];

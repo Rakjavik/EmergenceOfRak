@@ -778,17 +778,17 @@ public partial class RAKTerrainMaster : MonoBehaviour
         {
             Vector3 terrainPos = terrain[count].transform.position;
             if (point.x < 0)
-                terrainPos.x = 0;
+                point.x = 0;
             else if (point.x > maxXZ)
-                terrainPos.x = maxXZ;
+                point.x = maxXZ;
             if (point.z < 0)
-                terrainPos.z = 0;
+                point.z = 0;
             else if (point.z > maxXZ)
-                terrainPos.z = maxXZ;
+                point.z = maxXZ;
 
-            if (point.x > terrainPos.x && point.x < terrainPos.x + TileSize)
+            if (point.x >= terrainPos.x && point.x <= terrainPos.x + TileSize)
             {
-                if (point.z > terrainPos.z && point.z < terrainPos.z + TileSize)
+                if (point.z >= terrainPos.z && point.z <= terrainPos.z + TileSize)
                 {
                     return terrain[count];
                 }
