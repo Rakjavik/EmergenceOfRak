@@ -773,10 +773,20 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     public static RAKTerrain GetTerrainAtPoint(Vector3 point)
     {
-        for(int count = 0; count < terrain.Length; count++)
+        int maxXZ = TileSize * (terrain.Length / 4);
+        for (int count = 0; count < terrain.Length; count++)
         {
             Vector3 terrainPos = terrain[count].transform.position;
-            if(point.x > terrainPos.x && point.x < terrainPos.x + TileSize)
+            if (point.x < 0)
+                terrainPos.x = 0;
+            else if (point.x > maxXZ)
+                terrainPos.x = maxXZ;
+            if (point.z < 0)
+                terrainPos.z = 0;
+            else if (point.z > maxXZ)
+                terrainPos.z = maxXZ;
+
+            if (point.x > terrainPos.x && point.x < terrainPos.x + TileSize)
             {
                 if (point.z > terrainPos.z && point.z < terrainPos.z + TileSize)
                 {
