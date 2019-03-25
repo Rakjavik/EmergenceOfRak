@@ -458,7 +458,7 @@ namespace rak.creatures
                         velocityWhenMovingWithoutPhysics*delta);
                     GridSector currentSector = creature.currentSector;
 
-                    if (currentSector != null)
+                    if (!currentSector.IsEmpty())
                     {
                         float terrainY = creature.currentSector.GetTerrainHeightFromGlobalPos(creature.transform.position);
                         creature.transform.position = new Vector3(creature.transform.position.x, terrainY+sustainHeight, creature

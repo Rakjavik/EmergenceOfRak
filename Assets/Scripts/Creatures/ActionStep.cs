@@ -117,7 +117,7 @@ namespace rak
                 {
                     //Debug.LogWarning("Locating explore sector");
                     GridSector sector = performer.GetClosestUnexploredSector();
-                    if (sector != null)
+                    if (!sector.IsEmpty())
                     {
                         Vector3 explorePoint = sector.GetSectorPosition();
                         float terrainHeight = sector.GetTerrainHeightFromGlobalPos(explorePoint);

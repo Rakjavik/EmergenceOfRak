@@ -35,6 +35,22 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     private static RAKWeather sun;
     private static RAKBiome currentBiome;
+    private static Dictionary<System.Guid, RAKTerrain> terrainList = new Dictionary<Guid, RAKTerrain>();
+    public static RAKTerrain GetTerrainByGuid(Guid guid)
+    {
+        return terrainList[guid];
+    }
+    public static void AddToTerrainList(RAKTerrain terrain)
+    {
+        if (World.ISDEBUGSCENE)
+        {
+            terrainList.Add(terrain.guid, terrain);
+        }
+        else
+        {
+            Debug.LogError("Trying to add to terrain list when not in debug mode");
+        }
+    }
     public static int TileSize = 256; // Size of each Terrain piece
     private int width = TileSize+1; // Terrain width/height needs a plus one due to Unity being weird
     private int height = TileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
@@ -103,6 +119,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             terrain[count].savedData = savedTerrain;
             mapPositions(count);
             terrain[count].setBiome(RAKBiome.getForestBiome());
+            terrainList.Add(terrain[count].guid, terrain[count]);
         }
         // Tell Unity which terrain objects are next to each other //
         setNeighbors();

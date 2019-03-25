@@ -328,13 +328,13 @@ namespace rak.creatures
             currentTerrain = RAKTerrainMaster.GetTerrainAtPoint(transform.position);
             GridSector[] closeAreas = currentTerrain.GetThisGridAndNeighborGrids();
             currentSector = currentTerrain.GetSectorAtPos(transform.position);
-            foreach (GridSector element in closeAreas)
+            for (int count = 0; count < closeAreas.Length; count++)
             {
-                if (!knownGridSectorsVisited.ContainsKey(element))
+                if (!knownGridSectorsVisited.ContainsKey(closeAreas[count]))
                 {
-                    knownGridSectorsVisited.Add(element, false);
+                    knownGridSectorsVisited.Add(closeAreas[count], false);
                 }
-                if (currentSector == element && !knownGridSectorsVisited[currentSector])
+                if (currentSector.name.Equals(closeAreas[count].name) && !knownGridSectorsVisited[currentSector])
                 {
                     knownGridSectorsVisited[currentSector] = true;
                 }
@@ -393,7 +393,7 @@ namespace rak.creatures
         }
         public GridSector GetClosestUnexploredSector()
         {
-            GridSector closestSector = null;
+            GridSector closestSector = GridSector.Empty;
             float closestDistance = Mathf.Infinity;
             foreach (GridSector sector in knownGridSectorsVisited.Keys)
             {

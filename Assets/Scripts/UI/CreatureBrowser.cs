@@ -104,7 +104,7 @@ namespace rak.UI
                                 if (shortTermMemory[count].GetInvertVerb())
                                     columnText.Append("!");
                                 columnText.Append(shortTermMemory[count].verb.ToString() + "-" + 
-                                    Area.GetThingByGUID(shortTermMemory[count].subject).name + "\n");
+                                    Area.GetThingByGUID(shortTermMemory[count].subject).thingName + "\n");
                             }
                             else
                             {

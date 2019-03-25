@@ -134,8 +134,7 @@ namespace rak.world
         private void InitializeDebug(Tribe tribe)
         {
             int NUMBEROFGNATS = 1;
-            float SPAWNFRUITEVERY = 5000;
-
+            float SPAWNFRUITEVERY = 50;
             sitesPresent.Add(new Site("Home of DeGnats"));
             tribesPresent.Add(tribe);
             tribe.Initialize();
@@ -146,12 +145,7 @@ namespace rak.world
             creatureContainer = new GameObject("CreatureContainer");
             if (disabledContainer == null)
                 disabledContainer = new GameObject("DisabledContainer");
-            /*for (int i = 0; i < 0; i++)
-            {
-                Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f,15f), Random.Range(10f, 200));
-                addThingToWorld("fruit",position,false);
-                    
-            }*/
+            RAKTerrainMaster.AddToTerrainList(GameObject.FindObjectOfType<RAKTerrain>());
             for (int i = 0; i < NUMBEROFGNATS; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
@@ -365,7 +359,7 @@ namespace rak.world
                     }
                 }
             }
-            return null;
+            return GridSector.Empty;
         }
         public GridSector GetRandomGridSector()
         {

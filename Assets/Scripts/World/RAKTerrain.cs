@@ -10,17 +10,27 @@ using rak.world;
 [Serializable]
 public class RAKTerrain : MonoBehaviour
 {
-    private RAKTerrainMaster terrainMaster;
     public Terrain terrain;
     public Terrain[] neighbors { get; private set; }
     public RAKTerrain[] rakNeighbors;
     public RAKTerrainObject[] nonTerrainObjects { get; set; }
     public RAKTerrainMaster.RAKTerrainSavedData savedData { get; set; }
+    public Guid guid { get; private set; }
 
     private RAKTree[] rakTrees;
     private RAKTerrainMaster.RAKBiome biome;
     private Grid grid;
+    private RAKTerrainMaster terrainMaster;
+    private Dictionary<Guid, GridSector> sectorsList;
 
+    public GridSector GetGridSectorByGUID(Guid guid)
+    {
+        return sectorsList[guid];
+    }
+    public void AddGridSectorHash(GridSector sector)
+    {
+        sectorsList.Add(sector.guid, sector);
+    }
     public void initialize(RAKTerrainMaster terrainMaster)
     {
         Debug.LogWarning("Initialize " + name);
@@ -28,7 +38,9 @@ public class RAKTerrain : MonoBehaviour
         terrain = GetComponent<Terrain>();
         rakNeighbors = new RAKTerrain[4];
         neighbors = new Terrain[4];
-        grid = null;
+        grid = Grid.Empty;
+        guid = Guid.NewGuid();
+        sectorsList = new Dictionary<Guid, GridSector>();
     }
     
     public GridSector GetSectorAtPos(Vector3 position)
@@ -46,7 +58,7 @@ public class RAKTerrain : MonoBehaviour
                 }
             }
         }
-        return null;
+        return GridSector.Empty;
     }
     public GridSector[] GetThisGridAndNeighborGrids()
     {
@@ -57,7 +69,7 @@ public class RAKTerrain : MonoBehaviour
             GridSector[] neighborSectors = rakNeighbors[count].GetGridElements();
             for (int sectorCount = 0; sectorCount < neighborSectors.Length; sectorCount++)
             {
-                if(neighborSectors[sectorCount] != null)
+                if(!neighborSectors[sectorCount].IsEmpty())
                 {
                     sectors.Add(neighborSectors[sectorCount]);
                 }

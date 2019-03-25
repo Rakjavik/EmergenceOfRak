@@ -20,6 +20,7 @@ namespace rak.creatures
             this.attachedBody = bodyToShield;
             this._OnDuringTheseActions = actions;
             this.creature = transform.GetComponentInParent<Creature>();
+            ignoreStuckFor = 0;
         }
 
         private void ActivateShield()
@@ -44,10 +45,6 @@ namespace rak.creatures
                 attachedBody.isKinematic = false;
             Activated = false;
         }
-        private void GotoSleep(float time)
-        {
-            ignoreStuckFor = time;
-        }
         public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
             base.UpdateDerivedPart(action,delta);
@@ -64,6 +61,7 @@ namespace rak.creatures
                         if (ignoreStuckFor <= 0)
                         {
                             activate = true;
+                            ignoreStuckFor = .2f;
                         }
                     }
                     // Not stuck //
@@ -101,7 +99,6 @@ namespace rak.creatures
                     if (ignoreStuckFor > 0)
                     {
                         ignoreStuckFor -= Time.deltaTime;
-                        //Debug.LogWarning("Sleeping - " + sleepFor);
                     }
                     if (activate)
                     {
@@ -119,7 +116,7 @@ namespace rak.creatures
                         if (turnNeeded.magnitude < 1f || turnNeeded.magnitude > 359)
                         {
                             DeActivateShield();
-                            GotoSleep(.15f);
+                            ignoreStuckFor =.05f;
                         }
                     }
                 }
