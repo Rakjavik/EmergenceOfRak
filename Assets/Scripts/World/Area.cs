@@ -18,15 +18,19 @@ namespace rak.world
             jobHandles.Add(handle);
         }
         private static NativeArray<BlittableThing> allThingsBlittableCache;
+        public static void WorldDisabled()
+        {
+            allThingsBlittableCache.Dispose();
+        }
 
 
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
-        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 512;
+        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
         private static readonly int MAX_VISIBLE_CREATURES = 20;
         private static readonly int MAXPOP = 200;
-        public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 10;
-        
-        
+        public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
+
+
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
         private static List<Thing> _removeTheseThings = new List<Thing>();
@@ -409,10 +413,12 @@ namespace rak.world
 
         public void update(float delta)
         {
-            if(initialized)
-                world.StartCoroutine(updateCoroutine(Time.deltaTime));
+            if (initialized)
+            {
+                masterUpdate(delta);
+            }
         }
-        private System.Collections.IEnumerator updateCoroutine(float delta)
+        private void masterUpdate(float delta)
         { 
             sinceLastSunUpdated += delta;
             timeSinceLastCreatureDistanceSightCheck += delta;
@@ -447,8 +453,8 @@ namespace rak.world
             }
 
             // THING UPDATES //
-            int batchSize = allThings.Count / World.THING_PROCESS_BATCH_SIZE_DIVIDER;
-            if (batchSize == 0) batchSize = 1;
+            //int batchSize = THING_PROCESS_BATCH_SIZE;
+            //if (batchSize == 0) batchSize = 1;
             int numberOfVisibleThings = 0;
             for (int count = 0; count < allThings.Count; count++)
             {
@@ -491,8 +497,6 @@ namespace rak.world
                     if (creature.Visible)
                         numberOfVisibleThings++;
                 }
-                if (count % batchSize == 0)
-                    yield return null;
             }
             NumberOfVisibleThings = numberOfVisibleThings;
         }

@@ -41,7 +41,7 @@ namespace rak.creatures
             if (currentNeeds[highest].CurrentAmount != NeedAmount.Critical &&
                 currentNeeds[highest].CurrentAmount != NeedAmount.Major &&
                 currentNeeds[highest].CurrentAmount != NeedAmount.Moderate &&
-                currentNeeds[highest].CurrentAmount != NeedAmount.Little)
+                currentNeeds[highest].CurrentAmount != NeedAmount.Invalid)
                 return NEEDTYPE.NONE;
             return highest;
         }

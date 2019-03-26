@@ -14,7 +14,6 @@ namespace rak.world
         public static FollowCamera FollowCamera;
         public enum WorldType { CLASSM }
         public const int NUMBEROFSTARTINGCIVS = 30;
-        public const int THING_PROCESS_BATCH_SIZE_DIVIDER = 15;
         public static string WORLD_DATAPATH;
         private static World world;
 
@@ -82,6 +81,12 @@ namespace rak.world
         {
             Initialize();
         }
+
+        private void OnDisable()
+        {
+            Area.WorldDisabled();
+        }
+
         private void Initialize()
         {
             ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower().Contains("debug");
@@ -201,5 +206,28 @@ namespace rak.world
             CurrentArea.update(Time.deltaTime);
         }
 
+    }
+
+    public struct Coord2
+    {
+        public int x, y;
+
+        public Coord2(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    public struct Coord3
+    {
+        public int x, y, z;
+
+        public Coord3(int x, int y, int z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
     }
 }

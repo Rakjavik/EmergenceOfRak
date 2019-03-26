@@ -6,6 +6,8 @@ using UnityEngine.AI;
 using rak;
 using rak.world;
 using rak.creatures;
+using Unity.Collections;
+using Unity.Jobs;
 
 public partial class RAKTerrainMaster : MonoBehaviour
 {
@@ -24,7 +26,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
     private static Area area; // Area holds all variables related to the local representation of the HexCell
     private static World world;
     private static RAKTerrain[] terrain; // Terrain objects for this Area
-    
+
     [Header("Tree Prefabs needed for Terrain Generation")]
     public GameObject[] treePrefabs;
     [Header("Ground Textures needed for Terrain Generation")]

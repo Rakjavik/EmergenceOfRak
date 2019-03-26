@@ -152,7 +152,7 @@ namespace rak.creatures
             Vector3 direction = getNeededDirection();
             if (direction == Vector3.zero)
             {
-                Debug.LogWarning("Needed direction zero, currentactiondestination null?");
+                //Debug.LogWarning("Needed direction zero, currentactiondestination null?");
                 return Quaternion.identity;
             }
             else

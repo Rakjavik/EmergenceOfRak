@@ -1,11 +1,7 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System;
 using DigitalRuby.RainMaker;
-using UnityEngine.AI;
-using rak;
-using rak.world;
 
 [Serializable]
 public class RAKTerrain : MonoBehaviour

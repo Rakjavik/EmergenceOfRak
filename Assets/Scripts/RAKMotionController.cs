@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using Valve.VR;
 using System;
 
-public class RAKMotionController : MonoBehaviour
+public class RAKMotionControllerDeprecated : MonoBehaviour
 {
-    public static float floorPosition = 3.3f;
+    /*public static float floorPosition = 3.3f;
     public static float headPosition = 3.7112f;
     public static float height = headPosition - floorPosition;
     public static float armLength = .6f;
 
-    public RAKMotionController otherHand;
+    public RAKMotionControllerDeprecated otherHand;
     public GameObject hmd;
     public bool initialized = false;
 
@@ -165,7 +165,7 @@ public class RAKMotionController : MonoBehaviour
             {
                 equipSelected(menu.getSelection().getWieldable());
             }
-        }*/
+        }
     }
     public void processTouchPadTouchDown(Vector2 touchPad)
     {
@@ -263,7 +263,7 @@ public class RAKMotionController : MonoBehaviour
     {
         this.gripped = gripped;
     }
-    public RAKMotionController getOtherController()
+    public RAKMotionControllerDeprecated getOtherController()
     {
         return otherHand;
     }
@@ -384,5 +384,5 @@ public class RAKMotionController : MonoBehaviour
         }
     }
     #endregion
-    
+    */    
 }

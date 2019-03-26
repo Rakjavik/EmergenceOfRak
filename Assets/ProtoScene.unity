@@ -1263,7 +1263,7 @@ GameObject:
   - component: {fileID: 1973921792}
   - component: {fileID: 1973921791}
   m_Layer: 0
-  m_Name: Sun
+  m_Name: WorldSun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1540,7 +1540,7 @@ PrefabInstance:
     - target: {fileID: 2008449429053802603, guid: 68da474954fe77445a364ce13b517bbc,
         type: 3}
       propertyPath: m_projectionMatrixMode
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2008449429053802603, guid: 68da474954fe77445a364ce13b517bbc,
         type: 3}

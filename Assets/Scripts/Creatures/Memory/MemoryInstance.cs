@@ -10,7 +10,7 @@ namespace rak.creatures.memory
         public Guid subject { get; private set; }
         public long timeStamp { get; private set; }
         public int iterations { get; private set; }
-        public MemoryInstance(Verb verb,Guid subject,bool invertVerb)
+        public MemoryInstance(Verb verb, Guid subject, bool invertVerb, long timestamp)
         {
             if (invertVerb)
                 this.invertVerb = 1;
@@ -18,7 +18,7 @@ namespace rak.creatures.memory
                 this.invertVerb = 0;
             this.verb = verb;
             this.subject = subject;
-            timeStamp = DateTime.Now.ToBinary();
+            this.timeStamp = timestamp;
             iterations = 0;
         }
         private void setInvertVerb(bool invertVerb)
@@ -39,6 +39,10 @@ namespace rak.creatures.memory
             else
                 return true;
         }
+        public void MakeEmpty()
+        {
+            verb = Verb.NA;
+        }
         public bool IsEmpty()
         {
             if (verb == Verb.NA)
@@ -47,7 +51,7 @@ namespace rak.creatures.memory
         }
         public static MemoryInstance GetNewEmptyMemory()
         {
-            return new MemoryInstance(Verb.NA, Guid.Empty, false);
+            return new MemoryInstance(Verb.NA, Guid.Empty, false,0);
         }
         public void ReplaceMemory(Verb verb, Guid subject, bool invertVerb)
         {

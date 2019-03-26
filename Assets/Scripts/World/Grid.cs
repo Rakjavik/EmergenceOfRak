@@ -43,7 +43,7 @@ public struct Grid
                         elementWorldPosition.x + CurrentElementSize.x,
                         0,
                         elementWorldPosition.z + CurrentElementSize.y);
-                    elements[elementCount] = new GridSector(new Vector2(x, z), elementWorldPosition, elementWorldPositionEnd,
+                    elements[elementCount] = new GridSector(new Coord2(x, z), elementWorldPosition, elementWorldPositionEnd,
                         terrain.name, terrain);
                     elementCount++;
                 }

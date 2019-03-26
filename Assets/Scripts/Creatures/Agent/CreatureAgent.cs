@@ -382,7 +382,7 @@ namespace rak.creatures
                 }
             }
             ignoreIncomingCollisions = false;
-            velocityWhenMovingWithoutPhysics = 25f;
+            velocityWhenMovingWithoutPhysics = 100f;
             initialized = true;
         }
 

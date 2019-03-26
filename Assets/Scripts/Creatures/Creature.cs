@@ -56,7 +56,8 @@ namespace rak.creatures
         private CreatureAgent agent;
         private Tribe memberOfTribe;
         private Area currentArea;
-        private Dictionary<GridSector, bool> knownGridSectorsVisited;
+        private System.Guid[] knownGridSectorsVisited;
+        private int knownGridSectorsCount = 0;
 
         public bool IsInitialized()
         {
@@ -112,7 +113,7 @@ namespace rak.creatures
             agent.Initialize(species.getBaseSpecies());
             miscVariables = MiscVariables.GetCreatureMiscVariables(this);
             memberOfTribe = null;
-            knownGridSectorsVisited = new Dictionary<GridSector, bool>();
+            knownGridSectorsVisited = new System.Guid[100];
             lastObserved = Random.Range(0, observeEvery);
             Visible = false;
             mainCamera = Camera.main.transform;
@@ -178,7 +179,7 @@ namespace rak.creatures
         }
         public void ManualCreatureUpdate(float delta)
         {
-            agent.Update(delta,Visible);
+            agent.Update(delta, Visible);
             lastUpdated += delta;
             lastObserved += delta;
             if (timeSinceLeftView > 0)
@@ -199,42 +200,46 @@ namespace rak.creatures
             {
                 lastUpdated = 0;
                 updateCurrentGridSector();
-                // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
-                if (currentState == CREATURE_STATE.IDLE)
-                {
-                    debug("Creature is idle, looking for new task");
-                    taskManager.GetNewTask(this);
-                    if (taskManager.hasTask())
-                    {
-                        currentState = CREATURE_STATE.WAIT;
-                    }
-                }
-                // CREATURE IS NOT IDLE //
-                else
-                {
-                    debug("Performing current tasks - " + taskManager.getCurrentTaskType());
-                    taskManager.PerformCurrentTask();
-                    // Task was cancelled, mark creature as idle to get a new task next update //
-                    if (taskManager.GetCurrentTaskStatus() == Tasks.TASK_STATUS.Cancelled &&
-                        currentState != CREATURE_STATE.IDLE)
-                    {
-                        ChangeState(CREATURE_STATE.IDLE);
-                    }
-                    if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
-                        if (DEBUGSCENE)
-                            Debug.DrawLine(transform.position, agent.Destination, Color.cyan, 1f);
-
-                }
-                //Debug.LogWarning("Current state - " + currentState);
-                if (!taskManager.hasTask() && !CreatureConstants.CreatureIsIncapacitatedState(currentState))
-                {
-                    debug("No task found, marking Idle");
-                    currentState = CREATURE_STATE.IDLE;
-                }
-                // CREATURE PHYSICAL STATS UPDATES //
-                if (currentState != CREATURE_STATE.DEAD)
-                    creaturePhysicalStats.Update();
+                updateState(delta);
             }
+        }
+        private void updateState(float delta)
+        { 
+            // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
+            if (currentState == CREATURE_STATE.IDLE)
+            {
+                debug("Creature is idle, looking for new task");
+                taskManager.GetNewTask(this);
+                if (taskManager.hasTask())
+                {
+                    currentState = CREATURE_STATE.WAIT;
+                }
+            }
+            // CREATURE IS NOT IDLE //
+            else
+            {
+                debug("Performing current tasks - " + taskManager.getCurrentTaskType());
+                taskManager.PerformCurrentTask();
+                // Task was cancelled, mark creature as idle to get a new task next update //
+                if (taskManager.GetCurrentTaskStatus() == Tasks.TASK_STATUS.Cancelled &&
+                    currentState != CREATURE_STATE.IDLE)
+                {
+                    ChangeState(CREATURE_STATE.IDLE);
+                }
+                if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
+                    if (DEBUGSCENE)
+                        Debug.DrawLine(transform.position, agent.Destination, Color.cyan, 1f);
+
+            }
+            //Debug.LogWarning("Current state - " + currentState);
+            if (!taskManager.hasTask() && !CreatureConstants.CreatureIsIncapacitatedState(currentState))
+            {
+                debug("No task found, marking Idle");
+                currentState = CREATURE_STATE.IDLE;
+            }
+            // CREATURE PHYSICAL STATS UPDATES //
+            if (currentState != CREATURE_STATE.DEAD)
+                creaturePhysicalStats.Update();
         }
         private void OnCollisionEnter(Collision collision)
         {
@@ -299,15 +304,18 @@ namespace rak.creatures
             if (lastObserved < observeEvery || awaitingObservation || !initialized)
                 yield break;
             lastObserved = 0;
+            long start = System.DateTime.Now.ToBinary();
             jobFor = new ObserveJobFor();
             jobFor.allThings = Area.GetBlittableThings();
             jobFor.observeDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
             jobFor.origin = transform.position;
             jobFor.memories = new NativeArray<MemoryInstance>(jobFor.allThings.Length,Allocator.Persistent);
+            jobFor.timestamp = start;
             observeHandle = jobFor.Schedule(jobFor.allThings.Length, 1);
             Area.AddJobHandle(observeHandle);
             yield return new WaitUntil(() => observeHandle.IsCompleted);
             observeHandle.Complete();
+            //Debug.LogWarning("TIme to complete - " + (System.DateTime.Now.ToBinary() - start));
             updateThingsWithinProximityAndDisposeCache();
         }
 
@@ -324,20 +332,24 @@ namespace rak.creatures
         private void updateCurrentGridSector()
         {
             // Observe Areas //
-            float areaDistance = Grid.CurrentElementSize.sqrMagnitude * 2;
             currentTerrain = RAKTerrainMaster.GetTerrainAtPoint(transform.position);
-            GridSector[] closeAreas = currentTerrain.GetThisGridAndNeighborGrids();
             currentSector = currentTerrain.GetSectorAtPos(transform.position);
-            for (int count = 0; count < closeAreas.Length; count++)
+            bool currentSectorVisited = false;
+            for (int sectorCount = 0; sectorCount < knownGridSectorsCount; sectorCount++) 
             {
-                if (!knownGridSectorsVisited.ContainsKey(closeAreas[count]))
+                if (knownGridSectorsVisited[sectorCount].Equals(currentSector.guid))
                 {
-                    knownGridSectorsVisited.Add(closeAreas[count], false);
+                    currentSectorVisited = true;
                 }
-                if (currentSector.name.Equals(closeAreas[count].name) && !knownGridSectorsVisited[currentSector])
+            }
+            if (!currentSectorVisited)
+            {
+                if(knownGridSectorsCount >= knownGridSectorsVisited.Length)
                 {
-                    knownGridSectorsVisited[currentSector] = true;
+                    Debug.LogError("Max known grid sectors - " + knownGridSectorsCount);
                 }
+                knownGridSectorsVisited[knownGridSectorsCount] = currentSector.guid;
+                knownGridSectorsCount++;
             }
         }
 
@@ -394,12 +406,22 @@ namespace rak.creatures
         public GridSector GetClosestUnexploredSector()
         {
             GridSector closestSector = GridSector.Empty;
+            GridSector[] closeSectors = currentTerrain.GetThisGridAndNeighborGrids();
             float closestDistance = Mathf.Infinity;
-            foreach (GridSector sector in knownGridSectorsVisited.Keys)
+            foreach (GridSector sector in closeSectors)
             {
                 // Already visited //
-                if (knownGridSectorsVisited[sector])
-                    continue;
+                bool visited = false;
+                for(int count = 0; count < knownGridSectorsCount; count++)
+                {
+                    if (knownGridSectorsVisited[count].Equals(sector.guid))
+                    {
+                        visited = true;
+                        break;
+                    }
+
+                }
+                if (visited) continue;
                 float distance = Vector3.Distance(sector.GetSectorPosition(), transform.position);
                 if (distance < closestDistance)
                 {

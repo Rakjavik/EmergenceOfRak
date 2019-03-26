@@ -7,18 +7,18 @@ public struct GridSector
     public Vector3 WorldPositionStart { get; private set; }
     public Vector3 WorldPositionEnd { get; private set; }
     public string name { get; private set; }
-    public Vector2 gridPosition { get; private set; }
+    public Coord2 gridPosition { get; private set; }
     public System.Guid guid { get; private set; }
 
     private System.Guid parentTerrain;
     
 
-    public GridSector(Vector2 gridPosition, Vector3 worldPositionStart, 
+    public GridSector(Coord2 gridPosition, Vector3 worldPositionStart, 
         Vector3 worldPositionEnd,string terrainName,RAKTerrain terrain)
     {
         guid = System.Guid.NewGuid();
         name = (terrainName + "-" + gridPosition.x + "-" + gridPosition.y);
-        this.gridPosition = new Vector2((int)gridPosition.x,(int)gridPosition.y);
+        this.gridPosition = gridPosition;
         this.WorldPositionStart = new Vector3(worldPositionStart.x,worldPositionStart.y,worldPositionStart.z);
         this.WorldPositionEnd = new Vector3(worldPositionEnd.x, worldPositionEnd.y, worldPositionEnd.z); ;
         if (terrain != null)
@@ -53,7 +53,7 @@ public struct GridSector
     public static GridSector Empty { get
         {
             {
-                return new GridSector(Vector2.zero, Vector3.zero, Vector3.zero, "", null);
+                return new GridSector(new Coord2(0,0), Vector3.zero, Vector3.zero, "", null);
             }
         }
     }

@@ -19,19 +19,19 @@ namespace rak.creatures.memory
         {
             longTermMemory = new List<MemoryInstance>();
             shortTermMemory = new MemoryInstance[SHORT_TERM_MEMORY_SIZE];
-            for(int count = 0; count < shortTermMemory.Length; count++)
+            for (int count = 0; count < shortTermMemory.Length; count++)
             {
                 shortTermMemory[count] = MemoryInstance.GetNewEmptyMemory();
             }
             currentMemoryIndex = 0;
         }
-        public Thing GetClosestFoodFromMemory(bool filterOutMoveToFailuresFromShortTerm,CONSUMPTION_TYPE cType,
+        public Thing GetClosestFoodFromMemory(bool filterOutMoveToFailuresFromShortTerm, CONSUMPTION_TYPE cType,
             Vector3 originPosition)
         {
             Thing closest = null;
             float closestDist = float.MaxValue;
             Thing[] food = GetFoodFromMemory(cType);
-            for(int count = 0; count < food.Length; count++)
+            for (int count = 0; count < food.Length; count++)
             {
                 // We remember not being able to access this previously //
                 if (HasRecentMemoryOf(Verb.MOVEDTO, food[count], true) && filterOutMoveToFailuresFromShortTerm)
@@ -42,7 +42,7 @@ namespace rak.creatures.memory
                     continue;
                 }
                 float thisDist = Vector3.Distance(originPosition, food[count].transform.position);
-                if(thisDist < closestDist)
+                if (thisDist < closestDist)
                 {
                     closestDist = thisDist;
                     closest = food[count];
@@ -52,7 +52,7 @@ namespace rak.creatures.memory
         }
         public Thing GetClosestFoodProducerFromMemory(Vector3 origin, Thing[] exclusions)
         {
-            return getClosestFoodProducerFromMemory(origin, exclusions,0);
+            return getClosestFoodProducerFromMemory(origin, exclusions, 0);
         }
         public Thing GetClosestFoodProducerFromMemory(Vector3 origin, float discludeDistanceLessThan)
         {
@@ -64,13 +64,13 @@ namespace rak.creatures.memory
         }
         public Thing GetClosestFoodProducerFromMemory(Vector3 origin)
         {
-            return getClosestFoodProducerFromMemory(origin, null,0);
+            return getClosestFoodProducerFromMemory(origin, null, 0);
         }
         public MemoryInstance[] GetShortTermMemory()
         {
             return shortTermMemory;
         }
-        private Thing getClosestFoodProducerFromMemory(Vector3 origin,Thing[] exclusions,float discludeDistanceLessThan)
+        private Thing getClosestFoodProducerFromMemory(Vector3 origin, Thing[] exclusions, float discludeDistanceLessThan)
         {
             Thing closest = null;
             for (int count = 0; count < shortTermMemory.Length; count++)
@@ -84,11 +84,11 @@ namespace rak.creatures.memory
                     Thing currentThing = Area.GetThingByGUID(memory.subject);
                     float currentDistance = Vector3.Distance(origin, currentThing.transform.position);
                     float closestDistance = float.MaxValue;
-                    if(closest != null)
+                    if (closest != null)
                         closestDistance = Vector3.Distance(origin, closest.transform.position);
                     if (currentDistance < closestDistance)
                     {
-                        if(exclusions == null && discludeDistanceLessThan == 0)
+                        if (exclusions == null && discludeDistanceLessThan == 0)
                             closest = currentThing;
                         else
                         {
@@ -106,7 +106,7 @@ namespace rak.creatures.memory
                                 }
                             }
                             // Discard if below min distance //
-                            if(discludeDistanceLessThan > 0)
+                            if (discludeDistanceLessThan > 0)
                             {
                                 if (currentDistance <= discludeDistanceLessThan)
                                 {
@@ -117,7 +117,7 @@ namespace rak.creatures.memory
                                 closest = currentThing;
                         }
                     }
-                    
+
                 }
             }
             return closest;
@@ -126,12 +126,12 @@ namespace rak.creatures.memory
         private Thing[] GetFoodFromMemory(CONSUMPTION_TYPE consumptionType)
         {
             List<Thing> memoriesOfFood = new List<Thing>();
-            for(int count = 0; count < shortTermMemory.Length; count++)
+            for (int count = 0; count < shortTermMemory.Length; count++)
             {
                 MemoryInstance memory = shortTermMemory[count];
                 bool currentMemoryInvertVerb = memory.GetInvertVerb();
                 if (memory.verb == Verb.NA) continue;
-                if (memory.verb == Verb.SAW && currentMemoryInvertVerb == false && 
+                if (memory.verb == Verb.SAW && currentMemoryInvertVerb == false &&
                     memory.subject != System.Guid.Empty && Area.GetThingByGUID(memory.subject)
                     .matchesConsumptionType(consumptionType))
                 {
@@ -143,7 +143,7 @@ namespace rak.creatures.memory
         private Thing[] getFoodProducersFromMemory()
         {
             List<Thing> producers = new List<Thing>();
-            for(int count = 0; count < shortTermMemory.Length; count++)
+            for (int count = 0; count < shortTermMemory.Length; count++)
             {
                 if (shortTermMemory[count].verb == Verb.NA) continue;
                 Thing currentThing = Area.GetThingByGUID(shortTermMemory[count].subject);
@@ -154,20 +154,20 @@ namespace rak.creatures.memory
             }
             return producers.ToArray();
         }
-        public bool HasRecentMemoryOf(Verb verb,Thing subject,bool invertVerb)
+        public bool HasRecentMemoryOf(Verb verb, Thing subject, bool invertVerb)
         {
             return isRecentMemory(verb, subject.GetBlittableThing(), invertVerb).verb != Verb.NA;
         }
         public bool AddMemory(MemoryInstance memory)
         {
             Thing memorySubject = Area.GetThingByGUID(memory.subject);
-            if(memorySubject == null)
+            if (memorySubject == null)
             {
                 return false;
             }
             return AddMemory(memory.verb, memorySubject.GetBlittableThing(), memory.GetInvertVerb());
         }
-        public bool AddMemory(Verb verb,BlittableThing subject,bool invertVerb)
+        public bool AddMemory(Verb verb, BlittableThing subject, bool invertVerb)
         {
             MemoryInstance recentSubjectMemory = isRecentMemory(verb, subject, invertVerb);
             if (!recentSubjectMemory.IsEmpty())
@@ -177,9 +177,9 @@ namespace rak.creatures.memory
             }
             if (currentMemoryIndex + 1 == shortTermMemory.Length)
                 currentMemoryIndex = 0;
-            if(currentMemoryIndex < shortTermMemory.Length)
+            if (currentMemoryIndex < shortTermMemory.Length)
             {
-                if(subject.IsEmpty())
+                if (subject.IsEmpty())
                 {
                     Debug.Break();
                     Debug.Log("Null subject to add memory " + verb.ToString());
@@ -223,12 +223,12 @@ namespace rak.creatures.memory
         public MemoryInstance[] GetAllMemoriesOf(Thing thing)
         {
             List<MemoryInstance> foundThings = new List<MemoryInstance>();
-            foreach(MemoryInstance memory in shortTermMemory)
+            foreach (MemoryInstance memory in shortTermMemory)
             {
                 if (!memory.IsEmpty() && memory.subject.Equals(thing.guid))
                     foundThings.Add(memory);
             }
-            foreach(MemoryInstance memory in longTermMemory)
+            foreach (MemoryInstance memory in longTermMemory)
             {
                 if (memory.subject.Equals(thing.guid))
                     foundThings.Add(memory);
@@ -239,23 +239,23 @@ namespace rak.creatures.memory
         {
             return GetAllMemoriesOf(thing).Length > 0;
         }
-        public MemoryInstance[] HasAnyMemoriesOf(Verb verb,CONSUMPTION_TYPE consumptionType)
+        public MemoryInstance[] HasAnyMemoriesOf(Verb verb, CONSUMPTION_TYPE consumptionType)
         {
             List<MemoryInstance> memories = new List<MemoryInstance>();
-            for(int count = 0; count < shortTermMemory.Length; count++)
+            for (int count = 0; count < shortTermMemory.Length; count++)
             {
-                if(shortTermMemory[count].verb != Verb.NA)
+                if (shortTermMemory[count].verb != Verb.NA)
                 {
                     if (shortTermMemory[count].verb == verb &&
                         Area.GetThingByGUID(shortTermMemory[count].subject)
                         .matchesConsumptionType(consumptionType))
-                    { 
+                    {
                         memories.Add(shortTermMemory[count]);
                     }
                 }
-                for(count = 0; count < longTermMemory.Count; count++)
+                for (count = 0; count < longTermMemory.Count; count++)
                 {
-                    if(longTermMemory[count].verb == verb &&
+                    if (longTermMemory[count].verb == verb &&
                         Area.GetThingByGUID(longTermMemory[count].subject)
                         .matchesConsumptionType(consumptionType))
                     {
@@ -265,7 +265,7 @@ namespace rak.creatures.memory
             }
             return memories.ToArray();
         }
-        public MemoryInstance HasAnyMemoryOf(Verb verb,CONSUMPTION_TYPE consumptionType,bool invertVerb)
+        public MemoryInstance HasAnyMemoryOf(Verb verb, CONSUMPTION_TYPE consumptionType, bool invertVerb)
         {
             for (int count = 0; count < shortTermMemory.Length; count++)
             {
@@ -279,7 +279,7 @@ namespace rak.creatures.memory
             }
             for (int count = 0; count < longTermMemory.Count; count++)
             {
-                if(longTermMemory[count].verb == Verb.SAW &&
+                if (longTermMemory[count].verb == Verb.SAW &&
                     Area.GetThingByGUID(longTermMemory[count].subject)
                     .matchesConsumptionType(consumptionType))
                 {
@@ -294,7 +294,7 @@ namespace rak.creatures.memory
             {
                 if (shortTermMemory[count].verb != Verb.NA)
                 {
-                    if (shortTermMemory[count].IsSameAs(verb,subject.GetGuid(),invertVerb))
+                    if (shortTermMemory[count].IsSameAs(verb, subject.GetGuid(), invertVerb))
                     {
                         return shortTermMemory[count];
                     }
@@ -306,7 +306,7 @@ namespace rak.creatures.memory
         {
             for (int count = 0; count < shortTermMemory.Length; count++)
             {
-                if(shortTermMemory[count].verb != Verb.NA)
+                if (shortTermMemory[count].verb != Verb.NA)
                 {
                     longTermMemory.Add(shortTermMemory[count]);
                 }
