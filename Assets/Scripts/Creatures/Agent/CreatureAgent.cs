@@ -1,5 +1,6 @@
 ﻿using rak.world;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace rak.creatures
@@ -24,11 +25,11 @@ namespace rak.creatures
         // Creature object being controlled //
         public Creature creature { get; private set; }
         // Amount of brake requested to any BrakeParts //
-        public Vector3 CurrentBrakeAmountRequest { get; private set; }
+        public float3 CurrentBrakeAmountRequest { get; private set; }
         // Maximium total velocity before brakes kick in //
         public float maxVelocityMagnitude { get; private set; }
         // Maximum force that can be applied to the ConstantForce componenet //
-        public Vector3 maxForce = Vector3.zero;
+        public float3 maxForce = float3.zero;
         // Maximum Angular Velocity //
         public float maxAngularVel { get; private set; }
         // Force required to keep creature floating //
@@ -40,7 +41,7 @@ namespace rak.creatures
         // Rigid bodies currently in contact with creature //
         public List<Transform> touchingBodies { get; private set; }
         // Throttle will back off when this is reached //
-        public Vector3 CruisingSpeed { get; private set; }
+        public float3 CruisingSpeed { get; private set; }
         public bool ignoreIncomingCollisions { get; private set; }
         // Type of turning this creature uses //
         public CreatureTurnType creatureTurnType { get; private set; }
@@ -49,7 +50,7 @@ namespace rak.creatures
 
         private Rigidbody rigidbody;
         // All body parts in agent //
-        private List<Part> allParts;
+        private Part[] allParts;
         private float lastUpdate = 0;
         // Height creature tries to keep from ground if flying //
         private float sustainHeight = 3;
@@ -75,11 +76,11 @@ namespace rak.creatures
         {
             return creature.GetCurrentActionTarget();
         }
-        public Vector3 GetCurrentActionDestination()
+        public float3 GetCurrentActionDestination()
         {
             return creature.GetCurrentActionTargetDestination();
         }
-        public void SetCruisingSpeed(Vector3 cruisingSpeed)
+        public void SetCruisingSpeed(float3 cruisingSpeed)
         {
             this.CruisingSpeed = cruisingSpeed;
         }
@@ -119,7 +120,7 @@ namespace rak.creatures
         public Rigidbody GetRigidBody() { return rigidbody; }
         public void setParts(List<Part> allParts)
         {
-            this.allParts = allParts;
+            this.allParts = allParts.ToArray();
         }
         public void SetCreatureTurnType(CreatureTurnType creatureTurnType)
         {
@@ -133,8 +134,7 @@ namespace rak.creatures
         public ConstantForce GetConstantForceComponent() { return rigidbody.GetComponent<ConstantForce>(); }
         public void SetBrakeRequestToZero()
         {
-            if(CurrentBrakeAmountRequest != Vector3.zero)
-                CurrentBrakeAmountRequest = Vector3.zero;
+            CurrentBrakeAmountRequest = float3.zero;
         }
         public void SetMaxAngularVel(float maxAngularVel)
         {
@@ -157,29 +157,17 @@ namespace rak.creatures
         }
         public Part[] GetAllParts()
         {
-            return allParts.ToArray();
+            return allParts;
         }
         #endregion
 
         #region MISC METHODS
         public void DestroyAllParts()
         {
-            destroyAll(creature.gameObject);
-        }
-        private void destroyAll(GameObject gameObject)
-        {
-            for(int count = 0; count < gameObject.transform.childCount; count++)
-            {
-                if (gameObject.transform.GetChild(count).childCount > 0)
-                {
-                    destroyAll(gameObject.transform.GetChild(count).gameObject);
-                }
-                GameObject.Destroy(gameObject.transform.GetChild(count).gameObject);
-            }
         }
         public void Land()
         {
-            for (int count = 0; count < allParts.Count; count++)
+            for (int count = 0; count < allParts.Length; count++)
             {
                 if (allParts[count] is EnginePart)
                 {
@@ -220,7 +208,7 @@ namespace rak.creatures
         {
             creature.ChangeState(Creature.CREATURE_STATE.SLEEP);
         }
-        public void ApplyBrake(Vector3 percentToBrake,bool angular)
+        public void ApplyBrake(float3 percentToBrake,bool angular)
         {
             CurrentBrakeAmountRequest = percentToBrake;
         }
@@ -263,8 +251,8 @@ namespace rak.creatures
         }
         public float GetDistanceFromDestination()
         {
-            Vector3 destinationNoY = new Vector3(Destination.x, 0, Destination.z);
-            Vector3 positionNoY = new Vector3(creature.transform.position.x, 0, creature.transform.position.z);
+            float3 destinationNoY = new float3(Destination.x, 0, Destination.z);
+            float3 positionNoY = new float3(creature.transform.position.x, 0, creature.transform.position.z);
             return Vector3.Distance(positionNoY, destinationNoY);
         }
 
@@ -394,7 +382,7 @@ namespace rak.creatures
             {
                 touchingBodies.Add(collision.gameObject.transform);
             }
-            for (int count = 0;count < allParts.Count; count++)
+            for (int count = 0;count < allParts.Length; count++)
             {
                 if (!(allParts[count] is EnginePart)) continue;
                 EnginePart currentPart = (EnginePart)allParts[count];
@@ -409,7 +397,7 @@ namespace rak.creatures
                 touchingBodies.Remove(collision.gameObject.transform);
                 //Debug.LogWarning("Body not touching anymore - " + collision.gameObject.name);
             }
-            for (int count = 0; count < allParts.Count; count++)
+            for (int count = 0; count < allParts.Length; count++)
             {
                 if (!(allParts[count] is EnginePart)) continue;
                 EnginePart currentPart = (EnginePart)allParts[count];
@@ -465,7 +453,7 @@ namespace rak.creatures
                             .transform.position.z);
                     }
                     // Update these parts when not visible //
-                    for (int count = 0; count < allParts.Count; count++)
+                    for (int count = 0; count < allParts.Length; count++)
                     {
                         if (allParts[count] is AnimationPart &&
                             ((AnimationPart)allParts[count]).PartType == CreaturePart.SHIELD)
@@ -478,7 +466,7 @@ namespace rak.creatures
                 }
                 else if (currentAction == ActionStep.Actions.Add)
                 {
-                    for(int count = 0; count < allParts.Count; count++)
+                    for(int count = 0; count < allParts.Length; count++)
                     {
                         if (allParts[count] is TractorBeamPart)
                             allParts[count].Update(delta);

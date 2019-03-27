@@ -140,8 +140,6 @@ namespace rak.UI
                 text = text.Replace("{sleep}", ((int)selectedCreature.GetNeedAmount(Needs.NEEDTYPE.SLEEP)).ToString());
                 text = text.Replace("{sleepRelative}", ((int)selectedCreature.
                     GetRelativeNeedAmount(Needs.NEEDTYPE.SLEEP)).ToString());
-                text = text.Replace("{currentBrake}", ((int)selectedCreature.GetCreatureAgent().
-                    CurrentBrakeAmountRequest.magnitude).ToString());
                 detailText.text = text;
             }
             int cc = World.CurrentArea.ActiveCreatureCount;

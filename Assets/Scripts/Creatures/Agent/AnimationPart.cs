@@ -74,7 +74,8 @@ namespace rak.creatures
         {
             float relativeMultiplier;
             if (partMovesRelativeTo == PartMovesWith.Braking)
-                relativeMultiplier = attachedAgent.CurrentBrakeAmountRequest.magnitude;
+                relativeMultiplier = new Vector3(attachedAgent.CurrentBrakeAmountRequest.x,
+                    attachedAgent.CurrentBrakeAmountRequest.y, attachedAgent.CurrentBrakeAmountRequest.z).magnitude;
             else if (partMovesRelativeTo == PartMovesWith.ConstantForceY)
                 relativeMultiplier = attachedAgent.GetConstantForceComponent().relativeForce.y;
             else if (partMovesRelativeTo == PartMovesWith.ConstantForceZ)

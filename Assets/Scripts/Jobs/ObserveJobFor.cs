@@ -1,6 +1,7 @@
 ﻿using rak.creatures.memory;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 public struct ObserveJobFor : IJobParallelFor
@@ -10,7 +11,7 @@ public struct ObserveJobFor : IJobParallelFor
 
     public NativeArray<MemoryInstance> memories;
 
-    public Vector3 origin;
+    public float3 origin;
     public float observeDistance;
     public long timestamp;
 

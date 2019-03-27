@@ -173,13 +173,15 @@ namespace rak.creatures
         {
             SetInView(true);
         }
+
         private void OnBecameInvisible()
         {
             SetInView(false);
         }
+
         public void ManualCreatureUpdate(float delta)
         {
-            agent.Update(delta, Visible);
+            //agent.Update(delta, Visible);
             lastUpdated += delta;
             lastObserved += delta;
             if (timeSinceLeftView > 0)
@@ -434,6 +436,10 @@ namespace rak.creatures
         }
 
         #region GETTERS/SETTERS
+        public bool HasAgent()
+        {
+            return agent != null;
+        }
         public MemoryInstance[] GetShortTermMemory()
         {
             return species.memory.GetShortTermMemory();
@@ -522,29 +528,6 @@ namespace rak.creatures
         public Vector3 getNavMeshDestination()
         {
             return agent.Destination;
-        }
-        private void demolish()
-        {
-            agent.DisableAgent();
-            Vector3 currentVel = agent.GetRigidBody().velocity;
-            for (int childCount = 0; childCount < transform.childCount; childCount++)
-            {
-                GameObject part = transform.GetChild(childCount).gameObject;
-                part.transform.SetParent(null);
-                if (true == false)
-                {
-                    Rigidbody body = part.AddComponent<Rigidbody>();
-                    body.velocity = currentVel;
-                }
-                else
-                {
-                    try
-                    {
-                        Destroy(transform.GetChild(childCount).gameObject);
-                    }
-                    catch (UnityException ex) { }
-                }
-            }
         }
         #endregion
     }

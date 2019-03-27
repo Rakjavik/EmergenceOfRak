@@ -1,5 +1,6 @@
 ﻿using rak.world;
 using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace rak.creatures.memory
@@ -12,9 +13,9 @@ namespace rak.creatures.memory
         public Thing.Thing_Produces produces;
         private float age;
         private float bornAt;
-        public Vector3 position;
+        public float3 position;
 
-        public BlittableThing(Thing.Base_Types baseType,Guid guid,float age,float bornAt,Vector3 position,
+        public BlittableThing(Thing.Base_Types baseType,Guid guid,float age,float bornAt, float3 position,
             Thing.Thing_Produces produces)
         {
             if (guid.Equals(Guid.Empty))
@@ -22,7 +23,7 @@ namespace rak.creatures.memory
                 this.baseType = Thing.Base_Types.NA;
                 this.age = -1;
                 this.bornAt = -1;
-                this.position = Vector3.zero;
+                this.position = float3.zero;
                 this.guid = Guid.Empty;
                 this.produces = Thing.Thing_Produces.NA;
             }
@@ -39,7 +40,7 @@ namespace rak.creatures.memory
         
         public static BlittableThing GetNewEmptyThing()
         {
-            return new BlittableThing(Thing.Base_Types.NA,Guid.Empty,-1,-1,Vector3.zero,Thing.Thing_Produces.NA);
+            return new BlittableThing(Thing.Base_Types.NA,Guid.Empty,-1,-1, float3.zero,Thing.Thing_Produces.NA);
         }
         public Thing GetThing()
         {

@@ -143,7 +143,7 @@ namespace rak.creatures
         }
         private Vector3 getNeededDirection()
         {
-            Vector3 direction = (attachedAgent.GetCurrentActionDestination() - parentCreature.transform.position).normalized;
+            Vector3 direction = ((Vector3)attachedAgent.GetCurrentActionDestination() - parentCreature.transform.position).normalized;
             return direction;
         }
         private Quaternion getDifferenceFromLookAtTargetRotation()

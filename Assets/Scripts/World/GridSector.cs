@@ -1,11 +1,12 @@
 ﻿using rak;
 using rak.world;
+using Unity.Mathematics;
 using UnityEngine;
 
 public struct GridSector
 {
-    public Vector3 WorldPositionStart { get; private set; }
-    public Vector3 WorldPositionEnd { get; private set; }
+    public float3 WorldPositionStart { get; private set; }
+    public float3 WorldPositionEnd { get; private set; }
     public string name { get; private set; }
     public Coord2 gridPosition { get; private set; }
     public System.Guid guid { get; private set; }
@@ -13,8 +14,8 @@ public struct GridSector
     private System.Guid parentTerrain;
     
 
-    public GridSector(Coord2 gridPosition, Vector3 worldPositionStart, 
-        Vector3 worldPositionEnd,string terrainName,RAKTerrain terrain)
+    public GridSector(Coord2 gridPosition, float3 worldPositionStart, 
+        float3 worldPositionEnd,string terrainName,RAKTerrain terrain)
     {
         guid = System.Guid.NewGuid();
         name = (terrainName + "-" + gridPosition.x + "-" + gridPosition.y);
@@ -36,33 +37,30 @@ public struct GridSector
     }
 
     public Vector3 GetSectorPosition()
-    { 
-        Vector3 position = new Vector3(WorldPositionStart.x+(Grid.CurrentElementSize.x/2), 0, WorldPositionStart.z + 
+    {
+        float3 position = new Vector3(WorldPositionStart.x+(Grid.CurrentElementSize.x/2), 0, WorldPositionStart.z + 
             (Grid.CurrentElementSize.y / 2));
         return position;
     }
     
-    public float GetTerrainHeightFromGlobalPos(Vector3 position)
+    public float GetTerrainHeightFromGlobalPos(float3 position)
     {
         return RAKTerrainMaster.GetTerrainByGuid(parentTerrain).GetHeightAt(position);
     }
     public Vector2 GetTwoDLerpOfSector()
     {
-        return Vector2.Lerp(WorldPositionStart, WorldPositionEnd,.5f);
+        return Vector2.Lerp(new Vector2(WorldPositionStart.x,WorldPositionStart.z), 
+            new Vector2(WorldPositionEnd.x,WorldPositionEnd.z),.5f);
     }
     public static GridSector Empty { get
         {
             {
-                return new GridSector(new Coord2(0,0), Vector3.zero, Vector3.zero, "", null);
+                return new GridSector(new Coord2(-1,-1), float3.zero, float3.zero, "", null);
             }
         }
     }
     public bool IsEmpty()
     {
-        if(WorldPositionStart == Vector3.zero && WorldPositionEnd == Vector3.zero)
-        {
-            return true;
-        }
-        return false;
+        return gridPosition.x == -1;
     }
 }

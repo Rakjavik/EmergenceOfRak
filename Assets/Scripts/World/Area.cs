@@ -23,6 +23,7 @@ namespace rak.world
             }
         }
         private static List<Thing> allThings;
+        private static List<CreatureAgent> agents;
         private static Dictionary<System.Guid, Thing> thingMasterList;
         private static List<JobHandle> jobHandles;
         public static void AddJobHandle(JobHandle handle)
@@ -37,8 +38,8 @@ namespace rak.world
 
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
-        private static readonly int MAX_VISIBLE_CREATURES = 205;
-        private static readonly int MAXPOP = 200;
+        private static readonly int MAX_VISIBLE_CREATURES = 30;
+        private static readonly int MAXPOP = 300;
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
 
         // How many entries in the cache before empty structs are placed //
@@ -83,6 +84,12 @@ namespace rak.world
         {
             allThings.Add(thingToAdd);
             thingMasterList.Add(thingToAdd.guid, thingToAdd);
+            if(thingToAdd is Creature)
+            {
+                Creature creature = (Creature)thingToAdd;
+                if (creature.HasAgent())
+                    agents.Add(creature.GetCreatureAgent());
+            }
             //Debug.LogWarning("Adding " + thingToAdd.name);
         }
         public static NativeArray<BlittableThing> GetBlittableThings()
@@ -132,6 +139,10 @@ namespace rak.world
         private GameObject[] walls;
         private Transform sun;
         private float sinceLastSunUpdated = 0;
+        private static int batchSize = 20;
+        private static float batchDelta = 0;
+        private static int currentThingIndex = 0;
+        private static int currentBatch = 0;
         
         public Area(HexCell cell,World world)
         {
@@ -155,6 +166,7 @@ namespace rak.world
             Debug.LogWarning("DEBUG MODE ENABLED");
             areaSize = new Vector3(256, 10, 256);
             allThings = new List<Thing>();
+            agents = new List<CreatureAgent>();
             thingContainer = new GameObject("ThingContainer");
             creatureContainer = new GameObject("CreatureContainer");
             if (disabledContainer == null)
@@ -212,6 +224,7 @@ namespace rak.world
             if(disabledContainer == null)
                 disabledContainer = new GameObject("DisabledContainer");
             allThings = new List<Thing>();
+            agents = new List<CreatureAgent>();
             // Scan the TerrainObjects placed in map for Things //
             foreach (RAKTerrain terrain in world.masterTerrain.getTerrain())
             {
@@ -431,51 +444,61 @@ namespace rak.world
         private void masterUpdate(float delta)
         { 
             sinceLastSunUpdated += delta;
+            batchDelta += delta;
             timeSinceLastCreatureDistanceSightCheck += delta;
 
-
-            for (int count = 0; count < _removeTheseThings.Count; count++)
+            // DO THESE EVERY UPDATE //
+            NumberOfVisibleThings = 0;
+            for (int count = 0; count < agents.Count; count++)
             {
-                Thing singleThing = _removeTheseThings[count];
-                allThings.Remove(singleThing);
-                singleThing.GetBlittableThing().SetToEmpty();
-                singleThing.gameObject.SetActive(false);
-                singleThing.transform.SetParent(disabledContainer.transform);
-            }
-            _removeTheseThings = new List<Thing>();
-            
-            foreach (Tribe tribe in tribesPresent)
-            {
-                tribe.Update();
-            }
-            AreaLocalTime += delta;
-            if (sinceLastSunUpdated > updateSunEvery)
-            {
-                float timeOfDay = (AreaLocalTime) % dayLength;
-                sun.rotation = Quaternion.Euler(new Vector3((timeOfDay / dayLength) * 360, 0, 0));
-                sinceLastSunUpdated = 0;
-            }
-            timeSinceUpdatedThings += Time.deltaTime;
-            if (timeSinceUpdatedThings > updateThingsEvery)
-            {
-                updateAllBlittableThingsCache();
-                timeSinceUpdatedThings = 0;
+                bool visible = agents[count].creature.Visible;
+                if (visible) NumberOfVisibleThings++;
+                if (agents[count].Active)
+                    agents[count].Update(delta, visible);
             }
 
+            // DO THESE BEFORE STARTING BATCHES, BUT NOT DURING BATCH PROCESSING //
+            if (currentThingIndex == 0)
+            {
+                for (int count = 0; count < _removeTheseThings.Count; count++)
+                {
+                    Thing singleThing = _removeTheseThings[count];
+                    allThings.Remove(singleThing);
+                    singleThing.GetBlittableThing().SetToEmpty();
+                    singleThing.gameObject.SetActive(false);
+                    singleThing.transform.SetParent(disabledContainer.transform);
+                }
+                _removeTheseThings = new List<Thing>();
+
+                foreach (Tribe tribe in tribesPresent)
+                {
+                    tribe.Update();
+                }
+                AreaLocalTime += delta;
+                if (sinceLastSunUpdated > updateSunEvery)
+                {
+                    float timeOfDay = (AreaLocalTime) % dayLength;
+                    sun.rotation = Quaternion.Euler(new Vector3((timeOfDay / dayLength) * 360, 0, 0));
+                    sinceLastSunUpdated = 0;
+                }
+                timeSinceUpdatedThings += Time.deltaTime;
+                if (timeSinceUpdatedThings > updateThingsEvery)
+                {
+                    updateAllBlittableThingsCache();
+                    timeSinceUpdatedThings = 0;
+                }
+            }
             // THING UPDATES //
-            //int batchSize = THING_PROCESS_BATCH_SIZE;
-            //if (batchSize == 0) batchSize = 1;
-            int numberOfVisibleThings = 0;
-            for (int count = 0; count < allThings.Count; count++)
+            int startIndex = currentThingIndex;
+            for (int count = currentThingIndex;count < allThings.Count; count++)
             {
-                delta = Time.deltaTime;
                 Vector3 cameraPosition = mainCamera.transform.position;
                 Thing thing = allThings[count];
-                thing.ManualUpdate(delta);
+                thing.ManualUpdate(batchDelta);
                 if (thing is Creature)
                 {
                     Creature creature = (Creature)thing;
-                    creature.ManualCreatureUpdate(delta);
+                    creature.ManualCreatureUpdate(batchDelta);
                     if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
                     {
                         _removeTheseThings.Add(creature);
@@ -497,18 +520,29 @@ namespace rak.world
                         {
                             if (!creature.Visible)
                             {
-                                if(numberOfVisibleThings < MAX_VISIBLE_CREATURES)
+                                if(NumberOfVisibleThings < MAX_VISIBLE_CREATURES)
                                     creature.SetVisible(true);
                             }
                         }
                         
                         timeSinceLastCreatureDistanceSightCheck = 0;
                     }
-                    if (creature.Visible)
-                        numberOfVisibleThings++;
+                }
+                currentThingIndex++;
+                if(currentThingIndex-startIndex >= batchSize)
+                {
+                    currentBatch++;
+                    break;
+                }
+                if(currentThingIndex == allThings.Count)
+                {
+                    Debug.LogWarning("All batches complete # - " + currentBatch + " batchdelta - " + batchDelta);
+                    currentThingIndex = 0;
+                    currentBatch = 0;
+                    batchDelta = 0;
+                    break;
                 }
             }
-            NumberOfVisibleThings = numberOfVisibleThings;
         }
     }
 }

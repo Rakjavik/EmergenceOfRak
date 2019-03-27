@@ -1,6 +1,7 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
 using rak.world;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace rak
@@ -17,7 +18,7 @@ namespace rak
 
         private Actions action;
         public FailReason failReason { get; private set; }
-        public Vector3 _targetPosition { get; private set; }
+        public float3 _targetPosition { get; private set; }
         public Thing _targetThing { get; private set; }
         public Tasks.CreatureTasks associatedTask { get; private set; }
         public void SetTarget(Thing thing)
@@ -26,7 +27,7 @@ namespace rak
             this._targetPosition = thing.transform.position;
             creatureAgentDestinationHasBeenSet = true;
         }
-        public void SetTargetPosition(Vector3 target)
+        public void SetTargetPosition(float3 target)
         {
             creatureAgentDestinationHasBeenSet = true;
             _targetPosition = target;
@@ -60,7 +61,7 @@ namespace rak
             this.associatedTask = task;
             this.action = action;
             // No target, set to zero //
-            _targetPosition = Vector3.zero;
+            _targetPosition = float3.zero;
             failReason = FailReason.NA;
             creatureAgentDestinationHasBeenSet = false;
             this.distanceRequiredToCompleteModifier = distanceRequiredToCompleteModifier;
@@ -119,9 +120,9 @@ namespace rak
                     GridSector sector = performer.GetClosestUnexploredSector();
                     if (!sector.IsEmpty())
                     {
-                        Vector3 explorePoint = sector.GetSectorPosition();
+                        float3 explorePoint = sector.GetSectorPosition();
                         float terrainHeight = sector.GetTerrainHeightFromGlobalPos(explorePoint);
-                        explorePoint = new Vector3(
+                        explorePoint = new float3(
                             explorePoint.x,
                             terrainHeight + performer.GetCreatureAgent().GetSustainHeight(),
                             explorePoint.z);
@@ -253,7 +254,7 @@ namespace rak
         }
         public bool HasTargetPosition()
         {
-            if (_targetPosition != Vector3.zero)
+            if ((Vector3)_targetPosition != Vector3.zero)
             {
                 return true;
             }
