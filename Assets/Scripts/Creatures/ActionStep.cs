@@ -175,7 +175,7 @@ namespace rak
                     if (associatedTask != Tasks.CreatureTasks.EXPLORE)
                         distanceToCompleteArrival = performer.getCreatureStats().getDistanceFromTargetBeforeConsideredReached();
                     else
-                        distanceToCompleteArrival = 20;
+                        distanceToCompleteArrival = 10;
                     if (performer.getDistanceFromDestination() <= distanceToCompleteArrival)
                     {
                         status = Tasks.TASK_STATUS.Complete;

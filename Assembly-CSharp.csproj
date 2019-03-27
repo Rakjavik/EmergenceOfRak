@@ -194,6 +194,7 @@
     <Compile Include="Assets\Scripts\Jobs\ObserveJobFor.cs" />
     <Compile Include="Assets\Scripts\RAKAudioClip.cs" />
     <Compile Include="Assets\Scripts\RAKCarouselMenu.cs" />
+    <Compile Include="Assets\Scripts\RakInput.cs" />
     <Compile Include="Assets\Scripts\RAKMeshBaker.cs" />
     <Compile Include="Assets\Scripts\RAKMotionController.cs" />
     <Compile Include="Assets\Scripts\RAKPlayer.cs" />
@@ -615,6 +616,9 @@
     <Reference Include="UnityEngine.SpatialTracking">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.3f1/Editor/Data/UnityExtensions/Unity/UnitySpatialTracking/RuntimeEditor/UnityEngine.SpatialTracking.dll</HintPath>
     </Reference>
+    <Reference Include="Valve.Newtonsoft.Json">
+      <HintPath>E:/Unity Projects/The Emergence of Rak/Assets/SteamVR/Input/Plugins/JSON.NET/Valve.Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Analytics.Editor">
       <HintPath>E:/Unity Projects/The Emergence of Rak/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.Editor.dll</HintPath>
     </Reference>
@@ -623,9 +627,6 @@
     </Reference>
     <Reference Include="Unity.Analytics.Tracker">
       <HintPath>E:/Unity Projects/The Emergence of Rak/Library/PackageCache/com.unity.analytics@3.2.2/Unity.Analytics.Tracker.dll</HintPath>
-    </Reference>
-    <Reference Include="Valve.Newtonsoft.Json">
-      <HintPath>E:/Unity Projects/The Emergence of Rak/Assets/SteamVR/Input/Plugins/JSON.NET/Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.3f1/Editor/Data/NetStandard/ref/2.0.0/netstandard.dll</HintPath>
@@ -974,6 +975,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="SteamVR_Actions.csproj">
+      <Project>{DCA54175-417E-C262-2D85-695137709A28}</Project>
+      <Name>SteamVR_Actions</Name>
+    </ProjectReference>
     <ProjectReference Include="NavMeshComponentsEditor.csproj">
       <Project>{B829F446-17FC-B708-A942-5B8CE0BBE294}</Project>
       <Name>NavMeshComponentsEditor</Name>

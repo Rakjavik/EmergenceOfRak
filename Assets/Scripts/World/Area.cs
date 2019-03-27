@@ -10,6 +10,18 @@ namespace rak.world
 {
     public class Area
     {
+        // DEBUG METHOD FOR VR //
+        public static void SetDestinationForAllCreatureAgents(Vector3 dest)
+        {
+            for (int count = 0; count < allThings.Count; count++)
+            {
+                if(allThings[count] is Creature)
+                {
+                    Creature creature = (Creature)allThings[count];
+                    creature.GetCreatureAgent().SetDestination(dest);
+                }
+            }
+        }
         private static List<Thing> allThings;
         private static Dictionary<System.Guid, Thing> thingMasterList;
         private static List<JobHandle> jobHandles;
@@ -23,13 +35,11 @@ namespace rak.world
             allThingsBlittableCache.Dispose();
         }
 
-
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
-        private static readonly int MAX_VISIBLE_CREATURES = 20;
+        private static readonly int MAX_VISIBLE_CREATURES = 205;
         private static readonly int MAXPOP = 200;
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
-
 
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
@@ -153,7 +163,7 @@ namespace rak.world
             for (int i = 0; i < NUMBEROFGNATS; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
-                addCreatureToWorldDEBUG(BASE_SPECIES.Gnat.ToString(), position, false, tribe);
+                addCreatureToWorldDEBUG("GnatInteractable", position, false, tribe);
             }
             CreatureUtilities.OptimizeUpdateTimes(allThings);
             FruitTree[] trees = GameObject.FindObjectsOfType<FruitTree>();
