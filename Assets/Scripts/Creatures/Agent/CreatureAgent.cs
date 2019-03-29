@@ -162,8 +162,12 @@ namespace rak.creatures
         #endregion
 
         #region MISC METHODS
-        public void DestroyAllParts()
+        public void DeactivateAllParts()
         {
+            foreach(Part part in allParts)
+            {
+                part.Disable();
+            }
         }
         public void Land()
         {

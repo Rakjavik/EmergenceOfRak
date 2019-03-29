@@ -123,7 +123,15 @@ namespace rak.creatures
         }
         public void PlayOneShot()
         {
-            audioSource.Play();
+            if (!audioSource.isPlaying && Visible)
+            {
+                audioSource.Play();
+            }
+        }
+        public void StopEngineAudio()
+        {
+            if (audioSource.isPlaying)
+                audioSource.Stop();
         }
         public Thing GetClosestKnownReachableConsumable()
         {
@@ -315,7 +323,7 @@ namespace rak.creatures
             jobFor.timestamp = start;
             observeHandle = jobFor.Schedule(jobFor.allThings.Length, 1);
             Area.AddJobHandle(observeHandle);
-            yield return new WaitUntil(() => observeHandle.IsCompleted);
+            //yield return new WaitUntil(() => observeHandle.IsCompleted);
             observeHandle.Complete();
             //Debug.LogWarning("TIme to complete - " + (System.DateTime.Now.ToBinary() - start));
             updateThingsWithinProximityAndDisposeCache();
@@ -368,11 +376,11 @@ namespace rak.creatures
             return species.memory.HasRecentMemoryOf(verb, target, invertVerb);
         }
 
-        public void DestroyAllParts()
+        public void DeactivateAllParts()
         {
             if (currentState == CREATURE_STATE.DEAD)
             {
-                agent.DestroyAllParts();
+                agent.DeactivateAllParts();
             }
             else
             {

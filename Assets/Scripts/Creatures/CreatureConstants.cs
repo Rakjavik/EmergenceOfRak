@@ -5,61 +5,6 @@ namespace rak.creatures
 {
     public abstract class CreatureConstants
     {
-        /*public static bool IsThisFarAwayFromWallsIfNotFixIt(float distance, Vector3 point)
-        {
-            return IsThisFarAwayFromAnyWalls(distance, point, true);
-        }
-        private static bool IsThisFarAwayFromAnyWalls(float distance, Vector3 point, bool fixAsWeGo)
-        {
-            bool noWalls = true;
-            RaycastHit hit;
-            if (Physics.Raycast(point, Vector3.left, out hit))
-            {
-                if (Vector3.Distance(point, hit.point) < distance && !fixAsWeGo)
-                    if (!fixAsWeGo)
-                        noWalls = false;
-                    else
-                        point.x += 5;
-            }
-            if (Physics.Raycast(point, -Vector3.left, out hit))
-            {
-                if (Vector3.Distance(point, hit.point) < distance && !fixAsWeGo)
-                    if (!fixAsWeGo)
-                        noWalls = false;
-                    else
-                        point.x -= 5;
-            }
-            if (Physics.Raycast(point, Vector3.forward, out hit))
-            {
-                // Adjust origin so we're not hitting floor //
-                point.y += .1f;
-                if (Vector3.Distance(point, hit.point) < distance && !fixAsWeGo)
-                    if (!fixAsWeGo)
-                        noWalls = false;
-                    else
-                        point.z -= 5;
-            }
-            if (Physics.Raycast(point, -Vector3.forward, out hit))
-            {
-                // Adjust height of origin so we're not hitting floor //
-                point.y += .1f;
-                if (Vector3.Distance(point, hit.point) < distance && !fixAsWeGo)
-                {
-                    if (!fixAsWeGo)
-                        noWalls = false;
-                    else
-                        point.z += 5;
-                }
-            }
-            return noWalls;
-        }
-
-        public static bool IsAtLeastThisFarAwayFromAnyWalls(float distance, Vector3 point)
-        {
-            if (point == Vector3.zero) return false;
-            return IsThisFarAwayFromAnyWalls(distance, point, false);
-        }*/
-
         public static bool CreatureIsIncapacitatedState(Creature.CREATURE_STATE state)
         {
             bool _inCapacitated;
@@ -235,7 +180,8 @@ namespace rak.creatures
             {
                 // Body with constant force //
                 EnginePart bodyFlight = new EnginePart
-                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureLocomotionType.Flight, .2f);
+                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureLocomotionType.Flight, .2f,
+                    PartAudioPropToModify.PITCH);
 
                 // Body with Rotation turning //
                 TurnPart bodyTurning = new TurnPartRotation
@@ -270,7 +216,7 @@ namespace rak.creatures
                     .2f, creature.GetCreatureAgent().GetRigidBody(), new ActionStep.Actions[] {ActionStep.Actions.Add,
                         ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait});
                 AnimationPart antiGravShieldAnimation = new AnimationPart(CreaturePart.SHIELD, creature.transform.GetChild(7),
-                    CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
+                    CreatureAnimationMovementType.Rotation, .05f, Vector3.right, 10, new ActionStep.Actions[]
                     {ActionStep.Actions.Add,ActionStep.Actions.MoveTo,ActionStep.Actions.Add,ActionStep.Actions.Eat
                     ,ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait},
                     PartMovesWith.IsKinematic, PartAnimationType.Movement, false);
@@ -299,7 +245,7 @@ namespace rak.creatures
                 // Constant force for Z //
                 EnginePart mainEngine = new EnginePart(CreaturePart.ENGINE_Z,
                     creature.transform.GetChild(0),
-                    CreatureLocomotionType.StandardForwardBack, 1);
+                    CreatureLocomotionType.StandardForwardBack, 1,PartAudioPropToModify.PITCH);
                 TurnPart inchSpine = new TurnPartInching(CreaturePart.BODY,
                     creature.transform.GetChild(0),
                     CreatureTurnType.Inch, .5f, Direction.X,

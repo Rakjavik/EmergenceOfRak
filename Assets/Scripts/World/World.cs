@@ -47,6 +47,7 @@ namespace rak.world
         private HexMapEditor editor;
         private MenuController mainMenu;
         public HexMapCamera mapCam;
+        public AudioClip AmbientSound;
 
         private bool editing = false;
         private bool _initialized;

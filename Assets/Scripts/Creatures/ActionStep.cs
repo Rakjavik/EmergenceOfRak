@@ -218,7 +218,7 @@ namespace rak
             {
                 if (_targetThing.beConsumed(performer))
                 {
-                    performer.PlayOneShot();
+                    //performer.PlayOneShot();
                     performer.ConsumeThing(_targetThing);
                     status = Tasks.TASK_STATUS.Complete;
                     return;

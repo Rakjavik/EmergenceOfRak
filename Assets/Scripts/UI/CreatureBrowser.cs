@@ -78,7 +78,7 @@ namespace rak.UI
 
         public void Initialize()
         {
-            gameObject.SetActive(true);
+            gameObject.SetActive(false);
             Initialize(CreatureBrowserWindow.Creature_Detail_List);
         }
 

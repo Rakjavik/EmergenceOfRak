@@ -4,24 +4,42 @@ using UnityEngine;
 
 namespace rak.creatures
 {
-
+    public enum PartAudioPropToModify { PITCH }
     public class EnginePart : Part
     {
         // Constant Force component control for X Y and Z Axis //
         private ConstantForce cf;
         private EngineMovementVariable[] engineMovementVariables;
+        private AudioSource partAudio;
         private float baseUpdateEvery;
+        float objectBlockDistance;
+
+        private PartAudioPropToModify audioProp;
+        private float changeSpeed = 50;
+        private float engineLow = -3;
+        private float engineMed = 0;
+        private float engineHigh = 3;
+        private float currentEngineLevel = 0;
+        private float targetEngineLevel = 0;
 
         public EnginePart(CreaturePart creaturePart,Transform transform, CreatureLocomotionType partMovementType,
-            float updateEvery) 
+            float updateEvery,PartAudioPropToModify propToModify) 
             : base(creaturePart,transform,updateEvery)
         {
             baseUpdateEvery = updateEvery;
             cf = transform.GetComponentInParent<ConstantForce>();
+            partAudio = PartTransform.gameObject.AddComponent<AudioSource>();
+            partAudio.clip = RAKUtilities.getAudioClip("buzz");
+            partAudio.spatialBlend = 0;
+            partAudio.spread = 190;
+            partAudio.loop = true;
+            partAudio.playOnAwake = true;
+            this.audioProp = propToModify;
         }
 
         public void InitializeMovementPart()
         {
+            objectBlockDistance = miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Halt_Forward_Movement_If_Object_Is_Distance];
             CreatureLocomotionType locomotionType = attachedAgent.locomotionType;
             attachedBody = PartTransform.GetComponentInParent<Rigidbody>();
             if (locomotionType == CreatureLocomotionType.StandardForwardBack || 
@@ -45,7 +63,7 @@ namespace rak.creatures
                 // NOT IMPLEMENTED YET //
                 else if (locomotionType == CreatureLocomotionType.StandardForwardBack)
                 {
-                    
+
                 }
             }
             else
@@ -78,11 +96,11 @@ namespace rak.creatures
             {
                 Vector3 relativeVel = attachedBody.transform.InverseTransformDirection(attachedBody.velocity);
                 float distFromGround = attachedAgent.GetDistanceBeforeCollision(CreatureUtilities.RayCastDirection.DOWN);
-                yield return null;
+                //yield return null;
                 float distanceFromFirstZHit = attachedAgent.GetDistanceBeforeCollision(
                     CreatureUtilities.RayCastDirection.FORWARD);
-                yield return null;
-                float objectBlockDistance = miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Halt_Forward_Movement_If_Object_Is_Distance];
+                //yield return null;
+                
                 bool objectBlockingForward = distanceFromFirstZHit < objectBlockDistance;
                 //Debug.LogWarning("Distance from first z- " + distanceFromFirstZHit);
                 MovementState stateToSetY = MovementState.IDLE;
@@ -146,6 +164,18 @@ namespace rak.creatures
             float z = engineMovementVariables[(int)Direction.Z].CurrentForce;
             Vector3 newForce = new Vector3(x, y, z);
             cf.relativeForce = newForce;
+            if (engineMovementVariables[(int)Direction.Y].CurrentState == MovementState.FORWARD ||
+                engineMovementVariables[(int)Direction.Y].CurrentState == MovementState.REVERSE)
+            {
+                targetEngineLevel = engineHigh;
+            }
+            else if (engineMovementVariables[(int)Direction.Y].CurrentState == MovementState.IDLE)
+            {
+                targetEngineLevel = engineLow;
+            }
+            else
+                targetEngineLevel = engineMed;
+            yield return null;
         }
         // GROUND //
         private void ProcessStandardForwardBack()
@@ -172,17 +202,36 @@ namespace rak.creatures
 
         public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
-            if (attachedBody.isKinematic) return;
             if(attachedAgent.locomotionType == CreatureLocomotionType.Flight)
             {
-
-                attachedAgent.creature.StartCoroutine(Flight(action,delta));
+                if(!attachedBody.isKinematic)
+                    attachedAgent.creature.StartCoroutine(Flight(action,delta));
                 UpdateEvery = baseUpdateEvery + (25 - attachedBody.velocity.magnitude) * .01f;
                 //Debug.Log(UpdateEvery);
             }
             else if (attachedAgent.locomotionType == CreatureLocomotionType.StandardForwardBack)
             {
                 ProcessStandardForwardBack();
+            }
+            if(currentEngineLevel != targetEngineLevel)
+            {
+                if (currentEngineLevel < targetEngineLevel)
+                {
+                    currentEngineLevel += changeSpeed * delta;
+                    if (currentEngineLevel > targetEngineLevel)
+                        currentEngineLevel = targetEngineLevel;
+                }
+                else
+                {
+                    currentEngineLevel -= changeSpeed * delta;
+                    if (currentEngineLevel < targetEngineLevel)
+                        currentEngineLevel = targetEngineLevel;
+                }
+                
+                if (audioProp == PartAudioPropToModify.PITCH)
+                    partAudio.pitch = currentEngineLevel;
+                if (!partAudio.isPlaying)
+                    partAudio.Play();
             }
         }
         

@@ -46,6 +46,17 @@ namespace rak
             World.CurrentArea.RemoveThingFromWorld(this);
         }
 
+        public void Deactivate()
+        {
+            gameObject.SetActive(false);
+            available = false;
+            if(this is Creature)
+            {
+                Creature creature = (Creature)this;
+                creature.DeactivateAllParts();
+            }
+        }
+
         public bool beConsumed(Creature consumer)
         {
             if (consumeable && !available)
