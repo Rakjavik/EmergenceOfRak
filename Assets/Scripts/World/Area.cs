@@ -39,7 +39,7 @@ namespace rak.world
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
         private static readonly int MAX_VISIBLE_CREATURES = 40;
-        private static readonly int MAXPOP = 300;
+        private static readonly int MAXPOP = 150;
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 3;
 
         // How many entries in the cache before empty structs are placed //

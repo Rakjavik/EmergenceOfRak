@@ -128,11 +128,6 @@ namespace rak.creatures
                 audioSource.Play();
             }
         }
-        public void StopEngineAudio()
-        {
-            if (audioSource.isPlaying)
-                audioSource.Stop();
-        }
         public Thing GetClosestKnownReachableConsumable()
         {
             return species.memory.GetClosestFoodFromMemory

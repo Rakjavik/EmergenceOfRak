@@ -7,6 +7,7 @@ namespace rak.UI
     public class FollowCamera : MonoBehaviour
     {
         private static Vector3 _defaultOffset = Vector3.one*2;
+        private static int speed = 3;
         private static float mouseLookSpeed = 1f;
         private static float mouseWheelZoomModifier = 1;
         private static float maxZoomIn = .5f;
@@ -48,7 +49,7 @@ namespace rak.UI
             else
             {
                 if (_stopCameraMovement) return;
-                transform.position = Vector3.Lerp(transform.position, _target.position+cameraOffset, Time.deltaTime*3f);
+                transform.position = Vector3.Lerp(transform.position, _target.position+cameraOffset, Time.deltaTime*speed);
                 transform.LookAt(_target);
                 Vector3 positionForward;
                 float currentDistance = Vector3.Distance(transform.position, _target.position);

@@ -32,7 +32,6 @@ namespace rak.creatures
                 return;
             }
             attachedBody.isKinematic = true;
-            parentCreature.StopEngineAudio();
             Activated = true;
         }
         private void DeActivateShield()

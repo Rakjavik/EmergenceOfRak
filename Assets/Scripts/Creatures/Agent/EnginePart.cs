@@ -15,10 +15,7 @@ namespace rak.creatures
         float objectBlockDistance;
 
         private PartAudioPropToModify audioProp;
-        private float changeSpeed = 50;
-        private float engineLow = -3;
-        private float engineMed = 0;
-        private float engineHigh = 3;
+        //private float changeSpeed = 200;
         private float currentEngineLevel = 0;
         private float targetEngineLevel = 0;
 
@@ -30,8 +27,9 @@ namespace rak.creatures
             cf = transform.GetComponentInParent<ConstantForce>();
             partAudio = PartTransform.gameObject.AddComponent<AudioSource>();
             partAudio.clip = RAKUtilities.getAudioClip("buzz");
-            partAudio.spatialBlend = 0;
-            partAudio.spread = 190;
+            partAudio.spatialBlend = 1;
+            partAudio.maxDistance = 50;
+            partAudio.spread = 360;
             partAudio.loop = true;
             partAudio.playOnAwake = true;
             this.audioProp = propToModify;
@@ -70,6 +68,7 @@ namespace rak.creatures
             {
                 engineMovementVariables = new EngineMovementVariable[0];
             }
+            partAudio.Play();
         }
         public override void Disable()
         {
@@ -164,17 +163,6 @@ namespace rak.creatures
             float z = engineMovementVariables[(int)Direction.Z].CurrentForce;
             Vector3 newForce = new Vector3(x, y, z);
             cf.relativeForce = newForce;
-            if (engineMovementVariables[(int)Direction.Y].CurrentState == MovementState.FORWARD ||
-                engineMovementVariables[(int)Direction.Y].CurrentState == MovementState.REVERSE)
-            {
-                targetEngineLevel = engineHigh;
-            }
-            else if (engineMovementVariables[(int)Direction.Y].CurrentState == MovementState.IDLE)
-            {
-                targetEngineLevel = engineLow;
-            }
-            else
-                targetEngineLevel = engineMed;
             yield return null;
         }
         // GROUND //
@@ -206,7 +194,8 @@ namespace rak.creatures
             {
                 if(!attachedBody.isKinematic)
                     attachedAgent.creature.StartCoroutine(Flight(action,delta));
-                UpdateEvery = baseUpdateEvery + (25 - attachedBody.velocity.magnitude) * .01f;
+                targetEngineLevel = attachedBody.velocity.magnitude/10;
+                //UpdateEvery = baseUpdateEvery + (25 - attachedBody.velocity.magnitude) * .01f;
                 //Debug.Log(UpdateEvery);
             }
             else if (attachedAgent.locomotionType == CreatureLocomotionType.StandardForwardBack)
@@ -215,23 +204,11 @@ namespace rak.creatures
             }
             if(currentEngineLevel != targetEngineLevel)
             {
-                if (currentEngineLevel < targetEngineLevel)
-                {
-                    currentEngineLevel += changeSpeed * delta;
-                    if (currentEngineLevel > targetEngineLevel)
-                        currentEngineLevel = targetEngineLevel;
-                }
-                else
-                {
-                    currentEngineLevel -= changeSpeed * delta;
-                    if (currentEngineLevel < targetEngineLevel)
-                        currentEngineLevel = targetEngineLevel;
-                }
-                
+                currentEngineLevel = targetEngineLevel;
                 if (audioProp == PartAudioPropToModify.PITCH)
                     partAudio.pitch = currentEngineLevel;
-                if (!partAudio.isPlaying)
-                    partAudio.Play();
+                //if (!partAudio.isPlaying) partAudio.Play();
+
             }
         }
         
