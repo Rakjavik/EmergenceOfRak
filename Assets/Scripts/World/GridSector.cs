@@ -36,10 +36,18 @@ public struct GridSector
             Color.yellow, 1);
     }
 
-    public Vector3 GetSectorPosition()
+    public float3 GetSectorPosition()
     {
-        float3 position = new Vector3(WorldPositionStart.x+(Grid.CurrentElementSize.x/2), 0, WorldPositionStart.z + 
+        float3 position = new float3(WorldPositionStart.x+(Grid.CurrentElementSize.x/2), 0, WorldPositionStart.z + 
             (Grid.CurrentElementSize.y / 2));
+        return position;
+    }
+
+    public float3 GetRandomPositionInSector()
+    {
+        float randomX = UnityEngine.Random.Range(0, Grid.CurrentElementSize.x);
+        float randomZ = UnityEngine.Random.Range(0, Grid.CurrentElementSize.y);
+        float3 position = new float3(WorldPositionStart.x + randomX, 0, WorldPositionStart.z + randomZ);
         return position;
     }
     

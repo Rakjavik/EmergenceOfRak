@@ -35,18 +35,12 @@ namespace rak
                 }
             }
             else*/
-            neededTask = Tasks.GetAppropriateTask(highestNeed);
+                neededTask = Tasks.GetAppropriateTask(highestNeed);
 
             if (neededTask == Tasks.CreatureTasks.SLEEP && creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
             {
                 Debug.LogWarning("Task is sleep, already asleep");
                 return;
-            }
-            ActionStep.FailReason failReason = currentTask.GetPreviousStepsFailReason();
-            // DEPRECATED? Previous task was failed //
-            if (failReason != ActionStep.FailReason.NA)
-            {
-                
             }
             startNewTask(neededTask);
         }

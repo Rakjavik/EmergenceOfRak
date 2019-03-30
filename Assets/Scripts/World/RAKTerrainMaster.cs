@@ -42,17 +42,6 @@ public partial class RAKTerrainMaster : MonoBehaviour
     {
         return terrainList[guid];
     }
-    public static void AddToTerrainList(RAKTerrain terrain)
-    {
-        if (World.ISDEBUGSCENE)
-        {
-            terrainList.Add(terrain.guid, terrain);
-        }
-        else
-        {
-            Debug.LogError("Trying to add to terrain list when not in debug mode");
-        }
-    }
     public static int TileSize = 256; // Size of each Terrain piece
     private int width = TileSize+1; // Terrain width/height needs a plus one due to Unity being weird
     private int height = TileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
@@ -61,17 +50,13 @@ public partial class RAKTerrainMaster : MonoBehaviour
     private void InitializeDebugTerrain(World world,HexCell cell)
     {
         Debug.LogWarning("DEBUG MODE ENABLED");
-        terrain = new RAKTerrain[1];
-        terrain[0] = gameObject.GetComponentInChildren<RAKTerrain>();
-        terrain[0].initialize(this);
-        terrain[0].InitializeGrid();
+        worldSize = 4;
     }
     public void Initialize(World world,HexCell cell)
     {
         if (debug)
         {
             InitializeDebugTerrain(world,cell);
-            return;
         }
         // Set static data //
         RAKTerrainMaster.world = world;
@@ -95,7 +80,6 @@ public partial class RAKTerrainMaster : MonoBehaviour
             // If no save data available, go ahead and generate a new terrain //
             if (!saveDataAvail) //  generate //
             {
-                TerrainData previousTD = null;
                 if (count > 0)
                     currentBiome.GetNewOffsets();
                 td = generateTerrain(width, height, currentBiome.depth, currentBiome.scale, currentBiome.offsetX, 
@@ -119,7 +103,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             terrain[count] = go.AddComponent<RAKTerrain>();
             terrain[count].initialize(this);
             terrain[count].savedData = savedTerrain;
-            mapPositions(count);
+            mapPositions(count,(int)Mathf.Sqrt(worldSize));
             terrain[count].setBiome(RAKBiome.getForestBiome());
             terrainList.Add(terrain[count].guid, terrain[count]);
         }
@@ -146,11 +130,6 @@ public partial class RAKTerrainMaster : MonoBehaviour
         #endregion
         
         float currentTime = Time.time;
-        /*List<NavMeshSurface> surfaces = new List<NavMeshSurface>();
-        surfaces.Add(gameObject.AddComponent<NavMeshSurface>());
-        surfaces[0].collectObjects = CollectObjects.Children;
-        RAKMeshBaker.Bake(surfaces.ToArray());
-        Debug.LogWarning("Build nav mesh took - " + (Time.time - currentTime));*/
         
         // Save to disk if needed //
         if (!saveDataAvail)
@@ -211,8 +190,9 @@ public partial class RAKTerrainMaster : MonoBehaviour
             Terrain tRight = neighborTerrain[(int)NEIGHDIRECTION.Right];
             int left = index - 1;
             int right = index + 1;
-            int up = index + worldSize / 4;
-            int down = index - worldSize / 4;
+            int worldSquareRoot = (int)Mathf.Sqrt(worldSize);
+            int up = index + worldSquareRoot;
+            int down = index - worldSquareRoot;
             if (up >= worldSize)
             {
                 up = -1;
@@ -229,7 +209,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             {
                 tDown = terrain[down].getTerrainComponenet();
             }
-            if (left < 0 || left % 4 == 3)
+            if (left < 0 || left % worldSquareRoot == worldSquareRoot-1)
             {
                 left = -1;
             }
@@ -237,7 +217,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             {
                 tLeft = terrain[left].getTerrainComponenet();
             }
-            if (right >= worldSize || right % 4 == 0)
+            if (right >= worldSize || right % worldSquareRoot == 0)
             {
                 right = -1;
             }
@@ -257,7 +237,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             }
         }
     }
-    private void mapPositions(int index)
+    private void mapPositions(int index, int columnCount)
     {
         if (worldSize == 1)
         {
@@ -265,8 +245,8 @@ public partial class RAKTerrainMaster : MonoBehaviour
         }
         else
         {
-            int y = index / (worldSize / 4);
-            int x = index - y * (worldSize / 4);
+            int y = index / (worldSize / columnCount);
+            int x = index - y * (worldSize / columnCount);
             terrain[index].transform.position = new Vector3(x * TileSize, 0, y * TileSize);
         }
     }
@@ -619,9 +599,9 @@ public partial class RAKTerrainMaster : MonoBehaviour
             Terrain[] neighbors = terrain[terrainCount].neighbors;
             for (int nCount = 0; nCount < neighbors.Length; nCount++)
             {
-                // Only do right and down //
+                // Only do right and up //
                 if (nCount == 0 || nCount == 3) continue;
-                float[] seamStartPoints = new float[TileSize];
+                float[] targetTerrainsClosestRow = new float[TileSize];
                 float[,] thisTerrainsEdge = null;
                 float[,] targetTerrainsEdge = null;
 
@@ -636,77 +616,63 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     // LEFT
                     if (nCount == 0)
                     {
-                        startPoint = new Vector2(0, 0); // Where to insert new heights
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, width, height);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(TileSize-width, 0, width, height);
+                        
                     }
                     // RIGHT
                     else if (nCount == 1)
                     {
-                        startPoint = new Vector2(TileSize-width, 0);
+                        startPoint = new Vector2(TileSize-width+1, 0);
                         thisTerrainsEdge = singleTerrain.terrainData.GetHeights(TileSize-width, 0, width, height);
                         targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, width, height);
                     }
-                    // DOWN
+                    // UP
                     else if (nCount == 2)
                     {
-                        // WIDTH/HEIGHT REVERSED //
-                        startPoint = new Vector2(0, TileSize-width);
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, TileSize-width, TileSize, width);
+                        startPoint = new Vector2(0, TileSize-width+1);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, TileSize - width, TileSize, width);
                         targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, TileSize, width);
                     }
-                    // UP
+                    // DOWN
                     else if (nCount == 3)
                     {
-                        // WIDTH/HEIGHT REVERSED //
-                        startPoint = new Vector2(0, 0);
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, TileSize, width);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, TileSize, TileSize, 1);
+                        
                     }
                     // CALCULATE SEAMS
                     for (int countLong = 0; countLong < TileSize; countLong++)
                     {
                         if (nCount == 0) // LEFT
                         {
-                            seamStartPoints[countLong] = targetTerrainsEdge[countLong, 0];
                         }
                         else if (nCount == 1) // RIGHT
                         {
-                            seamStartPoints[countLong] = targetTerrainsEdge[countLong, 0];
+                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[countLong, 0];// xy reversed in array
                         }
-                        else if (nCount == 2) // DOWN
+                        else if (nCount == 2) // UP
                         {
-                            seamStartPoints[countLong] = targetTerrainsEdge[0, countLong];
+                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[0, countLong];
                         }
-                        else if (nCount == 3) // UP
+                        else if (nCount == 3) // DOWN
                         {
-                            seamStartPoints[countLong] = targetTerrainsEdge[0, countLong];
+                            
                         }
                     }
                     if (nCount == 0) // LEFT
                     {
-                        seam(thisTerrainsEdge, seamStartPoints);
-                        seam(targetTerrainsEdge, seamStartPoints);
                     }
                     else if (nCount == 1) // RIGHT
                     {
-                        seam(thisTerrainsEdge, seamStartPoints);
-                        //seam(targetTerrainsEdge, seamStartPoints);
+                        seam(thisTerrainsEdge, targetTerrainsClosestRow,false);
+                        //thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
                     }
-                    else if (nCount == 2) // DOWN
+                    else if (nCount == 2) // UP
                     {
                         thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
-                        seam(thisTerrainsEdge, seamStartPoints);
+                        seam(thisTerrainsEdge, targetTerrainsClosestRow,false);
                         thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
-                        //targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
-                        //seam(targetTerrainsEdge, seamStartPoints);
-                        //targetTerrainsEdge = swapDimensions(targetTerrainsEdge);
                     }
-                    else if (nCount == 3) // UP
+                    else if (nCount == 3) // DOWN
                     {
-                        thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
-                        seam(thisTerrainsEdge, seamStartPoints);
-                        thisTerrainsEdge = swapDimensions(thisTerrainsEdge);
+                        
                     }
                     singleTerrain.terrainData.SetHeights((int)startPoint.x, (int)startPoint.y, thisTerrainsEdge);
                 }
@@ -726,12 +692,38 @@ public partial class RAKTerrainMaster : MonoBehaviour
         }
         return newArray;
     }
-    private void seam(float[,] edge, float[] destSeamPoints)
+    private void seam(float[,] edge, float[] destSeamPoints,bool startAtEnd)
     {
         int longSize = edge.GetLength(0);
         int shortSize = edge.GetLength(1);
 
-        for (int longCount = 0; longCount < longSize; longCount++)
+        for(int longCount = 0; longCount < longSize; longCount++)
+        {
+            float yStart = edge[longCount, 0];
+            float yDest = destSeamPoints[longCount];
+            float step = (yDest - yStart) / shortSize;
+            if (!startAtEnd) {
+                for (int shortCount = 0; shortCount < shortSize; shortCount++)
+                {
+                    if (shortCount != shortSize - 1)
+                        edge[longCount, shortCount] = yStart + step * shortCount;
+                    else
+                        edge[longCount, shortCount] = yDest;
+                }
+            }
+            else
+            {
+                for (int shortCount = shortSize-1; shortCount > 0; shortCount--)
+                {
+                    if (shortCount != shortSize - 1)
+                        edge[longCount, shortCount] = yStart + step * shortCount;
+                    else
+                        edge[longCount, shortCount] = yDest;
+                }
+            }
+        }
+
+        /*for (int longCount = 0; longCount < longSize; longCount++)
         {
             float step = (destSeamPoints[longCount] - edge[longCount, shortSize - 1]) / shortSize;
             for (int shortCount = 0; shortCount < shortSize; shortCount++)
@@ -741,7 +733,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
                 else
                     edge[longCount, shortCount] = destSeamPoints[longCount];
             }
-        }
+        }*/
     }
     private float CalculateHeight(int x, int y, int width, int height, float scale, float offsetX, float offsetY)
     {

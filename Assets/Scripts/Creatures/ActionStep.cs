@@ -120,7 +120,7 @@ namespace rak
                     GridSector sector = performer.GetClosestUnexploredSector();
                     if (!sector.IsEmpty())
                     {
-                        float3 explorePoint = sector.GetSectorPosition();
+                        float3 explorePoint = sector.GetRandomPositionInSector();
                         float terrainHeight = sector.GetTerrainHeightFromGlobalPos(explorePoint);
                         explorePoint = new float3(
                             explorePoint.x,

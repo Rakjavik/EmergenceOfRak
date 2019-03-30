@@ -195,8 +195,6 @@ namespace rak.creatures
                 if(!attachedBody.isKinematic)
                     attachedAgent.creature.StartCoroutine(Flight(action,delta));
                 targetEngineLevel = attachedBody.velocity.magnitude/10;
-                //UpdateEvery = baseUpdateEvery + (25 - attachedBody.velocity.magnitude) * .01f;
-                //Debug.Log(UpdateEvery);
             }
             else if (attachedAgent.locomotionType == CreatureLocomotionType.StandardForwardBack)
             {
@@ -207,7 +205,6 @@ namespace rak.creatures
                 currentEngineLevel = targetEngineLevel;
                 if (audioProp == PartAudioPropToModify.PITCH)
                     partAudio.pitch = currentEngineLevel;
-                //if (!partAudio.isPlaying) partAudio.Play();
 
             }
         }

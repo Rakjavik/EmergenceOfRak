@@ -39,7 +39,7 @@ namespace rak.world
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
         private static readonly int MAX_VISIBLE_CREATURES = 40;
-        private static readonly int MAXPOP = 150;
+        private static int MAXPOP = 300;
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 3;
 
         // How many entries in the cache before empty structs are placed //
@@ -159,7 +159,8 @@ namespace rak.world
         }
         private void InitializeDebug(Tribe tribe)
         {
-            int NUMBEROFGNATS = 1;
+            MAXPOP = 1;
+            /*int NUMBEROFGNATS = 1;
             float SPAWNFRUITEVERY = 50;
             sitesPresent.Add(new Site("Home of DeGnats"));
             tribesPresent.Add(tribe);
@@ -172,11 +173,10 @@ namespace rak.world
             creatureContainer = new GameObject("CreatureContainer");
             if (disabledContainer == null)
                 disabledContainer = new GameObject("DisabledContainer");
-            RAKTerrainMaster.AddToTerrainList(GameObject.FindObjectOfType<RAKTerrain>());
             for (int i = 0; i < NUMBEROFGNATS; i++)
             {
                 Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
-                addCreatureToWorldDEBUG("Gnat", position, false, tribe);
+                addCreatureToWorld("Gnat", position, false);
             }
             CreatureUtilities.OptimizeUpdateTimes(allThings);
             FruitTree[] trees = GameObject.FindObjectsOfType<FruitTree>();
@@ -187,7 +187,7 @@ namespace rak.world
                 AddThingToAllThings(trees[count]);
             }
             initialized = true;
-            Debug.LogWarning("Updates balanced");
+            Debug.LogWarning("Updates balanced");*/
         }
         public void Initialize(Tribe tribe)
         {
@@ -204,7 +204,7 @@ namespace rak.world
             if (debug) // DEBUG
             {
                 InitializeDebug(tribe);
-                return;
+                //return;
             }
             areaSize = world.masterTerrain.GetSize();
             for(int count = 0; count < walls.Length; count++)
