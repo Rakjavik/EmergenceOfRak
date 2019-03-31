@@ -600,7 +600,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             for (int nCount = 0; nCount < neighbors.Length; nCount++)
             {
                 // Only do right and up //
-                if (nCount == 0 || nCount == 3) continue;
+                if (nCount == 3 || nCount == 0) continue;
                 float[] targetTerrainsClosestRow = new float[TileSize];
                 float[,] thisTerrainsEdge = null;
                 float[,] targetTerrainsEdge = null;
@@ -616,7 +616,9 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     // LEFT
                     if (nCount == 0)
                     {
-                        
+                        startPoint = new Vector2(0, 0);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, width, height);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(TileSize - width, 0, width, height);
                     }
                     // RIGHT
                     else if (nCount == 1)
@@ -635,29 +637,40 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     // DOWN
                     else if (nCount == 3)
                     {
-                        
+                        startPoint = new Vector2(0, 0);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, TileSize, width);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, TileSize - width, TileSize, width);
                     }
                     // CALCULATE SEAMS
                     for (int countLong = 0; countLong < TileSize; countLong++)
                     {
                         if (nCount == 0) // LEFT
                         {
+                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[countLong,width];
                         }
                         else if (nCount == 1) // RIGHT
                         {
-                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[countLong, 0];// xy reversed in array
+                            // xy reversed in array
+                            // Meet half way between the current terrain and the target terrain
+                            //targetTerrainsClosestRow[countLong] = thisTerrainsEdge[countLong, 0] +
+                            //(targetTerrainsEdge[countLong, 0] - thisTerrainsEdge[countLong,0])/2;
+                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[countLong, 0];
+
                         }
                         else if (nCount == 2) // UP
                         {
+                            //targetTerrainsClosestRow[countLong] = thisTerrainsEdge[0,countLong] +
+                            //(targetTerrainsEdge[0,countLong] - thisTerrainsEdge[0,countLong]) / 2;
                             targetTerrainsClosestRow[countLong] = targetTerrainsEdge[0, countLong];
                         }
                         else if (nCount == 3) // DOWN
                         {
-                            
+                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[width, countLong];
                         }
                     }
                     if (nCount == 0) // LEFT
                     {
+                        seam(thisTerrainsEdge, targetTerrainsClosestRow, true);
                     }
                     else if (nCount == 1) // RIGHT
                     {
@@ -703,6 +716,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             float yDest = destSeamPoints[longCount];
             float step = (yDest - yStart) / shortSize;
             if (!startAtEnd) {
+                
                 for (int shortCount = 0; shortCount < shortSize; shortCount++)
                 {
                     if (shortCount != shortSize - 1)
@@ -713,12 +727,12 @@ public partial class RAKTerrainMaster : MonoBehaviour
             }
             else
             {
-                for (int shortCount = shortSize-1; shortCount > 0; shortCount--)
+                for (int shortCount = 0; shortCount < shortSize; shortCount++)
                 {
                     if (shortCount != shortSize - 1)
-                        edge[longCount, shortCount] = yStart + step * shortCount;
+                        edge[longCount,shortSize-shortCount-1] = yStart + step * shortCount;
                     else
-                        edge[longCount, shortCount] = yDest;
+                        edge[longCount, 0] = yDest;
                 }
             }
         }

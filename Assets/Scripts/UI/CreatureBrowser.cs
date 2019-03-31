@@ -144,7 +144,7 @@ namespace rak.UI
             }
             int cc = World.CurrentArea.ActiveCreatureCount;
             int tc = World.CurrentArea.ActiveThingCount;
-            clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + Area.GetFriendlyLocalTime()+
+            clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + Area.GetTimeOfDay()+
                 " Elapsed-" + Area.GetElapsedNumberOfHours() + "\n";
             clockText.text += "Visible-" + Area.NumberOfVisibleThings + " Deaths Flight-" + World.CurrentArea.DeathsByFlight + 
                 " Hunger-" + World.CurrentArea.DeathsByHunger;

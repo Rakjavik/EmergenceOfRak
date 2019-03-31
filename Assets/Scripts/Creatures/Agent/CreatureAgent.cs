@@ -348,7 +348,6 @@ namespace rak.creatures
         public void Initialize(BASE_SPECIES baseSpecies)
         {
             rigidbody = creature.GetComponent<Rigidbody>();
-            CreatureConstants.CreatureAgentInitialize(baseSpecies, this);
             if (rigidbody == null)
             {
                 rigidbody = creature.GetComponentInParent<Rigidbody>();
@@ -359,6 +358,7 @@ namespace rak.creatures
                         Debug.LogError("Can't find rigid body on " + creature.thingName);
                 }
             }
+            CreatureConstants.CreatureAgentInitialize(baseSpecies, this);
             rigidbody.constraints = RigidbodyConstraints.None;
             _transform = rigidbody.transform;
             if (baseSpecies == BASE_SPECIES.Gnat)
@@ -466,6 +466,8 @@ namespace rak.creatures
                             allParts[count].Update(delta);
                         else if (allParts[count] is TractorBeamPart)
                             allParts[count].Update(delta);
+                        else if (allParts[count] is LightArmPart)
+                            allParts[count].Update(delta);
                     }
                 }
                 else if (currentAction == ActionStep.Actions.Add)
@@ -500,7 +502,8 @@ namespace rak.creatures
         }
     }
     public enum CreaturePart { LEG , FOOT, BODY, ENGINE_Z, ENGINE_Y, ENGINE_X, BRAKE, SHIELD,
-        TRACTORBEAM, NONE }
+        TRACTORBEAM, LIGHT_ARM, NONE
+    }
     public enum CreatureGrabType { TractorBeam }
     public enum CreatureLocomotionType { StandardForwardBack, Flight, NONE }
     public enum CreatureAnimationMovementType { Rotation, Inch, NONE }

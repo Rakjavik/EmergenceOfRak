@@ -22,7 +22,7 @@ namespace rak.creatures
             Dictionary<Needs.NEEDTYPE, Need> currentNeeds = new Dictionary<Needs.NEEDTYPE, Need>();
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
-                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .1f, false));
+                currentNeeds.Add(Needs.NEEDTYPE.HUNGER, new Need(Needs.NEEDTYPE.HUNGER, .01f, false));
                 currentNeeds.Add(Needs.NEEDTYPE.REPRODUCTION, new Need(Needs.NEEDTYPE.REPRODUCTION, 1, false));
                 currentNeeds.Add(Needs.NEEDTYPE.SLEEP, new Need(Needs.NEEDTYPE.SLEEP, 100f, true));
                 currentNeeds.Add(Needs.NEEDTYPE.TEMPERATURE, new Need(Needs.NEEDTYPE.TEMPERATURE, 1, false));
@@ -178,53 +178,58 @@ namespace rak.creatures
             List<Part> allParts = new List<Part>();
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
+                Transform gnatMaster = creature.transform.GetChild(0);
                 // Body with constant force //
                 EnginePart bodyFlight = new EnginePart
-                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureLocomotionType.Flight, .2f,
+                    (CreaturePart.BODY, gnatMaster.transform.parent, CreatureLocomotionType.Flight, .2f,
                     PartAudioPropToModify.PITCH);
 
                 // Body with Rotation turning //
                 TurnPart bodyTurning = new TurnPartRotation
-                    (CreaturePart.BODY, creature.transform.GetChild(0), CreatureTurnType.Rotate, .2f);
+                    (CreaturePart.BODY, gnatMaster.transform.parent, CreatureTurnType.Rotate, .2f);
 
                 // Backward Propeller //
-                AnimationPart zPropeller = new AnimationPart(CreaturePart.ENGINE_Z, creature.transform.GetChild(1),
+                AnimationPart zPropeller = new AnimationPart(CreaturePart.ENGINE_Z, gnatMaster.transform.GetChild(1),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
                     PartMovesWith.ConstantForceZ, PartAnimationType.Movement, true);
 
                 // Y Propellers //
-                AnimationPart yPropeller = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(3),
+                AnimationPart yPropeller = new AnimationPart(CreaturePart.ENGINE_Y, gnatMaster.transform.GetChild(3),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
                     PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
-                AnimationPart yPropeller2 = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(4),
+                AnimationPart yPropeller2 = new AnimationPart(CreaturePart.ENGINE_Y, gnatMaster.transform.GetChild(4),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
                     PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
-                AnimationPart yPropeller3 = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(5),
+                AnimationPart yPropeller3 = new AnimationPart(CreaturePart.ENGINE_Y, gnatMaster.transform.GetChild(5),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
                     PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
-                AnimationPart yPropeller4 = new AnimationPart(CreaturePart.ENGINE_Y, creature.transform.GetChild(6),
+                AnimationPart yPropeller4 = new AnimationPart(CreaturePart.ENGINE_Y, gnatMaster.transform.GetChild(6),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.up, 10, new ActionStep.Actions[]
                     { ActionStep.Actions.Add,ActionStep.Actions.Land,ActionStep.Actions.MoveTo,ActionStep.Actions.Wait,ActionStep.Actions.Sleep},
                     PartMovesWith.ConstantForceY, PartAnimationType.Movement, true);
 
                 // Antigrav Shield //
-                AntiGravityShieldPart shieldPart = new AntiGravityShieldPart(CreaturePart.SHIELD, creature.transform.GetChild(9),
+                AntiGravityShieldPart shieldPart = new AntiGravityShieldPart(CreaturePart.SHIELD, gnatMaster.transform.GetChild(7),
                     .2f, creature.GetCreatureAgent().GetRigidBody(), new ActionStep.Actions[] {ActionStep.Actions.Add,
                         ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait});
-                AnimationPart antiGravShieldAnimation = new AnimationPart(CreaturePart.SHIELD, creature.transform.GetChild(7),
+                AnimationPart antiGravShieldAnimation = new AnimationPart(CreaturePart.SHIELD, gnatMaster.transform.GetChild(7),
                     CreatureAnimationMovementType.Rotation, .05f, Vector3.right, 10, new ActionStep.Actions[]
                     {ActionStep.Actions.Add,ActionStep.Actions.MoveTo,ActionStep.Actions.Add,ActionStep.Actions.Eat
                     ,ActionStep.Actions.Locate,ActionStep.Actions.None,ActionStep.Actions.Wait},
                     PartMovesWith.IsKinematic, PartAnimationType.Movement, false);
 
                 // Tractor Beam //
-                TractorBeamPart tractorBeam = new TractorBeamPart(creature.transform, .2f, 30);
+                TractorBeamPart tractorBeam = new TractorBeamPart(gnatMaster.transform, .2f, 30);
                 TractorBeamAnimationPart tractorAnimation = new TractorBeamAnimationPart(CreaturePart.TRACTORBEAM,
-                    creature.transform.GetChild(8), .2f, Vector3.forward, .3f);
+                    gnatMaster.transform.GetChild(8), .2f, Vector3.forward, .3f);
+
+                // Light Arm //
+                LightArmPart lightArm = new LightArmPart(CreaturePart.LIGHT_ARM, 
+                    gnatMaster.transform.parent.GetChild(1),.05f);
 
                 allParts.Add(bodyFlight);
                 allParts.Add(bodyTurning);
@@ -237,6 +242,7 @@ namespace rak.creatures
                 allParts.Add(antiGravShieldAnimation);
                 allParts.Add(tractorBeam);
                 allParts.Add(tractorAnimation);
+                allParts.Add(lightArm);
                 agent.SetCreatureTurnType(CreatureTurnType.Rotate);
                 agent.setParts(allParts);
             }

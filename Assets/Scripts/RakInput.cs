@@ -7,6 +7,7 @@ public class RakInput : MonoBehaviour
     public SteamVR_Input_Sources handType; // 1
     public SteamVR_Action_Boolean teleportAction; // 2
     public SteamVR_Action_Boolean grabAction; // 3
+    public SteamVR_Action_Boolean interactionAction;
 
     private RAKPlayer player;
 
@@ -19,6 +20,10 @@ public class RakInput : MonoBehaviour
     private bool getGrab()
     {
         return grabAction.GetState(handType);
+    }
+    private bool getInteraction()
+    {
+        return interactionAction.GetState(handType);
     }
 
     private void Awake()
@@ -37,9 +42,13 @@ public class RakInput : MonoBehaviour
                 Area.SetDestinationForAllCreatureAgents(transform.position);
                 ignoreInputs = 1;
             }
-            if (getTeleportDown())
+            else if (getTeleportDown())
             {
                 player.transform.position += transform.forward*RAKPlayer.MoveSpeed * Time.deltaTime;
+            }
+            else if (getInteraction())
+            {
+                player.RideClosestCreature();
             }
         }
     }

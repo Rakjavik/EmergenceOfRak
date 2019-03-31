@@ -39,8 +39,8 @@ namespace rak.world
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
         private static readonly int MAX_VISIBLE_CREATURES = 40;
-        private static int MAXPOP = 300;
-        public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 3;
+        private static int MAXPOP = 120;
+        public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
 
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
@@ -69,6 +69,15 @@ namespace rak.world
             string time = ((int)(timeInDay * .1f)).ToString();
             return "HH:" + time;
         }
+        public static World.Time_Of_Day GetTimeOfDay()
+        {
+            float timeInDay = AreaLocalTime % dayLength;
+            float timePerPeriod = dayLength / 4;
+            if (timeInDay < timePerPeriod) return World.Time_Of_Day.SunRise;
+            else if (timeInDay < timePerPeriod * 2) return World.Time_Of_Day.Midday;
+            else if (timeInDay < timePerPeriod * 3) return World.Time_Of_Day.SunSet;
+            else return World.Time_Of_Day.Night;
+        }
         public static string GetElapsedNumberOfHours()
         {
             int elapsedDays = (int)(Time.time / dayLength);
@@ -78,11 +87,13 @@ namespace rak.world
             int elapsedHours = hourInDay + (int)(elapsedDays * dayLength*.1f);
             return elapsedHours.ToString();
         }
-        public static readonly float dayLength = 240;
+        public static float dayLength = 240;
 
         public static void AddThingToAllThings(Thing thingToAdd)
         {
             allThings.Add(thingToAdd);
+            if (thingToAdd == null)
+                Debug.LogError("NULL");
             thingMasterList.Add(thingToAdd.guid, thingToAdd);
             if(thingToAdd is Creature)
             {
@@ -159,7 +170,8 @@ namespace rak.world
         }
         private void InitializeDebug(Tribe tribe)
         {
-            MAXPOP = 1;
+            MAXPOP = 15;
+            dayLength = 60;
             /*int NUMBEROFGNATS = 1;
             float SPAWNFRUITEVERY = 50;
             sitesPresent.Add(new Site("Home of DeGnats"));
@@ -241,7 +253,7 @@ namespace rak.world
             }
             int populationToCreate = tribe.GetPopulation();
             
-            if (populationToCreate > MAXPOP) populationToCreate = MAXPOP;
+            populationToCreate = MAXPOP;
             Debug.LogWarning("Generating a population of - " + populationToCreate);
             for (int count = 0; count < populationToCreate; count++)
             {
@@ -301,7 +313,9 @@ namespace rak.world
             GameObject thingObject = RAKUtilities.getCreaturePrefab(nameOfPrefab);
             GameObject newThing = Object.Instantiate(thingObject);
             newThing.transform.SetParent(creatureContainer.transform);
-            newThing.GetComponent<Creature>().Initialize(nameOfPrefab,this,null);
+            Creature creature = newThing.GetComponent<Creature>();
+            if (creature == null) creature = newThing.GetComponentInChildren<Creature>();
+            creature.Initialize(nameOfPrefab,this,null);
             newThing.transform.localPosition = Vector3.zero;
             newThing.transform.rotation = Quaternion.identity;
             if(!generatePosition)
@@ -310,12 +324,13 @@ namespace rak.world
             }
             else
             {
-                float x = Random.Range(0, areaSize.x);
-                float z = Random.Range(0, areaSize.z);
-                Vector2 targetSpawn = new Vector2(x, z);
-                newThing.transform.position = new Vector3(x, 10, z);
+                Vector3 randomPosition = GetRandomGridSector().GetRandomPositionInSector();
+                newThing.transform.position = new Vector3(randomPosition.x, 10, randomPosition.z);
             }
-            AddThingToAllThings(newThing.GetComponent<Thing>());
+            Thing thing = newThing.GetComponent<Thing>();
+            if (thing == null)
+                thing = newThing.GetComponentInChildren<Thing>();
+            AddThingToAllThings(thing);
         }
 
         public void addThingToWorld(string nameOfPrefab)
@@ -509,7 +524,7 @@ namespace rak.world
                     if (creature.InView)
                     {
                         float distanceFromCamera = Vector3.Distance(cameraPosition, creature.transform.position);
-                            
+                        //Debug.LogWarning("Distance from cam " + distanceFromCamera);
                         if (distanceFromCamera > MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA)
                         {
                             if (creature.Visible)

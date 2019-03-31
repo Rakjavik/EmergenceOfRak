@@ -166,6 +166,7 @@
     <Compile Include="Assets\Scripts\Creatures\Agent\CreatureAgent.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\EngineMovementVariable.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\EnginePart.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\LightArmPart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\Part.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\PartMovementVariables.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\TractorBeamAnimationPart.cs" />

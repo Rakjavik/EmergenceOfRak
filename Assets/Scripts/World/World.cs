@@ -8,6 +8,8 @@ namespace rak.world
 {
     public class World : MonoBehaviour
     {
+        public enum Time_Of_Day { SunRise, Midday, SunSet, Night }
+
         public static bool ISDEBUGSCENE { get; private set; }
 
         public FollowCamera followCamera;

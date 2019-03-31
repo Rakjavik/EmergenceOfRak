@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace rak.creatures
 {
+
     public class Part
     {
         public float UpdateEvery; // How often Part Updates in seconds
@@ -26,6 +27,8 @@ namespace rak.creatures
             this.UpdateEvery = updateEvery;
             
             this.parentCreature = transform.GetComponentInParent<Creature>();
+            if (parentCreature == null) // TEMP fix
+                parentCreature = transform.parent.GetComponentInChildren<Creature>();
             this.attachedAgent = parentCreature.GetCreatureAgent();
             miscVariables = MiscVariables.GetAgentMiscVariables(parentCreature);
             audioClip = CreatureConstants.GetCreaturePartAudioClip(parentCreature.GetBaseSpecies(), creaturePart);
