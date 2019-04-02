@@ -8,6 +8,7 @@ using rak.world;
 using rak.creatures;
 using Unity.Collections;
 using Unity.Jobs;
+using System.Collections;
 
 public partial class RAKTerrainMaster : MonoBehaviour
 {
@@ -593,6 +594,10 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     private void fixGaps(int startSmoothingAt)
     {
+        StartCoroutine(fixTerrainHeights(startSmoothingAt));
+    }
+    private IEnumerator fixTerrainHeights(int startSmoothingAt)
+    { 
         for (int terrainCount = 0; terrainCount < terrain.Length; terrainCount++) // Loop through each piece of terrain
         {
             Terrain singleTerrain = RAKTerrainMaster.terrain[terrainCount].getTerrainComponenet();
@@ -600,7 +605,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             for (int nCount = 0; nCount < neighbors.Length; nCount++)
             {
                 // Only do right and up //
-                if (nCount == 3 || nCount == 0) continue;
+                if (nCount == 3) continue;
                 float[] targetTerrainsClosestRow = new float[TileSize];
                 float[,] thisTerrainsEdge = null;
                 float[,] targetTerrainsEdge = null;
@@ -609,23 +614,22 @@ public partial class RAKTerrainMaster : MonoBehaviour
                 Vector2 targetStartPoint = Vector2.zero;// Start position to insert changed values
                 if (neighbors[nCount] != null)
                 {
-                    int height, width;
+                    int width;
                     width = TileSize / startSmoothingAt;
-                    height = TileSize;
 
                     // LEFT
                     if (nCount == 0)
                     {
                         startPoint = new Vector2(0, 0);
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, width, height);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(TileSize - width, 0, width, height);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(0, 0, width, TileSize);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(TileSize - width, 0, width, TileSize);
                     }
                     // RIGHT
                     else if (nCount == 1)
                     {
                         startPoint = new Vector2(TileSize-width+1, 0);
-                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(TileSize-width, 0, width, height);
-                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, width, height);
+                        thisTerrainsEdge = singleTerrain.terrainData.GetHeights(TileSize-width, 0, width, TileSize);
+                        targetTerrainsEdge = neighbors[nCount].terrainData.GetHeights(0, 0, width, TileSize);
                     }
                     // UP
                     else if (nCount == 2)
@@ -646,15 +650,14 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     {
                         if (nCount == 0) // LEFT
                         {
-                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[countLong,width];
+                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[countLong,width-1];
                         }
                         else if (nCount == 1) // RIGHT
                         {
                             // xy reversed in array
                             // Meet half way between the current terrain and the target terrain
-                            //targetTerrainsClosestRow[countLong] = thisTerrainsEdge[countLong, 0] +
-                            //(targetTerrainsEdge[countLong, 0] - thisTerrainsEdge[countLong,0])/2;
-                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[countLong, 0];
+                            targetTerrainsClosestRow[countLong] = thisTerrainsEdge[countLong, 0] +
+                            (targetTerrainsEdge[countLong, 0] - thisTerrainsEdge[countLong,0])/2;
 
                         }
                         else if (nCount == 2) // UP
@@ -665,7 +668,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
                         }
                         else if (nCount == 3) // DOWN
                         {
-                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[width, countLong];
+                            targetTerrainsClosestRow[countLong] = targetTerrainsEdge[width-1, countLong];
                         }
                     }
                     if (nCount == 0) // LEFT
@@ -688,6 +691,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
                         
                     }
                     singleTerrain.terrainData.SetHeights((int)startPoint.x, (int)startPoint.y, thisTerrainsEdge);
+                    yield return null;
                 }
             }
             terrain[terrainCount].getTerrainComponenet().Flush();
@@ -712,8 +716,17 @@ public partial class RAKTerrainMaster : MonoBehaviour
 
         for(int longCount = 0; longCount < longSize; longCount++)
         {
-            float yStart = edge[longCount, 0];
+            float yStart;
             float yDest = destSeamPoints[longCount];
+            if (!startAtEnd)
+            {
+                yStart = edge[longCount, 0];
+            }
+            else
+            {
+                yStart = edge[longCount, shortSize-1];
+            }
+            
             float step = (yDest - yStart) / shortSize;
             if (!startAtEnd) {
                 
@@ -787,14 +800,14 @@ public partial class RAKTerrainMaster : MonoBehaviour
     public Vector3 GetSize()
     {
         Vector3 returnVector = new Vector3();
-        returnVector.x = width*4;
-        returnVector.z = height*4;
+        returnVector.x = width*Mathf.Sqrt(worldSize);
+        returnVector.z = height* Mathf.Sqrt(worldSize);
         returnVector.y = currentBiome.depth;
         return returnVector;
     }
     public int getSquareSize()
     {
-        return (worldSize / 4) * height;
+        return (int)(worldSize / Mathf.Sqrt(worldSize)) * height;
     }
     public static RAKTerrain GetTerrainAtPoint(Vector3 point)
     {
