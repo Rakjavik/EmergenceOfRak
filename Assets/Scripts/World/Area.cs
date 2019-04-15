@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.AI;
+using Unity.Entities;
 
 namespace rak.world
 {
@@ -24,6 +25,7 @@ namespace rak.world
         }
         private static List<Thing> allThings;
         private static List<CreatureAgent> agents;
+        public static EntityManager EntityManager { get; private set; }
         private static Dictionary<System.Guid, Thing> thingMasterList;
         private static List<JobHandle> jobHandles;
         public static void AddJobHandle(JobHandle handle)
@@ -211,6 +213,7 @@ namespace rak.world
                 Debug.LogError("Area called to initialize when already initialized");
                 return;
             }
+            EntityManager = Unity.Entities.World.Active.GetOrCreateManager<EntityManager>();
             jobHandles = new List<JobHandle>();
             allThingsBlittableCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
             thingMasterList = new Dictionary<System.Guid, Thing>();
@@ -253,6 +256,7 @@ namespace rak.world
                     }
                 }
             }
+
             int populationToCreate = tribe.GetPopulation();
             
             populationToCreate = MAXPOP;
@@ -260,6 +264,13 @@ namespace rak.world
             for (int count = 0; count < populationToCreate; count++)
             {
                 AddCreatureToWorld("Gnat");
+            }
+            NativeArray<Entity> entities = new NativeArray<Entity>(allThings.Count, Allocator.Temp);
+            for(int count = 0; count < allThings.Count; count++)
+            {
+                EntityManager.Instantiate(allThings[count].gameObject, entities);
+                allThings[count].AddComponents(entities[count]);
+                allThings[count].entityIndex = entities[count].Index;
             }
             initialized = true;
         }

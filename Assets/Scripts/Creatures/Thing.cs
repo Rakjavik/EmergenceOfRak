@@ -1,19 +1,27 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
+using rak.ecs.AgentComponents;
 using rak.world;
 using System;
+using Unity.Collections;
+using Unity.Entities;
 using UnityEngine;
 
 namespace rak
 {
     public class Thing : MonoBehaviour
     {
+        public void AddComponents(Entity entity)
+        {
+            Area.EntityManager.AddComponentData(entity, new Age { Value = 0,MaxAge=10 });
+            Area.EntityManager.AddComponentData(entity, new Enabled { Value = 1 });
+        }
+        
         #region ENUMS
         public enum BOOL_FILTERS { USEABLE, CONSUMEABLE, USE_LOCATE_TARGET }
         public enum Base_Types { CREATURE, PLANT, NON_ORGANIC, NA }
         public enum Thing_Types {Fruit,Wood,Gnat,House,FruitTree }
         public enum Thing_Produces { NA, Food }
-
         #endregion
 
         protected Creature ControlledBy;
@@ -27,6 +35,7 @@ namespace rak
         public float maxAge { get; private set; }
         public float bornAt { get; private set; }
         public Guid guid { get; private set; }
+        public int entityIndex { get; set; }
 
         private BlittableThing blittableThing = BlittableThing.GetNewEmptyThing();
         public BlittableThing GetBlittableThing()
@@ -44,7 +53,7 @@ namespace rak
         private void DestroyThisThing()
         {
             available = false;
-            World.CurrentArea.RemoveThingFromWorld(this);
+            world.World.CurrentArea.RemoveThingFromWorld(this);
         }
 
         public void Deactivate()
@@ -102,6 +111,8 @@ namespace rak
                     consumeable = false;
                     useable = false;
                 }
+                
+
             }
             else if (name.Equals(RAKUtilities.NON_TERRAIN_OBJECT_FRUIT_TREE))
             {
@@ -157,7 +168,8 @@ namespace rak
 
         public void ManualUpdate(float delta)
         {
-            age += delta;
+            // Age should be handled by ECS now //
+            Debug.LogWarning("Age - " + age);
             if (rb != null && !rb.IsSleeping())
             {
                 if (transform.position.y < Area.MinimumHeight)
