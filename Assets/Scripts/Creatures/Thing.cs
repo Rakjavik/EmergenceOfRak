@@ -35,6 +35,7 @@ namespace rak
             return blittableThing;
         }
         protected Rigidbody rb;
+        private ThingAgent thingAgent;
         private int weight;
         private bool useable;
         private bool consumeable;
@@ -102,12 +103,27 @@ namespace rak
                     useable = false;
                 }
             }
-            else if (name.Equals("FruitTree"))
+            else if (name.Equals(RAKUtilities.NON_TERRAIN_OBJECT_FRUIT_TREE))
             {
                 baseType = Base_Types.PLANT;
                 thingType = Thing_Types.FruitTree;
                 produces = Thing_Produces.Food;
                 name = "FruitTree";
+                weight = 500;
+                age = 0;
+                maxAge = int.MaxValue;
+                bornAt = Time.time;
+                available = false;
+                consumeable = false;
+                useable = false;
+                thingAgent = new ThingAgent(this);
+            }
+            else if (name.Equals(RAKUtilities.NON_TERRAIN_OBJECT_BUSH_01))
+            {
+                baseType = Base_Types.PLANT;
+                thingType = Thing_Types.FruitTree;
+                produces = Thing_Produces.Food;
+                name = "FruitBush";
                 weight = 500;
                 age = 0;
                 maxAge = int.MaxValue;
@@ -152,6 +168,10 @@ namespace rak
             {
                 Debug.Log("Death by age - " + name);
                 DestroyThisThing();
+            }
+            if(thingAgent != null)
+            {
+                thingAgent.ManualUpdate(delta);
             }
         }
 

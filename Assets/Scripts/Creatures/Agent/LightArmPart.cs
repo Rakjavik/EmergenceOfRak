@@ -24,7 +24,7 @@ namespace rak.creatures
             light = transform.GetComponentInChildren<Light>();
             followLightHomePosition = 0.024f;
             followLightDeployedPosition = -0.08f;
-            followLightMovementSpeed = .5f;
+            followLightMovementSpeed = .1f;
             UnDeploy();
         }
 

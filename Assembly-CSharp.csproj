@@ -60,6 +60,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\AssetStoreImports\FullTiltBoogie\RotateFlareHolder.cs" />
     <Compile Include="Assets\AssetStoreImports\GemExample\Scripts\DemoTimeOfDay.cs" />
     <Compile Include="Assets\AssetStoreImports\GemExample\Scripts\Orbit.cs" />
     <Compile Include="Assets\AssetStoreImports\LowPolyGround\Scripts\FreeCamera.cs" />
@@ -169,6 +170,8 @@
     <Compile Include="Assets\Scripts\Creatures\Agent\LightArmPart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\Part.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\PartMovementVariables.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\ThingAgent.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\ThingAnimationPart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\TractorBeamAnimationPart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\TractorBeamPart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\TurnPart.cs" />
@@ -227,6 +230,7 @@
     <Compile Include="Assets\Scripts\World\RAKTerrain.cs" />
     <Compile Include="Assets\Scripts\World\RAKTerrainMaster.cs" />
     <Compile Include="Assets\Scripts\World\RAKTerrainObject.cs" />
+    <Compile Include="Assets\Scripts\World\RAKTerrainSavedData.cs" />
     <Compile Include="Assets\Scripts\World\RAKWeather.cs" />
     <Compile Include="Assets\Scripts\World\Site\Building.cs" />
     <Compile Include="Assets\Scripts\World\Site\JobAction.cs" />
@@ -283,6 +287,7 @@
     <None Include="Assets\AssetStoreImports\PolarisStarter\README.txt" />
     <None Include="Assets\AssetStoreImports\NatureStarterKit2\Standard Assets\Effects\ImageEffects\Shaders\Contrast Stretch\Apply.shader" />
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
+    <None Include="Assets\AssetStoreImports\FullTiltBoogie\Helpers\readme.txt" />
     <None Include="Assets\PostProcessing\Resources\Shaders\Blit.shader" />
     <None Include="Assets\AssetStoreImports\NatureStarterKit2\Standard Assets\Effects\ImageEffects\Shaders\frag_ao.cginc" />
     <None Include="Assets\AssetStoreImports\Low Poly Buildings Lite\ReadMe.txt" />

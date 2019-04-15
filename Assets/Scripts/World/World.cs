@@ -93,6 +93,7 @@ namespace rak.world
         private void Initialize()
         {
             ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower().Contains("debug");
+            WORLD_DATAPATH = Application.persistentDataPath + "/Worlds/";
             if (ISDEBUGSCENE && !_initialized)
             {
                 InitializeDebugWorld();
@@ -100,7 +101,6 @@ namespace rak.world
             }
             world = this;
             FollowCamera = this.followCamera;
-            WORLD_DATAPATH = Application.persistentDataPath + "/Worlds/";
             if (!Directory.Exists(WORLD_DATAPATH))
             {
                 Directory.CreateDirectory(WORLD_DATAPATH);

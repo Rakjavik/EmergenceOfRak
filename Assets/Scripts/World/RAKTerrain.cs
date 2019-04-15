@@ -32,6 +32,8 @@ public class RAKTerrain : MonoBehaviour
         Debug.LogWarning("Initialize " + name);
         this.terrainMaster = terrainMaster;
         terrain = GetComponent<Terrain>();
+        terrain.materialTemplate = terrainMaster.TerrainMaterial;
+        terrain.materialType = Terrain.MaterialType.Custom;
         rakNeighbors = new RAKTerrain[4];
         neighbors = new Terrain[4];
         grid = Grid.Empty;

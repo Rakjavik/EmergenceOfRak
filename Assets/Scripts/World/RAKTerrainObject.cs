@@ -81,7 +81,7 @@ public class RAKTerrainObject : MonoBehaviour, Resource
                 resourceType = ResourceType.Matter;
                 break;
             case RAKUtilities.NON_TERRAIN_OBJECT_HOUSE1:
-                maxSteepness = 2;
+                maxSteepness = 8;
                 minimiumDistanceBetweenObjects = 30;
                 minDistFromEdge = 8;
                 heightOffset = .8563528f;
@@ -223,7 +223,7 @@ public class RAKTerrainObject : MonoBehaviour, Resource
                 minimiumDistanceBetweenObjects = 20;
                 minDistFromEdge = 0;
                 resourceType = ResourceType.Matter;
-                heightOffset = 3;
+                heightOffset = -20;
                 freeRotate = false;
                 numberOfTimesToSearchForLocation = 250;
                 sizeOverride = Vector3.zero;

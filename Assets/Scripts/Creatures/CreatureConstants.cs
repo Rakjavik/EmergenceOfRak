@@ -133,6 +133,7 @@ namespace rak.creatures
                 BuildCreatureParts(baseSpecies, agent);
             }
         }
+
         public static void SetPropertiesForParticleSystemByCreature(ParticleSystem ps, Creature creature)
         {
             ps.Stop();
@@ -171,6 +172,16 @@ namespace rak.creatures
                 renderer.lengthScale = .2f;
             }
         }
+
+        public static ThingAnimationPart[] GetPartsForThingAgent(Thing thing)
+        {
+            List<ThingAnimationPart> parts = new List<ThingAnimationPart>();
+            ThingAnimationPart part = new ThingAnimationPart(ThingPartAnimationType.RotatePart,
+                Vector3.up,thing.transform.GetChild(1),50);
+            parts.Add(part);
+            return parts.ToArray();
+        }
+
         public static void BuildCreatureParts(BASE_SPECIES baseSpecies, CreatureAgent agent)
         {
             Creature creature = agent.creature;
@@ -324,6 +335,7 @@ namespace rak.creatures
         {
             return Tasks.CreatureTasks.EXPLORE;
         }
+        
         // EXCEPTION ACTIONS, Do these when tasks fail for a certain reason //
         public static ActionStep[] GetExceptionActions(Tasks.CreatureTasks task, ActionStep.FailReason failReason,
             Creature creature)
@@ -381,6 +393,7 @@ namespace rak.creatures
             }
             return steps;
         }
+
         public static List<MovementState> GetStatesCanSwithTo(MovementState currentState)
         {
             List<MovementState> possibleStates = new List<MovementState>();
@@ -421,6 +434,7 @@ namespace rak.creatures
             }
             return possibleStates;
         }
+
         public static AudioClip GetCreaturePartAudioClip(BASE_SPECIES species, CreaturePart part)
         {
             if (species == BASE_SPECIES.Gnat)

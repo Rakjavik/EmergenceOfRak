@@ -39,8 +39,9 @@ namespace rak.world
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
         private static readonly int MAX_VISIBLE_CREATURES = 40;
-        private static int MAXPOP = 300;
+        private static int MAXPOP = 30;
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
+        public static float dayLength = 240;
 
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
@@ -87,7 +88,7 @@ namespace rak.world
             int elapsedHours = hourInDay + (int)(elapsedDays * dayLength*.1f);
             return elapsedHours.ToString();
         }
-        public static float dayLength = 240;
+        
 
         public static void AddThingToAllThings(Thing thingToAdd)
         {
@@ -171,7 +172,8 @@ namespace rak.world
         private void InitializeDebug(Tribe tribe)
         {
             MAXPOP = 15;
-            dayLength = 60;
+            //dayLength = 360;
+
             /*int NUMBEROFGNATS = 1;
             float SPAWNFRUITEVERY = 50;
             sitesPresent.Add(new Site("Home of DeGnats"));

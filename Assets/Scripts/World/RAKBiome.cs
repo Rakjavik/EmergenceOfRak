@@ -24,19 +24,32 @@ public partial class RAKTerrainMaster
                 {RAKUtilities.NON_TERRAIN_OBJECT_HOUSE1,RAKUtilities.NON_TERRAIN_OBJECT_HOUSE2,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_1,
                 RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_2,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_3,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_TREE_4,
                 RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_1,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_2,RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_3,
-                RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4,RAKUtilities.NON_TERRAIN_OBJECT_FRUIT_TREE},
+                RAKUtilities.NON_TERRAIN_OBJECT_LOW_POLY_BUSH_4,RAKUtilities.NON_TERRAIN_OBJECT_FRUIT_TREE,RAKUtilities.NON_TERRAIN_OBJECT_TREE01,
+                RAKUtilities.NON_TERRAIN_OBJECT_TREE02,RAKUtilities.NON_TERRAIN_OBJECT_TREE03,RAKUtilities.NON_TERRAIN_OBJECT_TREE04_3PACK,
+                RAKUtilities.NON_TERRAIN_OBJECT_BUSH_01,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_02,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_03,
+                RAKUtilities.NON_TERRAIN_OBJECT_BUSH_04,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_05,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_06},
                 new int[] {
                 5, // House1
                 5, // House2
+                0, // Tree01LP
+                0, // Tree02LP
+                0, // Tree03LP
+                0, // Tree04LP
+                0, // Bush01
+                0, // Bush02
+                0, // Bush03
+                0, // Bush04
+                1, // Fruit Tree
                 0, // Tree01
                 0, // Tree02
                 0, // Tree03
-                0, // Tree04
-                0, // Bush01
-                20, // Bush02
-                20, // Bush03
-                0, // Bush04
-                20 // Fruit Tree
+                0, // Tree04Pack
+                3, // Bush01
+                3, // Bush02
+                3, // Bush03
+                3, // Bush04
+                3, // Bush05
+                3 // Bush06
                 });
             biome.depth = 80;
             biome.numberOfTrees = 0;
