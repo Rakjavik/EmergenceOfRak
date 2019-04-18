@@ -1,20 +1,78 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
-using rak.ecs.AgentComponents;
+using rak.ecs.ThingComponents;
 using rak.world;
 using System;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace rak
 {
     public class Thing : MonoBehaviour
     {
-        public void AddComponents(Entity entity)
+        public void AddECSComponents()
         {
-            Area.EntityManager.AddComponentData(entity, new Age { Value = 0,MaxAge=10 });
-            Area.EntityManager.AddComponentData(entity, new Enabled { Value = 1 });
+            Unity.Entities.World world = Unity.Entities.World.Active;
+            Debug.LogWarning("Thing type - " + thingType);
+            world.EntityManager.AddComponentData(goEntity.Entity, new Age { Value = 0,MaxAge=10 });
+            world.EntityManager.AddComponentData(goEntity.Entity, new Enabled { Value = 1 });
+            if(thingType == Thing_Types.FruitTree)
+            {
+                world.EntityManager.AddComponentData(goEntity.Entity, new Produces
+                {
+                    spawnThingEvery = 360,
+                    thingToProduce = Thing_Types.Fruit,
+                    timeSinceLastSpawn = -1
+                });
+            }
+            else if (thingType == Thing_Types.Gnat)
+            {
+                Creature gnat = (Creature)this;
+                CreatureAgent attachedAgent = gnat.GetCreatureAgent();
+                EngineMovementVariable[] engineMovementVariables = new EngineMovementVariable[]
+                {
+                    new EngineMovementVariable(Direction.Y, attachedAgent.maxForce,
+                    attachedAgent.minimumForceToHover),
+                    new EngineMovementVariable(Direction.X, attachedAgent.maxForce,
+                    attachedAgent.minimumForceToHover),
+                    new EngineMovementVariable(Direction.Z, attachedAgent.maxForce,
+                    attachedAgent.minimumForceToHover)
+                };
+                world.EntityManager.AddComponentData(goEntity.Entity, new Engine
+                {
+                    kinematic = attachedAgent.IsKinematic(),
+                    moveType = attachedAgent.GetMoveType(),
+                    objectBlockDistance = attachedAgent.GetObjectBlockDistance(),
+                    sustainHeight = attachedAgent.GetSustainHeight(),
+                    MaxForceX = attachedAgent.maxForce.x,
+                    MaxForceY = attachedAgent.maxForce.y,
+                    MaxForceZ = attachedAgent.maxForce.z,
+                    MinForceX = 0,
+                    MinForceY = attachedAgent.minimumForceToHover,
+                    MinForceZ = 0,
+                    CurrentForceX = 0,
+                    CurrentForceY = 0,
+                    CurrentForceZ = 0,
+                    CurrentStateX = MovementState.IDLE,
+                    CurrentStateY = MovementState.IDLE,
+                    CurrentStateZ = MovementState.IDLE
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new Agent
+                {
+                    DistanceFromFirstZHit = float.MaxValue,
+                    DistanceFromGround = 5,
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new AgentVariables
+                {
+                    RelativeVelocity = Vector3.zero
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new CreatureAI
+                {
+                    CurrentAction = ActionStep.Actions.None
+                });
+            }
         }
         
         #region ENUMS
@@ -45,6 +103,7 @@ namespace rak
         }
         protected Rigidbody rb;
         private ThingAgent thingAgent;
+        public GameObjectEntity goEntity { get; private set; }
         private int weight;
         private bool useable;
         private bool consumeable;
@@ -88,6 +147,7 @@ namespace rak
         {
             rb = null;
             guid = Guid.NewGuid();
+            goEntity = GetComponent<GameObjectEntity>();
             this.thingName = name + "-" + guid.ToString().Substring(0,5);
             // Default to no production //
             produces = Thing_Produces.NA;
@@ -169,7 +229,6 @@ namespace rak
         public void ManualUpdate(float delta)
         {
             // Age should be handled by ECS now //
-            Debug.LogWarning("Age - " + age);
             if (rb != null && !rb.IsSleeping())
             {
                 if (transform.position.y < Area.MinimumHeight)

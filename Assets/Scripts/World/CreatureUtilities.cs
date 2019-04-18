@@ -119,6 +119,6 @@ namespace rak.world
             }
             return elementsWithinRange.ToArray();
         }
-        public enum RayCastDirection { LEFT,RIGHT,FORWARD,DOWN,VELOCITY }
+        public enum RayCastDirection { LEFT,RIGHT,FORWARD,DOWN,VELOCITY,NONE }
     }
 }

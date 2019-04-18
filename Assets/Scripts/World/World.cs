@@ -90,6 +90,11 @@ namespace rak.world
             Area.WorldDisabled();
         }
 
+        private void FixedUpdate()
+        {
+            CurrentArea.FixedUpdate(Time.deltaTime);
+        }
+
         private void Initialize()
         {
             ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower().Contains("debug");

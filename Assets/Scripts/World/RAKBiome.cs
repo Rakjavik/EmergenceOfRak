@@ -29,8 +29,8 @@ public partial class RAKTerrainMaster
                 RAKUtilities.NON_TERRAIN_OBJECT_BUSH_01,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_02,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_03,
                 RAKUtilities.NON_TERRAIN_OBJECT_BUSH_04,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_05,RAKUtilities.NON_TERRAIN_OBJECT_BUSH_06},
                 new int[] {
-                5, // House1
-                5, // House2
+                1, // House1
+                1, // House2
                 0, // Tree01LP
                 0, // Tree02LP
                 0, // Tree03LP

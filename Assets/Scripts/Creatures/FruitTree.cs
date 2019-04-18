@@ -6,7 +6,7 @@ namespace rak
 {
     public class FruitTree : Thing
     {
-        public float spawnsThingEvery = float.MaxValue;
+        public float spawnsThingEvery = 10;
         private float timeSincelastSpawned { get; set; }
         private List<GameObject> fruitInstances { get; set; }
 

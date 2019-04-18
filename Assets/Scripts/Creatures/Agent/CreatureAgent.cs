@@ -1,4 +1,5 @@
-﻿using rak.world;
+﻿using rak.ecs.ThingComponents;
+using rak.world;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -72,6 +73,14 @@ namespace rak.creatures
         
 
         #region GETTERS/SETTERS
+        public CreatureLocomotionType GetMoveType()
+        {
+            return locomotionType;
+        }
+        public float GetObjectBlockDistance()
+        {
+            return miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Halt_Forward_Movement_If_Object_Is_Distance];
+        }
         public Thing GetCurrentActionTarget()
         {
             return creature.GetCurrentActionTarget();
@@ -431,6 +440,11 @@ namespace rak.creatures
             if (!Active) return;
             lastUpdate += delta;
             distanceMovedLastUpdated += delta;
+            CreatureAI ai = new CreatureAI
+            {
+                CurrentAction = creature.GetCurrentAction()
+            };
+            Unity.Entities.World.Active.EntityManager.SetComponentData(creature.goEntity.Entity, ai);
             // If In View update everything normally //
             if (visible)
             {
@@ -439,6 +453,25 @@ namespace rak.creatures
                 {
                     part.Update(delta);
                 }
+                Engine engineData = creature.goEntity.EntityManager.GetComponentData<Engine>(creature.goEntity.Entity);
+                AgentVariables agentVariables = creature.goEntity.EntityManager.
+                    GetComponentData<AgentVariables>(creature.goEntity.Entity);
+                float3 relativeVel = creature.transform.InverseTransformDirection(rigidbody.velocity);
+                AgentVariables agentData = new AgentVariables
+                {
+                    RelativeVelocity = relativeVel,
+                    Position = creature.transform.position
+                };
+                Unity.Entities.World.Active.EntityManager.SetComponentData
+                    (creature.goEntity.Entity, agentData);
+                ConstantForce force = GetConstantForceComponent();
+                float3 newForce = new float3
+                {
+                    x = engineData.CurrentForceX,
+                    y = engineData.CurrentForceY,
+                    z = engineData.CurrentForceZ
+                };
+                force.relativeForce = newForce;
             }
             // If not in view, manually move without physics //
             else

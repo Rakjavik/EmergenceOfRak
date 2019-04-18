@@ -192,8 +192,8 @@ namespace rak.creatures
         {
             if(attachedAgent.locomotionType == CreatureLocomotionType.Flight)
             {
-                if(!attachedBody.isKinematic)
-                    attachedAgent.creature.StartCoroutine(Flight(action,delta));
+                //if(!attachedBody.isKinematic)
+                //attachedAgent.creature.StartCoroutine(Flight(action,delta));
                 targetEngineLevel = attachedBody.velocity.magnitude/10;
             }
             else if (attachedAgent.locomotionType == CreatureLocomotionType.StandardForwardBack)

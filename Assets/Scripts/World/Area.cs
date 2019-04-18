@@ -6,6 +6,8 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.AI;
 using Unity.Entities;
+using rak.ecs.ThingComponents;
+using Unity.Mathematics;
 
 namespace rak.world
 {
@@ -25,7 +27,6 @@ namespace rak.world
         }
         private static List<Thing> allThings;
         private static List<CreatureAgent> agents;
-        public static EntityManager EntityManager { get; private set; }
         private static Dictionary<System.Guid, Thing> thingMasterList;
         private static List<JobHandle> jobHandles;
         public static void AddJobHandle(JobHandle handle)
@@ -91,7 +92,6 @@ namespace rak.world
             return elapsedHours.ToString();
         }
         
-
         public static void AddThingToAllThings(Thing thingToAdd)
         {
             allThings.Add(thingToAdd);
@@ -104,7 +104,12 @@ namespace rak.world
                 if (creature.HasAgent())
                     agents.Add(creature.GetCreatureAgent());
             }
-            //Debug.LogWarning("Adding " + thingToAdd.name);
+            Unity.Entities.World world = Unity.Entities.World.Active;
+            Entity sourceEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(thingToAdd.gameObject, world);
+            NativeArray<Entity> entities = new NativeArray<Entity>(1,Allocator.Temp);
+            world.EntityManager.Instantiate(sourceEntity, entities);
+            entities.Dispose();
+            thingToAdd.AddECSComponents();
         }
         public static NativeArray<BlittableThing> GetBlittableThings()
         {
@@ -173,37 +178,9 @@ namespace rak.world
         }
         private void InitializeDebug(Tribe tribe)
         {
-            MAXPOP = 15;
+            MAXPOP = 1;
             //dayLength = 360;
 
-            /*int NUMBEROFGNATS = 1;
-            float SPAWNFRUITEVERY = 50;
-            sitesPresent.Add(new Site("Home of DeGnats"));
-            tribesPresent.Add(tribe);
-            tribe.Initialize();
-            Debug.LogWarning("DEBUG MODE ENABLED");
-            areaSize = new Vector3(256, 10, 256);
-            allThings = new List<Thing>();
-            agents = new List<CreatureAgent>();
-            thingContainer = new GameObject("ThingContainer");
-            creatureContainer = new GameObject("CreatureContainer");
-            if (disabledContainer == null)
-                disabledContainer = new GameObject("DisabledContainer");
-            for (int i = 0; i < NUMBEROFGNATS; i++)
-            {
-                Vector3 position = new Vector3(Random.Range(10f, 200), Random.Range(3f, 15f), Random.Range(10f, 200));
-                addCreatureToWorld("Gnat", position, false);
-            }
-            CreatureUtilities.OptimizeUpdateTimes(allThings);
-            FruitTree[] trees = GameObject.FindObjectsOfType<FruitTree>();
-            for(int count = 0; count < trees.Length; count++)
-            {
-                trees[count].initialize("FruitTree");
-                trees[count].spawnsThingEvery = SPAWNFRUITEVERY;
-                AddThingToAllThings(trees[count]);
-            }
-            initialized = true;
-            Debug.LogWarning("Updates balanced");*/
         }
         public void Initialize(Tribe tribe)
         {
@@ -213,7 +190,6 @@ namespace rak.world
                 Debug.LogError("Area called to initialize when already initialized");
                 return;
             }
-            EntityManager = Unity.Entities.World.Active.GetOrCreateManager<EntityManager>();
             jobHandles = new List<JobHandle>();
             allThingsBlittableCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
             thingMasterList = new Dictionary<System.Guid, Thing>();
@@ -265,17 +241,15 @@ namespace rak.world
             {
                 AddCreatureToWorld("Gnat");
             }
-            NativeArray<Entity> entities = new NativeArray<Entity>(allThings.Count, Allocator.Temp);
+            /*NativeArray<Entity> entities = new NativeArray<Entity>(allThings.Count, Allocator.Temp);
             for(int count = 0; count < allThings.Count; count++)
             {
                 EntityManager.Instantiate(allThings[count].gameObject, entities);
-                allThings[count].AddComponents(entities[count]);
+                allThings[count].AddECSComponents();
                 allThings[count].entityIndex = entities[count].Index;
-            }
+            }*/
             initialized = true;
         }
-
-        
 
         public Thing[] findConsumeable(CONSUMPTION_TYPE consumptionType)
         {
@@ -295,30 +269,6 @@ namespace rak.world
         public void AddCreatureToWorld(string nameOfPrefab)
         {
             addCreatureToWorld(nameOfPrefab, Vector3.zero,true);
-        }
-
-        private void addCreatureToWorldDEBUG(string nameOfPrefab, Vector3 position, 
-            bool generatePosition,Tribe tribe)
-        {
-            GameObject thingObject = RAKUtilities.getCreaturePrefab(nameOfPrefab);
-            GameObject newThing = Object.Instantiate(thingObject);
-            newThing.transform.SetParent(creatureContainer.transform);
-            newThing.GetComponent<Creature>().Initialize(nameOfPrefab, this, tribe);
-            newThing.transform.localPosition = Vector3.zero;
-            newThing.transform.rotation = Quaternion.identity;
-            if (!generatePosition)
-            {
-                newThing.transform.position = position;
-            }
-            else
-            {
-                float x = Random.Range(0, areaSize.x);
-                float z = Random.Range(0, areaSize.z);
-                Vector2 targetSpawn = new Vector2(x, z);
-                float y = RAKTerrainMaster.GetTerrainHeightAt(targetSpawn, RAKTerrainMaster.GetTerrainAtPoint(targetSpawn));
-                newThing.transform.position = new Vector3(x, y, z);
-            }
-            AddThingToAllThings(newThing.GetComponent<Thing>());
         }
 
         private void addCreatureToWorld(string nameOfPrefab, Vector3 position, bool generatePosition)
@@ -378,8 +328,8 @@ namespace rak.world
             int currentTry = 0;
             while (true)
             {
-                float x = Random.Range(startPosition.x-maxDistance, startPosition.x+maxDistance);
-                float z = Random.Range(startPosition.z - maxDistance, startPosition.z + maxDistance);
+                float x = UnityEngine.Random.Range(startPosition.x-maxDistance, startPosition.x+maxDistance);
+                float z = UnityEngine.Random.Range(startPosition.z - maxDistance, startPosition.z + maxDistance);
                 Vector2 targetSpawn = new Vector2(x, z);
                 float y = RAKTerrainMaster.GetTerrainHeightAt(targetSpawn, RAKTerrainMaster.GetTerrainAtPoint(targetSpawn));
                 Vector3 randomPosition = new Vector3(x, y, z);
@@ -420,10 +370,10 @@ namespace rak.world
         public GridSector GetRandomGridSector()
         {
             RAKTerrain[] terrain = world.masterTerrain.getTerrain();
-            int index = Random.Range(0, terrain.Length);
+            int index = UnityEngine.Random.Range(0, terrain.Length);
             RAKTerrain chosenTerrain = terrain[index];
             GridSector[] sectorsInTerrain = chosenTerrain.GetGridElements();
-            index = Random.Range(0, sectorsInTerrain.Length);
+            index = UnityEngine.Random.Range(0, sectorsInTerrain.Length);
             return sectorsInTerrain[index];
         }
 
@@ -462,7 +412,11 @@ namespace rak.world
             }
             return deaths;
         }
-
+        public void FixedUpdate(float delta)
+        {
+            EntityManager manager = Unity.Entities.World.Active.EntityManager;
+            updateEntityRaycasting(manager);
+        }
         public void update(float delta)
         {
             if (initialized)
@@ -470,12 +424,162 @@ namespace rak.world
                 masterUpdate(delta);
             }
         }
+        private void updateEntityRaycasting(EntityManager manager)
+        {
+            List<RaycastCommand> raycastCommands = new List<RaycastCommand>();
+            Dictionary<int, Entity> creatureIndexMap = new Dictionary<int, Entity>();
+            Dictionary<int, CreatureUtilities.RayCastDirection> indexDirectionMap = new Dictionary<int, CreatureUtilities.RayCastDirection>();
+            int allThingsLength = allThings.Count;
+            List<Creature> creaturesGettingUpdated = new List<Creature>();
+            for (int count = 0; count < allThingsLength; count++)
+            {
+                if (!(allThings[count] is Creature))
+                    continue;
+                Entity entity = allThings[count].goEntity.Entity;
+                Agent agentData = manager.GetComponentData<Agent>(entity);
+                if (agentData.RequestRaycastUpdateDirectionLeft == 1)
+                {
+                    Transform transform = allThings[count].transform;
+                    float3 rayDirection = -transform.right;
+                    RaycastCommand command = new RaycastCommand
+                    {
+                        direction = rayDirection,
+                        distance = 20,
+                        from = transform.position,
+                        maxHits = 1
+                    };
+                    raycastCommands.Add(command);
+                    creatureIndexMap.Add(raycastCommands.Count - 1, entity);
+                    indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.LEFT);
+                    Debug.LogWarning("Requesting Left update");
+                }
+                if (agentData.RequestRaycastUpdateDirectionRight == 1)
+                {
+                    Transform transform = allThings[count].transform;
+                    float3 rayDirection = transform.right;
+                    RaycastCommand command = new RaycastCommand
+                    {
+                        direction = rayDirection,
+                        distance = 20,
+                        from = transform.position,
+                        maxHits = 1
+                    };
+                    raycastCommands.Add(command);
+                    creatureIndexMap.Add(raycastCommands.Count - 1, entity);
+                    indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.RIGHT);
+                    Debug.LogWarning("Requesting Right update");
+                }
+                if (agentData.RequestRaycastUpdateDirectionDown == 1)
+                {
+                    Transform transform = allThings[count].transform;
+                    float3 rayDirection = Vector3.down;
+                    RaycastCommand command = new RaycastCommand
+                    {
+                        direction = rayDirection,
+                        distance = 20,
+                        from = transform.position-transform.up,
+                        maxHits = 1
+                    };
+                    raycastCommands.Add(command);
+                    creatureIndexMap.Add(raycastCommands.Count - 1, entity);
+                    indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.DOWN);
+                    //Debug.LogWarning("Requesting Down update");
+                }
+                if (agentData.RequestRaycastUpdateDirectionForward == 1)
+                {
+                    Transform transform = allThings[count].transform;
+                    float3 rayDirection = transform.forward;
+                    RaycastCommand command = new RaycastCommand
+                    {
+                        direction = rayDirection,
+                        distance = 20,
+                        from = transform.position+transform.forward,
+                        maxHits = 1
+                    };
+                    raycastCommands.Add(command);
+                    creatureIndexMap.Add(raycastCommands.Count - 1, entity);
+                    indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.FORWARD);
+                    //Debug.LogWarning("Requesting Forward update");
+                }
+            }
+            int rayCastCommandSize = raycastCommands.Count;
+            if (rayCastCommandSize > 0)
+            {
+                RaycastHit[] hits = new RaycastHit[rayCastCommandSize];
+                for (int count =0; count < rayCastCommandSize; count++)
+                {
+                    RaycastCommand command = raycastCommands[count];
+                    RaycastHit hit;
+                    if(Physics.Raycast(command.from, command.direction, out hit, command.distance))
+                    {
+                        hits[count] = hit;
+                        Debug.DrawLine(command.from, hit.point, Color.yellow, .5f);
+                    }
+                }
+                
+                for (int count = 0; count < hits.Length; count++)
+                {
+                    CreatureUtilities.RayCastDirection direction = indexDirectionMap[count];
+                    Entity entity = creatureIndexMap[count];
+                    Agent agentData = manager.GetComponentData<Agent>(entity);
+                    if (hits[count].distance == 0)
+                    {
+                        if (direction == CreatureUtilities.RayCastDirection.DOWN)
+                        {
+                            agentData.RequestRaycastUpdateDirectionDown = 0;
+                            agentData.DistanceFromGround = float.MaxValue;
+                        }
+                        else if (direction == CreatureUtilities.RayCastDirection.FORWARD)
+                        {
+                            agentData.RequestRaycastUpdateDirectionForward = 0;
+                            agentData.DistanceFromFirstZHit = float.MaxValue;
+                        }
+                        else if (direction == CreatureUtilities.RayCastDirection.LEFT)
+                        {
+                            agentData.RequestRaycastUpdateDirectionLeft = 0;
+                            agentData.DistanceFromLeft = float.MaxValue;
+                        }
+                        else if (direction == CreatureUtilities.RayCastDirection.RIGHT)
+                        {
+                            agentData.RequestRaycastUpdateDirectionRight = 0;
+                            agentData.DistanceFromRight = float.MaxValue;
+                        }
+                    }
+                    else
+                    {
+                        if (direction == CreatureUtilities.RayCastDirection.LEFT)
+                        {
+                            agentData.DistanceFromLeft = hits[count].distance;
+                            agentData.RequestRaycastUpdateDirectionLeft = 0;
+                        }
+                        else if (direction == CreatureUtilities.RayCastDirection.RIGHT)
+                        {
+                            agentData.DistanceFromRight = hits[count].distance;
+                            agentData.RequestRaycastUpdateDirectionRight = 0;
+                        }
+                        else if (direction == CreatureUtilities.RayCastDirection.DOWN)
+                        {
+                            agentData.DistanceFromGround = hits[count].distance;
+                            agentData.RequestRaycastUpdateDirectionDown = 0;
+                        }
+                        else if (direction == CreatureUtilities.RayCastDirection.FORWARD)
+                        {
+                            agentData.DistanceFromFirstZHit = hits[count].distance;
+                            agentData.RequestRaycastUpdateDirectionForward = 0;
+                        }
+
+                    }
+                    manager.SetComponentData(entity, agentData);
+                }
+            }
+        }
+        
         private void masterUpdate(float delta)
-        { 
+        {
+            
             sinceLastSunUpdated += delta;
             batchDelta += delta;
             timeSinceLastCreatureDistanceSightCheck += delta;
-
             // DO THESE EVERY UPDATE //
             NumberOfVisibleThings = 0;
             int lengthOfArray = agents.Count;
@@ -493,6 +597,7 @@ namespace rak.world
                 sun.rotation = Quaternion.Euler(new Vector3((timeOfDay / dayLength) * 360, 0, 0));
                 sinceLastSunUpdated = 0;
             }
+            
             // DO THESE BEFORE STARTING BATCHES, BUT NOT DURING BATCH PROCESSING //
             if (currentThingIndex == 0)
             {
