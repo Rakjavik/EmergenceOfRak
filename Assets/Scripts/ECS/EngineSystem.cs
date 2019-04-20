@@ -15,15 +15,17 @@ namespace rak.ecs.ThingComponents
         {
             EngineJob job = new EngineJob
             {
-                currentTime = Time.time
+                currentTime = Time.time,
+                delta = Time.deltaTime
         };
             return job.Schedule(this, inputDeps);
         }
 
         //[BurstCompile]
-        struct EngineJob : IJobForEach<Engine,CreatureAI,Agent,AgentVariables,EngineConstantForce>
+        struct EngineJob : IJobForEach<Engine,CreatureAI,Agent,AgentVariables,EngineConstantForce,Target>
         {
             public float currentTime;
+            public float delta;
 
             private void setState(MovementState requestedState, Direction direction, ref Engine engine, ref EngineConstantForce ecf)
             {
@@ -111,85 +113,99 @@ namespace rak.ecs.ThingComponents
                 }
             }
 
-            public void Execute(ref Engine engine, ref CreatureAI creatureAI,ref Agent agent,
-                ref AgentVariables agentVariables,ref EngineConstantForce ecf)
+            public void Execute(ref Engine engine, ref CreatureAI ai,ref Agent agent,
+                ref AgentVariables av,ref EngineConstantForce ecf,ref Target target)
             {
-                ActionStep.Actions currentAction = creatureAI.CurrentAction;
-                if (currentAction == ActionStep.Actions.MoveTo)
+                ActionStep.Actions currentAction = ai.CurrentAction;
+                // VISIBLE TO CAMERA //
+                if (av.Visible == 1)
                 {
-                    //Debug.LogWarning(currentTime - agent.YLastUpdated);
-                    if(currentTime-agent.YLastUpdated > .5f)
+                    if (currentAction == ActionStep.Actions.MoveTo)
                     {
-                        agent.RequestRaycastUpdateDirectionDown = 1;
-                        agent.YLastUpdated = currentTime;
-                    }
-                    if(currentTime-agent.ZLastUpdated > .5f)
-                    {
-                        agent.RequestRaycastUpdateDirectionForward = 1;
-                        agent.ZLastUpdated = currentTime;
-                    }
-                    float velMag = agentVariables.RelativeVelocity.x + agentVariables.RelativeVelocity.y +
-                        agentVariables.RelativeVelocity.z;
-                    if (velMag > 10 && currentTime-agent.VelLastUpdated > .2f)
-                    {
-                        agent.RequestRayCastUpdateDirectionVel = 1;
-                        agent.VelLastUpdated = currentTime;
-                    }
-                    bool objectBlockingForward = agent.DistanceFromFirstZHit < engine.objectBlockDistance;
-                    MovementState stateToSetY = MovementState.IDLE;
-                    // Moving down or close to ground, throttle up //
-                    
-                    if (agentVariables.RelativeVelocity.y < -.5f || agent.DistanceFromGround < engine.sustainHeight)
-                    {
-                        stateToSetY = MovementState.FORWARD;
-                    }
-
-                    else if (agent.DistanceFromGround == Mathf.Infinity)
-                    {
-
-                    }
-                    else if (agentVariables.RelativeVelocity.y > .5f)
-                    {
-                        stateToSetY = MovementState.IDLE;
-                    }
-                    else
-                        stateToSetY = MovementState.IDLE;
-
-                    if (engine.CurrentStateY != stateToSetY)
-                        setState(stateToSetY, Direction.Y, ref engine,ref ecf);
-                    // Don't move forward if we're blocked //
-                    if (engine.CurrentStateZ != MovementState.FORWARD && !objectBlockingForward)
-                        setState(MovementState.FORWARD, Direction.Z, ref engine, ref ecf);
-                    if (objectBlockingForward)
-                    {
-                        agent.RequestRaycastUpdateDirectionLeft = 1;
-                        agent.RequestRaycastUpdateDirectionRight = 1;
-                        agent.RequestRaycastUpdateDirectionForward = 1;
-                        float distanceRight = agent.DistanceFromRight;
-                        float distanceLeft = agent.DistanceFromRight;
-                        if (engine.CurrentStateX == MovementState.IDLE)
+                        //Debug.LogWarning(currentTime - agent.YLastUpdated);
+                        if (currentTime - agent.YLastUpdated > .5f)
                         {
-                            bool goRight = distanceLeft < distanceRight;
-                            if (goRight)
-                                setState(MovementState.FORWARD, Direction.X, ref engine, ref ecf);
-                            else
-                            {
-                                setState(MovementState.REVERSE, Direction.X, ref engine, ref ecf);
-                            }
+                            agent.RequestRaycastUpdateDirectionDown = 1;
+                            agent.YLastUpdated = currentTime;
                         }
-                        if (engine.CurrentStateZ == MovementState.FORWARD)
-                            setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
-                        else if (engine.CurrentStateZ == MovementState.IDLE &&
-                            agent.DistanceFromFirstZHit < .5f)
-                            setState(MovementState.REVERSE, Direction.Z, ref engine, ref ecf);
-                        else if (engine.CurrentStateZ == MovementState.REVERSE &&
-                            agent.DistanceFromFirstZHit >= .5f)
-                            setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
+                        if (currentTime - agent.ZLastUpdated > .5f)
+                        {
+                            agent.RequestRaycastUpdateDirectionForward = 1;
+                            agent.ZLastUpdated = currentTime;
+                        }
+                        float velMag = av.RelativeVelocity.x + av.RelativeVelocity.y +
+                            av.RelativeVelocity.z;
+                        if (velMag > 10 && currentTime - agent.VelLastUpdated > .2f)
+                        {
+                            agent.RequestRayCastUpdateDirectionVel = 1;
+                            agent.VelLastUpdated = currentTime;
+                        }
+                        bool objectBlockingForward = agent.DistanceFromFirstZHit < engine.objectBlockDistance;
+                        MovementState stateToSetY = MovementState.IDLE;
+                        // Moving down or close to ground, throttle up //
+
+                        if (av.RelativeVelocity.y < -.5f || agent.DistanceFromGround < engine.sustainHeight)
+                        {
+                            stateToSetY = MovementState.FORWARD;
+                        }
+
+                        else if (agent.DistanceFromGround == Mathf.Infinity)
+                        {
+
+                        }
+                        else if (av.RelativeVelocity.y > .5f)
+                        {
+                            stateToSetY = MovementState.IDLE;
+                        }
+                        else
+                            stateToSetY = MovementState.IDLE;
+
+                        if (engine.CurrentStateY != stateToSetY)
+                            setState(stateToSetY, Direction.Y, ref engine, ref ecf);
+                        // Don't move forward if we're blocked //
+                        if (engine.CurrentStateZ != MovementState.FORWARD && !objectBlockingForward)
+                            setState(MovementState.FORWARD, Direction.Z, ref engine, ref ecf);
+                        if (objectBlockingForward)
+                        {
+                            agent.RequestRaycastUpdateDirectionLeft = 1;
+                            agent.RequestRaycastUpdateDirectionRight = 1;
+                            agent.RequestRaycastUpdateDirectionForward = 1;
+                            float distanceRight = agent.DistanceFromRight;
+                            float distanceLeft = agent.DistanceFromRight;
+                            if (engine.CurrentStateX == MovementState.IDLE)
+                            {
+                                bool goRight = distanceLeft < distanceRight;
+                                if (goRight)
+                                    setState(MovementState.FORWARD, Direction.X, ref engine, ref ecf);
+                                else
+                                {
+                                    setState(MovementState.REVERSE, Direction.X, ref engine, ref ecf);
+                                }
+                            }
+                            if (engine.CurrentStateZ == MovementState.FORWARD)
+                                setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
+                            else if (engine.CurrentStateZ == MovementState.IDLE &&
+                                agent.DistanceFromFirstZHit < .5f)
+                                setState(MovementState.REVERSE, Direction.Z, ref engine, ref ecf);
+                            else if (engine.CurrentStateZ == MovementState.REVERSE &&
+                                agent.DistanceFromFirstZHit >= .5f)
+                                setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
+                        }
+                        else
+                        {
+                            if (engine.CurrentStateX != MovementState.IDLE)
+                                setState(MovementState.IDLE, Direction.X, ref engine, ref ecf);
+                        }
                     }
-                    else
+                }
+                // NOT VISIBLE TO CAMERA //
+                else
+                {
+                    if(currentAction == ActionStep.Actions.MoveTo)
                     {
-                        if (engine.CurrentStateX != MovementState.IDLE)
-                            setState(MovementState.IDLE, Direction.X, ref engine, ref ecf);
+                        engine.NonPhysicsPositionUpdate = Vector3.MoveTowards(av.Position, target.targetPosition,
+                            engine.VelWhenMovingWithoutPhysics * delta);
+                        Debug.LogWarning(engine.NonPhysicsPositionUpdate);
                     }
                 }
             }

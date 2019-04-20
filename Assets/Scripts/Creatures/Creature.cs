@@ -65,10 +65,6 @@ namespace rak.creatures
         {
             return initialized;
         }
-        public bool IsLanding()
-        {
-            return agent.IsLanding();
-        }
         public bool StillNeedsSleep()
         {
             if (creaturePhysicalStats.getNeeds().getMostUrgent() != Needs.NEEDTYPE.SLEEP &&
@@ -149,7 +145,28 @@ namespace rak.creatures
         }
         public void RequestObservationUpdate()
         {
-            StartCoroutine(observeSurroundings());
+            //StartCoroutine(observeSurroundings());
+            Observe observeComponent = goEntity.EntityManager.GetComponentData<Observe>(goEntity.Entity);
+            // Need to refresh observations //
+            if (observeComponent.ObservationAvailable == 0)
+            {
+                observeComponent.RequestObservation = 1;
+            }
+            // observations available, write to memory
+            else
+            {
+                DynamicBuffer<MemoryBuffer> buffer = goEntity.EntityManager.GetBuffer<MemoryBuffer>(goEntity.Entity);
+                int bufferSize = buffer.Length;
+                for(int count = 0; count < bufferSize; count++)
+                {
+                    species.memory.AddMemory(buffer[count].memories);
+                }
+                observeComponent.ObservationAvailable = 0;
+                observeComponent.RequestObservation = 0;
+                buffer.Clear();
+            }
+            goEntity.EntityManager.SetComponentData(goEntity.Entity, observeComponent);
+
         }
 
         public void SetInView(bool inView)
@@ -235,7 +252,10 @@ namespace rak.creatures
                 }
                 if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
                     if (DEBUGSCENE)
-                        Debug.DrawLine(transform.position, agent.Destination, Color.cyan, 1f);
+                    {
+                        Target target = goEntity.EntityManager.GetComponentData<Target>(goEntity.Entity);
+                        Debug.DrawLine(transform.position, target.targetPosition, Color.cyan, 1f);
+                    }
 
             }
             //Debug.LogWarning("Current state - " + currentState);
@@ -263,18 +283,13 @@ namespace rak.creatures
         private void OnCollisionEnter(Collision collision)
         {
             if (currentState == CREATURE_STATE.DEAD) return;
-            agent.OnCollisionEnter(collision);
-            if (agent.GetRigidBody().velocity.magnitude > agent.maxVelocityMagnitude*2)
+            if (agent.GetRigidBody().velocity.magnitude > 20*2)
             {
                 if (currentState != CREATURE_STATE.DEAD)
                 {
                     SetStateToDead(CREATURE_DEATH_CAUSE.FlightCollision);
                 }
             }
-        }
-        private void OnCollisionExit(Collision collision)
-        {
-            agent.OnCollisionExit(collision);
         }
         #endregion
 
@@ -293,7 +308,12 @@ namespace rak.creatures
         }
         private void setCreatureAgentDestination(Vector3 destination, bool needsToLand)
         {
-            agent.SetDestination(destination);
+            Target target = new Target
+            {
+                targetPosition = destination,
+                targetGuid = System.Guid.Empty
+            };
+            goEntity.EntityManager.SetComponentData(goEntity.Entity, target);
         }
         public bool AddThingToInventory(Thing thing)
         {
@@ -547,10 +567,6 @@ namespace rak.creatures
         public float getDistanceFromDestination()
         {
             return agent.GetDistanceFromDestination();
-        }
-        public Vector3 getNavMeshDestination()
-        {
-            return agent.Destination;
         }
         #endregion
     }

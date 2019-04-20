@@ -2,7 +2,9 @@
 using Unity.Mathematics;
 using Unity.Entities;
 using rak.creatures;
-using rak.world;
+using UnityEngine;
+using rak.creatures.memory;
+using Unity.Collections;
 
 namespace rak.ecs.ThingComponents
 {
@@ -30,6 +32,8 @@ namespace rak.ecs.ThingComponents
         public int kinematic;
         public float objectBlockDistance;
         public float sustainHeight;
+        public float3 NonPhysicsPositionUpdate;
+        public float VelWhenMovingWithoutPhysics;
 
         public MovementState CurrentStateX;
         public MovementState CurrentStateY;
@@ -89,14 +93,15 @@ namespace rak.ecs.ThingComponents
         public float3 Velocity;
         public float4 Rotation;
         public float3 AngularVelocity;
+        public byte Visible;
 
         public float GetVelocityMagnitude()
         {
-            return Velocity.x + Velocity.y + Velocity.z;
+            return Mathf.Abs(Velocity.x) + Mathf.Abs(Velocity.y) + Mathf.Abs(Velocity.z);
         }
         public float GetAngularVelocityMag()
         {
-            return AngularVelocity.x + AngularVelocity.y + AngularVelocity.z;
+            return Mathf.Abs(AngularVelocity.x) + Mathf.Abs(AngularVelocity.y) + Mathf.Abs(AngularVelocity.z);
         }
     }
 
@@ -113,6 +118,7 @@ namespace rak.ecs.ThingComponents
     {
         public System.Guid targetGuid;
         public float3 targetPosition;
+        public float distance;
     }
 
     public struct EngineSound : IComponentData
@@ -134,5 +140,19 @@ namespace rak.ecs.ThingComponents
         public byte Locked;
         public float3 NewTargetPosition;
         public float DistanceFromTarget;
+    }
+
+    public struct Observe : IComponentData
+    {
+        public float ObserveDistance;
+        public byte RequestObservation;
+        public byte ObservationAvailable;
+        public DynamicBuffer<MemoryBuffer> memoryBuffer;
+    }
+
+    [InternalBufferCapacity(100)]
+    public struct MemoryBuffer : IBufferElementData
+    {
+        public MemoryInstance memories;
     }
 }

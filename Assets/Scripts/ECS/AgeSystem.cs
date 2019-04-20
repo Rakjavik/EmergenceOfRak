@@ -47,6 +47,7 @@ namespace rak.ecs.ThingComponents
                 prod.timeSinceLastSpawn += delta;
                 if(prod.timeSinceLastSpawn >= prod.spawnThingEvery)
                 {
+                    // CANT DO THIS FROM NON MAIN THREAD
                     //world.World.CurrentArea.addThingToWorld("fruit");
                     prod.timeSinceLastSpawn = 0;
                 }

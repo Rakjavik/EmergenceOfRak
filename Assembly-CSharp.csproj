@@ -202,6 +202,8 @@
     <Compile Include="Assets\Scripts\ECS\EngineRotationTurningSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\EngineSoundSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\EngineSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\ObserveSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\TargetSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\ThingComponents.cs" />
     <Compile Include="Assets\Scripts\ECS\TractorBeamSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\TurnSystem.cs" />

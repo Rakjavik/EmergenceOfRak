@@ -96,19 +96,6 @@ namespace rak.creatures
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
                 agent.GetRigidBody().constraints = RigidbodyConstraints.None;
-                agent.SetTurnSpeed(.3f);
-                agent.SetSustainHeight(5);
-                agent.SetMaxAngularVel(10);
-                agent.SetMaxVelocityMagnitude(20);
-                agent.SetCruisingSpeed(new Vector3(2, 1, 15));
-
-                // Maximum force of the constant force component //
-                agent.maxForce.y = 15;
-                agent.maxForce.z = 8;
-                agent.maxForce.x = 4;
-                // Amount of force needed to hold the objects weight //
-                agent.SetMinimumForceToHover(8);
-                agent.SetSlowDownModifier(1);
                 agent.GetRigidBody().maxAngularVelocity = 5;
                 agent.SetExploreRadiusModifier(200);
                 agent.SetGrabType(CreatureGrabType.TractorBeam);
@@ -116,19 +103,6 @@ namespace rak.creatures
             }
             else if (baseSpecies == BASE_SPECIES.Gagk)
             {
-                agent.SetTurnSpeed(1f);
-                agent.SetSustainHeight(1);
-                agent.SetMaxAngularVel(15);
-                agent.SetMaxVelocityMagnitude(10);
-                agent.SetCruisingSpeed(new Vector3(0, 0, 5));
-
-                // Maximum force of the constant force component //
-                agent.maxForce.y = 0;
-                agent.maxForce.z = 5;
-                agent.maxForce.x = 0;
-                // Amount of force needed to hold the objects weight //
-                agent.SetMinimumForceToHover(0);
-                agent.SetSlowDownModifier(15);
                 agent.SetExploreRadiusModifier(200);
                 BuildCreatureParts(baseSpecies, agent);
             }

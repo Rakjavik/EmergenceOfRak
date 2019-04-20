@@ -73,10 +73,7 @@ namespace rak.creatures
         private void animateMovement()
         {
             float relativeMultiplier;
-            if (partMovesRelativeTo == PartMovesWith.Braking)
-                relativeMultiplier = new Vector3(attachedAgent.CurrentBrakeAmountRequest.x,
-                    attachedAgent.CurrentBrakeAmountRequest.y, attachedAgent.CurrentBrakeAmountRequest.z).magnitude;
-            else if (partMovesRelativeTo == PartMovesWith.ConstantForceY)
+            if (partMovesRelativeTo == PartMovesWith.ConstantForceY)
                 relativeMultiplier = attachedAgent.GetConstantForceComponent().relativeForce.y;
             else if (partMovesRelativeTo == PartMovesWith.ConstantForceZ)
                 relativeMultiplier = attachedAgent.GetConstantForceComponent().relativeForce.z;

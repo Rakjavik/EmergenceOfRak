@@ -6,11 +6,11 @@ namespace rak.creatures.memory
     public struct MemoryInstance
     {
         public Verb verb { get; private set; }
-        private short invertVerb { get; set; }
+        private byte invertVerb { get; set; }
         public Guid subject { get; private set; }
-        public long timeStamp { get; private set; }
+        public float timeStamp { get; private set; }
         public int iterations { get; private set; }
-        public MemoryInstance(Verb verb, Guid subject, bool invertVerb, long timestamp)
+        public MemoryInstance(Verb verb, Guid subject, bool invertVerb, float timestamp)
         {
             if (invertVerb)
                 this.invertVerb = 1;

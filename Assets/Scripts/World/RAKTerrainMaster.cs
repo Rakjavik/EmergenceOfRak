@@ -45,7 +45,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
     public static int TileSize = 256; // Size of each Terrain piece
     private int width = TileSize+1; // Terrain width/height needs a plus one due to Unity being weird
     private int height = TileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
-    private int worldSize = 16; // Number of total terrain objects
+    private static int worldSize = 16; // Number of total terrain objects
 
     private void InitializeDebugTerrain(World world,HexCell cell)
     {
@@ -813,7 +813,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
     }
     public static RAKTerrain GetTerrainAtPoint(Vector3 point)
     {
-        int maxXZ = TileSize * (terrain.Length / 4);
+        int maxXZ = TileSize * (terrain.Length / (int)Mathf.Sqrt(worldSize));
         for (int count = 0; count < terrain.Length; count++)
         {
             Vector3 terrainPos = terrain[count].transform.position;

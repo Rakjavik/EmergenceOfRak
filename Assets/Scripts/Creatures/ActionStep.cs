@@ -197,7 +197,6 @@ namespace rak
                     {
                         if (performer.AddThingToInventory(_targetThing))
                         {
-                            performer.GetCreatureAgent().CollisionRemoveIfPresent(_targetThing.transform);
                             _targetThing.transform.SetParent(performer.transform);
                             status = Tasks.TASK_STATUS.Complete;
                             return;
@@ -227,14 +226,6 @@ namespace rak
             // Land //
             else if (action == Actions.Land)
             {
-                CreatureAgent agent = performer.GetCreatureAgent();
-                if (!agent.IsLanding())
-                {
-                    // Landing failed //
-                    agent.Land();
-                    return;
-
-                }
                 return;
             }
             // DEACTIVATE SELF //

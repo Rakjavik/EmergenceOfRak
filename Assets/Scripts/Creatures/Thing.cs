@@ -18,7 +18,7 @@ namespace rak
             //Debug.LogWarning("Thing type - " + thingType);
             world.EntityManager.AddComponentData(goEntity.Entity, new Age { Value = 0,MaxAge=10 });
             world.EntityManager.AddComponentData(goEntity.Entity, new Enabled { Value = 1 });
-            if(thingType == Thing_Types.FruitTree)
+            if (thingType == Thing_Types.FruitTree)
             {
                 world.EntityManager.AddComponentData(goEntity.Entity, new Produces
                 {
@@ -33,18 +33,19 @@ namespace rak
                 CreatureAgent attachedAgent = gnat.GetCreatureAgent();
                 world.EntityManager.AddComponentData(goEntity.Entity, new Engine
                 {
-                    moveType = attachedAgent.GetMoveType(), // Engine movement type (Flight)
-                    objectBlockDistance = attachedAgent.GetObjectBlockDistance(), // Distance a raycast forward has to be below before alt flight logic for being blocked
-                    sustainHeight = attachedAgent.GetSustainHeight(), // Target height when in flight
-                    MaxForceX = attachedAgent.maxForce.x, // Max force for ConstantForceComponent
-                    MaxForceY = attachedAgent.maxForce.y,
-                    MaxForceZ = attachedAgent.maxForce.z,
+                    moveType = CreatureLocomotionType.Flight, // Engine movement type (Flight)
+                    objectBlockDistance = 3, // Distance a raycast forward has to be below before alt flight logic for being blocked
+                    sustainHeight = 5, // Target height when in flight
+                    MaxForceX = 4, // Max force for ConstantForceComponent
+                    MaxForceY = 15,
+                    MaxForceZ = 8,
                     MinForceX = 0, // Min force for ConstantForceComponent
-                    MinForceY = attachedAgent.minimumForceToHover,
+                    MinForceY = 8,
                     MinForceZ = 0,
                     CurrentStateX = MovementState.IDLE,
                     CurrentStateY = MovementState.IDLE,
-                    CurrentStateZ = MovementState.IDLE
+                    CurrentStateZ = MovementState.IDLE,
+                    VelWhenMovingWithoutPhysics = 20
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new EngineSound
                 {
@@ -74,12 +75,17 @@ namespace rak
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new EngineRotationTurning
                 {
-                    RotationSpeed = 50, // Modifier for slerp between
+                    RotationSpeed = 20, // Modifier for slerp between
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new TractorBeam
                 {
                     BeamStrength = 5, // Movement modifier
                 });
+                world.EntityManager.AddComponentData(goEntity.Entity, new Observe
+                {
+                    ObserveDistance = 100, // Distance from creature before creature can see it
+                });
+                world.EntityManager.AddBuffer<MemoryBuffer>(goEntity.Entity);
             }
         }
         

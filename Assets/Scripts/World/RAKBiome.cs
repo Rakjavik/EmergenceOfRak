@@ -55,7 +55,7 @@ public partial class RAKTerrainMaster
             biome.numberOfTrees = 0;
             biome.offsetX = UnityEngine.Random.Range(0, 100);
             biome.offsetY = UnityEngine.Random.Range(0, 100);
-            biome.scale = UnityEngine.Random.Range(1, 1.5f);
+            biome.scale = UnityEngine.Random.Range(1, 1f);
             biome.type = BIOMETYPE.Forest;
             return biome;
         }
