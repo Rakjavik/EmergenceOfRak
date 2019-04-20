@@ -15,14 +15,14 @@ namespace rak
         public void AddECSComponents()
         {
             Unity.Entities.World world = Unity.Entities.World.Active;
-            Debug.LogWarning("Thing type - " + thingType);
+            //Debug.LogWarning("Thing type - " + thingType);
             world.EntityManager.AddComponentData(goEntity.Entity, new Age { Value = 0,MaxAge=10 });
             world.EntityManager.AddComponentData(goEntity.Entity, new Enabled { Value = 1 });
             if(thingType == Thing_Types.FruitTree)
             {
                 world.EntityManager.AddComponentData(goEntity.Entity, new Produces
                 {
-                    spawnThingEvery = 360,
+                    spawnThingEvery = 15,
                     thingToProduce = Thing_Types.Fruit,
                     timeSinceLastSpawn = -1
                 });
@@ -31,46 +31,50 @@ namespace rak
             {
                 Creature gnat = (Creature)this;
                 CreatureAgent attachedAgent = gnat.GetCreatureAgent();
-                EngineMovementVariable[] engineMovementVariables = new EngineMovementVariable[]
-                {
-                    new EngineMovementVariable(Direction.Y, attachedAgent.maxForce,
-                    attachedAgent.minimumForceToHover),
-                    new EngineMovementVariable(Direction.X, attachedAgent.maxForce,
-                    attachedAgent.minimumForceToHover),
-                    new EngineMovementVariable(Direction.Z, attachedAgent.maxForce,
-                    attachedAgent.minimumForceToHover)
-                };
                 world.EntityManager.AddComponentData(goEntity.Entity, new Engine
                 {
-                    kinematic = attachedAgent.IsKinematic(),
-                    moveType = attachedAgent.GetMoveType(),
-                    objectBlockDistance = attachedAgent.GetObjectBlockDistance(),
-                    sustainHeight = attachedAgent.GetSustainHeight(),
-                    MaxForceX = attachedAgent.maxForce.x,
+                    moveType = attachedAgent.GetMoveType(), // Engine movement type (Flight)
+                    objectBlockDistance = attachedAgent.GetObjectBlockDistance(), // Distance a raycast forward has to be below before alt flight logic for being blocked
+                    sustainHeight = attachedAgent.GetSustainHeight(), // Target height when in flight
+                    MaxForceX = attachedAgent.maxForce.x, // Max force for ConstantForceComponent
                     MaxForceY = attachedAgent.maxForce.y,
                     MaxForceZ = attachedAgent.maxForce.z,
-                    MinForceX = 0,
+                    MinForceX = 0, // Min force for ConstantForceComponent
                     MinForceY = attachedAgent.minimumForceToHover,
                     MinForceZ = 0,
-                    CurrentForceX = 0,
-                    CurrentForceY = 0,
-                    CurrentForceZ = 0,
                     CurrentStateX = MovementState.IDLE,
                     CurrentStateY = MovementState.IDLE,
                     CurrentStateZ = MovementState.IDLE
                 });
+                world.EntityManager.AddComponentData(goEntity.Entity, new EngineSound
+                {
+                    ChangeSpeed = 100,
+                });
                 world.EntityManager.AddComponentData(goEntity.Entity, new Agent
                 {
-                    DistanceFromFirstZHit = float.MaxValue,
-                    DistanceFromGround = 5,
+                    UpdateDistanceEvery = .25f, // How often to add a new entry to distance traveled
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new AgentVariables
                 {
-                    RelativeVelocity = Vector3.zero
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new CreatureAI
                 {
-                    CurrentAction = ActionStep.Actions.None
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new AntiGravityShield
+                {
+                    BrakeIfCollidingIn = 2, // Use brake mechanism if a velocity collision is happening
+                    EngageIfWrongDirectionAndMovingFasterThan = 5, // Velocity magnitude before brake will kick in if going wrong direction from target
+                    VelocityMagNeededBeforeCollisionActivating = 20, // If colliding shortly, this minimum magnitude needs to be met before brake
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new Target
+                {
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new EngineConstantForce
+                {
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new EngineRotationTurning
+                {
+                    RotationSpeed = 10, // Modifier for slerp between
                 });
             }
         }

@@ -59,8 +59,7 @@ namespace rak.creatures
             needs.IncreaseNeed(Needs.NEEDTYPE.HUNGER, hungerIncrement);
             if(needs.getNeed(Needs.NEEDTYPE.HUNGER).CurrentAmount == NeedAmount.Critical)
             {
-                creature.SetStateToDead(Creature.CREATURE_DEATH_CAUSE.Hunger);
-
+                //creature.SetStateToDead(Creature.CREATURE_DEATH_CAUSE.Hunger);
                 return;
             }
             if (creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)

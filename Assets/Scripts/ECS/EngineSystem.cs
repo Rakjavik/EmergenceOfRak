@@ -5,6 +5,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
+using Unity.Mathematics;
 
 namespace rak.ecs.ThingComponents
 {
@@ -15,18 +16,18 @@ namespace rak.ecs.ThingComponents
             EngineJob job = new EngineJob
             {
                 currentTime = Time.time
-            };
+        };
             return job.Schedule(this, inputDeps);
         }
 
         //[BurstCompile]
-        struct EngineJob : IJobForEach<Engine,CreatureAI,Agent,AgentVariables>
+        struct EngineJob : IJobForEach<Engine,CreatureAI,Agent,AgentVariables,EngineConstantForce>
         {
             public float currentTime;
 
-            private void setState(MovementState requestedState, Direction direction, ref Engine engine)
+            private void setState(MovementState requestedState, Direction direction, ref Engine engine, ref EngineConstantForce ecf)
             {
-                MovementState currentState;
+                MovementState currentState = MovementState.NONE;
                 float currentForce;
                 float maxForce;
                 float minForce;
@@ -35,25 +36,24 @@ namespace rak.ecs.ThingComponents
                     currentState = engine.CurrentStateX;
                     maxForce = engine.MaxForceX;
                     minForce = engine.MinForceX;
-                    currentForce = engine.CurrentForceX;
+                    currentForce = ecf.CurrentForce.x;
                 }
                 else if (direction == Direction.Y)
                 {
                     currentState = engine.CurrentStateY;
                     maxForce = engine.MaxForceY;
                     minForce = engine.MinForceY;
-                    currentForce = engine.CurrentForceY;
+                    currentForce = ecf.CurrentForce.y;
                 }
                 else
                 {
                     currentState = engine.CurrentStateZ;
                     maxForce = engine.MaxForceZ;
                     minForce = engine.MinForceZ;
-                    currentForce = engine.CurrentForceZ;
+                    currentForce = ecf.CurrentForce.z;
                 }
-
-                MovementState[] availableStates = CreatureConstants.GetStatesCanSwithTo(currentState).ToArray();
                 bool validState = false;
+                MovementState[] availableStates = GetStatesCanSwithTo(currentState);
                 for (int count = 0; count < availableStates.Length; count++)
                 {
                     if (availableStates[count] == requestedState)
@@ -97,26 +97,27 @@ namespace rak.ecs.ThingComponents
                 if (direction == Direction.X)
                 {
                     engine.CurrentStateX = requestedState;
-                    engine.CurrentForceX = currentForce;
+                    ecf.CurrentForce.x = currentForce;
                 }
                 else if (direction == Direction.Y)
                 { 
                     engine.CurrentStateY = requestedState;
-                    engine.CurrentForceY = currentForce;
+                    ecf.CurrentForce.y = currentForce;
                 }
                 else
                 {
                     engine.CurrentStateZ = requestedState;
-                    engine.CurrentForceZ = currentForce;
+                    ecf.CurrentForce.z = currentForce;
                 }
             }
 
-            public void Execute(ref Engine engine, ref CreatureAI creatureAI,ref Agent agent,ref AgentVariables agentVariables)
+            public void Execute(ref Engine engine, ref CreatureAI creatureAI,ref Agent agent,
+                ref AgentVariables agentVariables,ref EngineConstantForce ecf)
             {
                 ActionStep.Actions currentAction = creatureAI.CurrentAction;
                 if (currentAction == ActionStep.Actions.MoveTo)
                 {
-                    Debug.LogWarning(currentTime - agent.YLastUpdated);
+                    //Debug.LogWarning(currentTime - agent.YLastUpdated);
                     if(currentTime-agent.YLastUpdated > .5f)
                     {
                         agent.RequestRaycastUpdateDirectionDown = 1;
@@ -126,6 +127,13 @@ namespace rak.ecs.ThingComponents
                     {
                         agent.RequestRaycastUpdateDirectionForward = 1;
                         agent.ZLastUpdated = currentTime;
+                    }
+                    float velMag = agentVariables.RelativeVelocity.x + agentVariables.RelativeVelocity.y +
+                        agentVariables.RelativeVelocity.z;
+                    if (velMag > 10 && currentTime-agent.VelLastUpdated > .2f)
+                    {
+                        agent.RequestRayCastUpdateDirectionVel = 1;
+                        agent.VelLastUpdated = currentTime;
                     }
                     bool objectBlockingForward = agent.DistanceFromFirstZHit < engine.objectBlockDistance;
                     MovementState stateToSetY = MovementState.IDLE;
@@ -148,10 +156,10 @@ namespace rak.ecs.ThingComponents
                         stateToSetY = MovementState.IDLE;
 
                     if (engine.CurrentStateY != stateToSetY)
-                        setState(stateToSetY, Direction.Y, ref engine);
+                        setState(stateToSetY, Direction.Y, ref engine,ref ecf);
                     // Don't move forward if we're blocked //
                     if (engine.CurrentStateZ != MovementState.FORWARD && !objectBlockingForward)
-                        setState(MovementState.FORWARD, Direction.Z, ref engine);
+                        setState(MovementState.FORWARD, Direction.Z, ref engine, ref ecf);
                     if (objectBlockingForward)
                     {
                         agent.RequestRaycastUpdateDirectionLeft = 1;
@@ -163,27 +171,91 @@ namespace rak.ecs.ThingComponents
                         {
                             bool goRight = distanceLeft < distanceRight;
                             if (goRight)
-                                setState(MovementState.FORWARD, Direction.X, ref engine);
+                                setState(MovementState.FORWARD, Direction.X, ref engine, ref ecf);
                             else
                             {
-                                setState(MovementState.REVERSE, Direction.X, ref engine);
+                                setState(MovementState.REVERSE, Direction.X, ref engine, ref ecf);
                             }
                         }
                         if (engine.CurrentStateZ == MovementState.FORWARD)
-                            setState(MovementState.IDLE, Direction.Z, ref engine);
+                            setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
                         else if (engine.CurrentStateZ == MovementState.IDLE &&
                             agent.DistanceFromFirstZHit < .5f)
-                            setState(MovementState.REVERSE, Direction.Z, ref engine);
+                            setState(MovementState.REVERSE, Direction.Z, ref engine, ref ecf);
                         else if (engine.CurrentStateZ == MovementState.REVERSE &&
                             agent.DistanceFromFirstZHit >= .5f)
-                            setState(MovementState.IDLE, Direction.Z, ref engine);
+                            setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
                     }
                     else
                     {
                         if (engine.CurrentStateX != MovementState.IDLE)
-                            setState(MovementState.IDLE, Direction.X, ref engine);
+                            setState(MovementState.IDLE, Direction.X, ref engine, ref ecf);
                     }
                 }
+            }
+
+            public MovementState[] GetStatesCanSwithTo(MovementState currentState)
+            {
+                MovementState[] possibleStates;
+                // Destroyed can be switched to at any point //
+                
+                if (currentState == MovementState.FORWARD)
+                {
+                    possibleStates = new MovementState[4];
+                    possibleStates[0] = MovementState.IDLE;
+                    possibleStates[1] = MovementState.REVERSE;
+                    possibleStates[2] = MovementState.POWER_DOWN;
+                    possibleStates[3] = MovementState.DESTROYED;
+                }
+                else if (currentState == MovementState.IDLE)
+                {
+                    possibleStates = new MovementState[4];
+                    possibleStates[0] = MovementState.FORWARD;
+                    possibleStates[1] = MovementState.REVERSE;
+                    possibleStates[2] = MovementState.POWER_DOWN;
+                    possibleStates[3] = MovementState.DESTROYED;
+                }
+                else if (currentState == MovementState.REVERSE)
+                {
+                    possibleStates = new MovementState[4];
+                    possibleStates[0] = MovementState.FORWARD;
+                    possibleStates[1] = MovementState.IDLE;
+                    possibleStates[2] = MovementState.POWER_DOWN;
+                    possibleStates[3] = MovementState.DESTROYED;
+                }
+                else if (currentState == MovementState.POWER_DOWN)
+                {
+
+                    possibleStates = new MovementState[3];
+                    possibleStates[0] = MovementState.UNINITIALIZED;
+                    possibleStates[1] = MovementState.STARTING;
+                    possibleStates[2] = MovementState.DESTROYED;
+                }
+                else if (currentState == MovementState.UNINITIALIZED)
+                {
+                    possibleStates = new MovementState[2];
+                    possibleStates[0] = MovementState.STARTING;
+                    possibleStates[1] = MovementState.DESTROYED;
+                }
+                else if (currentState == MovementState.STARTING)
+                {
+                    possibleStates = new MovementState[4];
+                    possibleStates[0] = MovementState.FORWARD;
+                    possibleStates[1] = MovementState.IDLE;
+                    possibleStates[2] = MovementState.REVERSE;
+                    possibleStates[3] = MovementState.DESTROYED;
+                }
+                else if (currentState == MovementState.NONE)
+                {
+                    possibleStates = new MovementState[2];
+                    possibleStates[0] = MovementState.NONE;
+                    possibleStates[1] = MovementState.DESTROYED;
+                }
+                else
+                {
+                    possibleStates = new MovementState[0];
+                }
+                return possibleStates;
             }
         }
     }

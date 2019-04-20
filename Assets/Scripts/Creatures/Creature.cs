@@ -1,8 +1,10 @@
 using rak.creatures.memory;
+using rak.ecs.ThingComponents;
 using rak.world;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 
@@ -205,10 +207,10 @@ namespace rak.creatures
             {
                 lastUpdated = 0;
                 updateCurrentGridSector();
-                updateState(delta);
+                updateStateAndTasks(delta);
             }
         }
-        private void updateState(float delta)
+        private void updateStateAndTasks(float delta)
         { 
             // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
             if (currentState == CREATURE_STATE.IDLE)
@@ -244,7 +246,19 @@ namespace rak.creatures
             }
             // CREATURE PHYSICAL STATS UPDATES //
             if (currentState != CREATURE_STATE.DEAD)
+            {
                 creaturePhysicalStats.Update();
+                Vector3 targetPosition = taskManager.GetCurrentTaskDestination();
+                Thing targetThing = taskManager.GetCurrentTaskTarget();
+                System.Guid guid = System.Guid.Empty;
+                if (targetThing != null)
+                    guid = targetThing.guid;
+                goEntity.EntityManager.SetComponentData<Target>(goEntity.Entity, new Target
+                {
+                    targetGuid = guid,
+                    targetPosition = targetPosition
+                });
+            }
         }
         private void OnCollisionEnter(Collision collision)
         {
@@ -264,6 +278,11 @@ namespace rak.creatures
         }
         #endregion
 
+        
+        public GameObjectEntity GetCreatureGOEntity()
+        {
+            return goEntity;
+        }
         public Rigidbody GetCreatureAgentBody()
         {
             return agent.GetRigidBody();
@@ -384,7 +403,7 @@ namespace rak.creatures
         }
         public void ConsumeThing(Thing thing)
         {
-            World.CurrentArea.RemoveThingFromWorld(thing);
+            rak.world.World.CurrentArea.RemoveThingFromWorld(thing);
             //getCurrentArea().removeThingFromWorld(thing);
             RemoveFromInventory(thing);
             creaturePhysicalStats.getNeeds().DecreaseNeed(Needs.NEEDTYPE.HUNGER, thing.getWeight());
@@ -493,7 +512,8 @@ namespace rak.creatures
         public void SetStateToDead(CREATURE_DEATH_CAUSE causeOfDeath)
         {
             this.causeOfDeath = causeOfDeath;
-            ChangeState(CREATURE_STATE.DEAD);
+            //ChangeState(CREATURE_STATE.DEAD);
+            Debug.Log("Avoided death by " + causeOfDeath);
         }
         public void ChangeState(CREATURE_STATE requestedState)
         {

@@ -5,6 +5,7 @@ using System;
 using rak.creatures;
 using rak.world;
 using UnityEngine;
+using Unity.Jobs;
 
 namespace rak.ecs.ThingComponents
 {
@@ -42,10 +43,11 @@ namespace rak.ecs.ThingComponents
         public float MinForceX;
         public float MinForceY;
         public float MinForceZ;
-        public float CurrentForceX;
-        public float CurrentForceY;
-        public float CurrentForceZ;
+    }
 
+    public struct EngineConstantForce : IComponentData
+    {
+        public float3 CurrentForce;
     }
 
     public struct CreatureAI : IComponentData
@@ -59,17 +61,99 @@ namespace rak.ecs.ThingComponents
         public float DistanceFromGround;
         public float DistanceFromLeft;
         public float DistanceFromRight;
+        public float DistanceFromVel;
         public byte RequestRaycastUpdateDirectionForward;
         public byte RequestRaycastUpdateDirectionDown;
         public byte RequestRaycastUpdateDirectionLeft;
         public byte RequestRaycastUpdateDirectionRight;
+        public byte RequestRayCastUpdateDirectionVel;
         public float ZLastUpdated;
         public float YLastUpdated;
+        public float VelLastUpdated;
+        public float DistanceLastUpdated;
+        public float UpdateDistanceEvery;
+        public float3 PreviousPositionMeasured;
+        public float4 DistanceMoved;
+        public int CurrentDistanceIndex;
+
+        public float GetDistanceMoved()
+        {
+            float distance = DistanceMoved.w + DistanceMoved.x + DistanceMoved.y + DistanceMoved.z;
+            //Debug.LogWarning("DIstance moved - " + distance);
+            return distance;
+        }
     }
 
+    // USED FOR MONO TO WRITE TO ECS VARIABLES FOR PHYSICS //
     public struct AgentVariables : IComponentData
     {
         public float3 RelativeVelocity;
         public float3 Position;
+        public float3 Velocity;
+        public float4 Rotation;
+        public float3 AngularVelocity;
+
+        public float GetVelocityMagnitude()
+        {
+            return Velocity.x + Velocity.y + Velocity.z;
+        }
+        public float GetAngularVelocityMag()
+        {
+            return AngularVelocity.x + AngularVelocity.y + AngularVelocity.z;
+        }
+    }
+
+    public struct AntiGravityShield : IComponentData
+    {
+        public byte Activated;
+        public float IgnoreStuckFor; // Will ignore being stuck until back to 0
+        public float BrakeIfCollidingIn;
+        public float VelocityMagNeededBeforeCollisionActivating;
+        public float EngageIfWrongDirectionAndMovingFasterThan;
+    }
+
+    public struct Target : IComponentData
+    {
+        public System.Guid targetGuid;
+        public float3 targetPosition;
+    }
+
+    public struct EngineSound : IComponentData
+    {
+        public float CurrentLevel;
+        public float TargetLevel;
+        public float ChangeSpeed;
+    }
+
+    public struct EngineRotationTurning : IComponentData
+    {
+        public float4 RotationUpdate; // Requested rotation to update transform to
+        public float RotationSpeed; // Speed modifier for slerp between current and dest rotation
+    }
+
+    public class EngineRotationTurningSystem : JobComponentSystem
+    {
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        {
+            EngineRotationTurningJob job = new EngineRotationTurningJob
+            {
+                delta = Time.deltaTime
+            };
+            return job.Schedule(this, inputDeps);
+        }
+
+        struct EngineRotationTurningJob : IJobForEach<EngineRotationTurning, AgentVariables,Target>
+        {
+            public float delta;
+
+            public void Execute(ref EngineRotationTurning ert, ref AgentVariables av, ref Target target)
+            {
+                float3 direction = (target.targetPosition - av.Position);
+                Quaternion lookRotation = Quaternion.LookRotation(direction);
+                Quaternion currentRot = new Quaternion(av.Rotation.x, av.Rotation.y, av.Rotation.z, av.Rotation.w);
+                Quaternion newRotation = Quaternion.Slerp(currentRot, lookRotation, ert.RotationSpeed * delta);
+                ert.RotationUpdate = new float4(newRotation.x, newRotation.y, newRotation.z, newRotation.w);
+            }
+        }
     }
 }

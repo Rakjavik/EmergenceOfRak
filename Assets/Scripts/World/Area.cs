@@ -42,7 +42,7 @@ namespace rak.world
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
         private static readonly int MAX_VISIBLE_CREATURES = 40;
-        private static int MAXPOP = 30;
+        private static int MAXPOP = 100;
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
         public static float dayLength = 240;
 
@@ -288,7 +288,7 @@ namespace rak.world
             else
             {
                 Vector3 randomPosition = GetRandomGridSector().GetRandomPositionInSector();
-                newThing.transform.position = new Vector3(randomPosition.x, 10, randomPosition.z);
+                newThing.transform.position = new Vector3(randomPosition.x, randomPosition.y, randomPosition.z);
             }
             Thing thing = newThing.GetComponent<Thing>();
             if (thing == null)
@@ -430,7 +430,6 @@ namespace rak.world
             Dictionary<int, Entity> creatureIndexMap = new Dictionary<int, Entity>();
             Dictionary<int, CreatureUtilities.RayCastDirection> indexDirectionMap = new Dictionary<int, CreatureUtilities.RayCastDirection>();
             int allThingsLength = allThings.Count;
-            List<Creature> creaturesGettingUpdated = new List<Creature>();
             for (int count = 0; count < allThingsLength; count++)
             {
                 if (!(allThings[count] is Creature))
@@ -451,7 +450,7 @@ namespace rak.world
                     raycastCommands.Add(command);
                     creatureIndexMap.Add(raycastCommands.Count - 1, entity);
                     indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.LEFT);
-                    Debug.LogWarning("Requesting Left update");
+                    //Debug.LogWarning("Requesting Left update");
                 }
                 if (agentData.RequestRaycastUpdateDirectionRight == 1)
                 {
@@ -467,7 +466,7 @@ namespace rak.world
                     raycastCommands.Add(command);
                     creatureIndexMap.Add(raycastCommands.Count - 1, entity);
                     indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.RIGHT);
-                    Debug.LogWarning("Requesting Right update");
+                    //Debug.LogWarning("Requesting Right update");
                 }
                 if (agentData.RequestRaycastUpdateDirectionDown == 1)
                 {
@@ -477,7 +476,7 @@ namespace rak.world
                     {
                         direction = rayDirection,
                         distance = 20,
-                        from = transform.position-transform.up,
+                        from = transform.position,
                         maxHits = 1
                     };
                     raycastCommands.Add(command);
@@ -493,12 +492,28 @@ namespace rak.world
                     {
                         direction = rayDirection,
                         distance = 20,
-                        from = transform.position+transform.forward,
+                        from = transform.position,
                         maxHits = 1
                     };
                     raycastCommands.Add(command);
                     creatureIndexMap.Add(raycastCommands.Count - 1, entity);
                     indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.FORWARD);
+                    //Debug.LogWarning("Requesting Forward update");
+                }
+                if (agentData.RequestRayCastUpdateDirectionVel == 1)
+                {
+                    Creature creature = (Creature)allThings[count];
+                    float3 rayDirection = creature.GetCreatureAgentBody().velocity.normalized;
+                    RaycastCommand command = new RaycastCommand
+                    {
+                        direction = rayDirection,
+                        distance = 50,
+                        from = creature.transform.position,
+                        maxHits = 1
+                    };
+                    raycastCommands.Add(command);
+                    creatureIndexMap.Add(raycastCommands.Count - 1, entity);
+                    indexDirectionMap.Add(raycastCommands.Count - 1, CreatureUtilities.RayCastDirection.VELOCITY);
                     //Debug.LogWarning("Requesting Forward update");
                 }
             }
@@ -544,6 +559,11 @@ namespace rak.world
                             agentData.RequestRaycastUpdateDirectionRight = 0;
                             agentData.DistanceFromRight = float.MaxValue;
                         }
+                        else if (direction == CreatureUtilities.RayCastDirection.VELOCITY)
+                        {
+                            agentData.RequestRayCastUpdateDirectionVel = 0;
+                            agentData.DistanceFromVel = float.MaxValue;
+                        }
                     }
                     else
                     {
@@ -566,6 +586,11 @@ namespace rak.world
                         {
                             agentData.DistanceFromFirstZHit = hits[count].distance;
                             agentData.RequestRaycastUpdateDirectionForward = 0;
+                        }
+                        else if (direction == CreatureUtilities.RayCastDirection.VELOCITY)
+                        {
+                            agentData.DistanceFromVel = hits[count].distance;
+                            agentData.RequestRayCastUpdateDirectionVel = 0;
                         }
 
                     }

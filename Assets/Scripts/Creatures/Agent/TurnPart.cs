@@ -1,4 +1,5 @@
-﻿using Unity.Jobs;
+﻿using rak.ecs.ThingComponents;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace rak.creatures
@@ -59,23 +60,16 @@ namespace rak.creatures
 
         public TurnPartRotation(CreaturePart creaturePart, Transform transform,
             CreatureTurnType turnType, float updateEvery) :
-            base(creaturePart, transform, CreatureTurnType.Inch, updateEvery)
-        {
-        }
+            base(creaturePart, transform, CreatureTurnType.Inch, updateEvery){}
 
         public override void UpdateDerivedPart(ActionStep.Actions action, float delta)
         {
             base.UpdateDerivedPart(action, delta);
-            
-            Quaternion newRotation;
-            Vector3 _direction = (attachedAgent.Destination - parentCreature.transform.position).normalized;
-            if (_direction != Vector3.zero)
-            {
-                Quaternion _lookRotation = Quaternion.LookRotation(_direction);
-                newRotation = Quaternion.Slerp(parentCreature.transform.rotation, _lookRotation,
-                    attachedAgent.turnSpeed);
-                parentCreature.transform.rotation = newRotation;
-            }
+
+            EngineRotationTurning ert = parentCreature.goEntity.EntityManager.
+                GetComponentData<EngineRotationTurning>(parentCreature.goEntity.Entity);
+            parentCreature.transform.rotation = new Quaternion(ert.RotationUpdate.x, ert.RotationUpdate.y,
+                ert.RotationUpdate.z, ert.RotationUpdate.w);
         }
     }
     public abstract class TurnPart : Part
@@ -86,14 +80,6 @@ namespace rak.creatures
             base(creaturePart, transform, updateEvery)
         {
             this.turnType = turnType;
-        }
-
-        public void RightRotation()
-        {
-            if (parentCreature.transform.rotation == Quaternion.identity) return;
-            Quaternion newRotation = Quaternion.Slerp(parentCreature.transform.rotation, Quaternion.identity,
-                miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel]);
-            parentCreature.transform.rotation = newRotation;
         }
     }
 }

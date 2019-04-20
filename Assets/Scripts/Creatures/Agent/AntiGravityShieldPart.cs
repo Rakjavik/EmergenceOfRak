@@ -1,13 +1,13 @@
-﻿using UnityEngine;
+﻿using rak.ecs.ThingComponents;
+using Unity.Entities;
+using UnityEngine;
 
 namespace rak.creatures
 {
     public class AntiGravityShieldPart : Part
     {
-        public bool Activated { get; private set; }
-        private ActionStep.Actions[] _OnDuringTheseActions;
-        private float ignoreStuckFor = 0; // disable turning on while this is + 0
         private Creature creature;
+        private bool Activated;
 
         public AntiGravityShieldPart(CreaturePart creaturePart, Transform transform, float updateEvery,
             Rigidbody bodyToShield, ActionStep.Actions[] actions)
@@ -16,16 +16,12 @@ namespace rak.creatures
             this.PartType = creaturePart;
             this.PartTransform = transform;
             this.UpdateEvery = updateEvery;
-            Activated = bodyToShield.isKinematic;
             this.attachedBody = bodyToShield;
-            this._OnDuringTheseActions = actions;
             this.creature = transform.GetComponentInParent<Creature>();
-            ignoreStuckFor = 0;
         }
 
         private void ActivateShield()
         {
-            //Debug.LogWarning("Activate shield");
             if (Activated)
             {
                 Debug.LogWarning("Call to activate shield when already active");
@@ -47,125 +43,16 @@ namespace rak.creatures
         }
         public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
-            base.UpdateDerivedPart(action,delta);
-            if (action == ActionStep.Actions.MoveTo)
+            
+            AntiGravityShield shield = World.Active.EntityManager.GetComponentData<AntiGravityShield>(creature.goEntity.Entity);
+            bool shieldActive = (shield.Activated == 1);
+            if (shieldActive != Activated)
             {
-                // Currently Deactivated //
-                if (!Activated)
-                {
-                    bool activate = false;
-
-                    // STUCK //
-                    if (attachedAgent.IsStuck())
-                    {
-                        if (ignoreStuckFor <= 0)
-                        {
-                            activate = true;
-                            ignoreStuckFor = .2f;
-                        }
-                    }
-                    // Not stuck //
-                    else if (!attachedAgent.IsStuck())
-                    {
-                        // Check for imminent collision //
-                        float beforeCollision = attachedAgent.GetTimeBeforeCollision();
-                        float collisionProblem = miscVariables[MiscVariables.AgentMiscVariables.Agent_Brake_If_Colliding_In];
-                        float velocityNeededToBrake = miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Max_Vel_Mag_Before_Brake];
-                        if (Mathf.Abs(beforeCollision) <= collisionProblem && Mathf.Abs(beforeCollision) != Mathf.Infinity &&
-                            beforeCollision > .01f &&
-                            attachedBody.velocity.magnitude > velocityNeededToBrake)
-                        {
-                            activate = true;
-                        }
-                        // Check for spinning //
-                        else if (attachedBody.angularVelocity.magnitude >
-                            miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Angular_Velocity_Brake_When_Over])
-                        {
-                            activate = true;
-                        }
-                        // Check if we're going in the wrong direction if we're not stopped //
-                        else if (attachedBody.velocity.magnitude >
-                            miscVariables[MiscVariables.AgentMiscVariables.Part_Flight_Brake_When_Going_Wrong_Direction_If_Vel])
-                        {
-                            Vector3 turnNeeded = getDifferenceFromLookAtTargetRotationViaVelocity().eulerAngles;
-
-                            if ((turnNeeded.x > 45 && turnNeeded.x < 315) ||
-                                (turnNeeded.z > 45 && turnNeeded.z < 315))
-                            {
-                                activate = true;
-                            }
-                        }
-                    }
-                    if (ignoreStuckFor > 0)
-                    {
-                        ignoreStuckFor -= Time.deltaTime;
-                    }
-                    if (activate)
-                    {
-                        ActivateShield();
-                    }
-
-                }
-                // Currently Activated //
+                if (shieldActive)
+                    ActivateShield();
                 else
-                {
-                    if (action == ActionStep.Actions.MoveTo)
-                    {
-                        // Make sure we are pointing in the right direction before deactivating //
-                        Vector3 turnNeeded = getDifferenceFromLookAtTargetRotation().eulerAngles;
-                        if (turnNeeded.magnitude < 1f || turnNeeded.magnitude > 359)
-                        {
-                            DeActivateShield();
-                            ignoreStuckFor =.05f;
-                        }
-                    }
-                }
-
+                    DeActivateShield();
             }
-            else
-            {
-                if (!Activated)
-                {
-                    bool activate = false;
-                    for (int count = 0; count < _OnDuringTheseActions.Length; count++)
-                    {
-                        if (_OnDuringTheseActions[count] == action)
-                        {
-                            activate = true;
-                            break;
-                        }
-                    }
-                    if (activate)
-                        ActivateShield();
-                }
-            }
-
-        }
-        private Vector3 getNeededDirection()
-        {
-            Vector3 direction = ((Vector3)attachedAgent.GetCurrentActionDestination() - parentCreature.transform.position).normalized;
-            return direction;
-        }
-        private Quaternion getDifferenceFromLookAtTargetRotation()
-        {
-            Quaternion start = attachedBody.transform.rotation;
-            Vector3 direction = getNeededDirection();
-            if (direction == Vector3.zero)
-            {
-                //Debug.LogWarning("Needed direction zero, currentactiondestination null?");
-                return Quaternion.identity;
-            }
-            else
-            {
-                Quaternion desired = Quaternion.LookRotation(direction);
-                return start * Quaternion.Inverse(desired);
-            }
-        }
-        private Quaternion getDifferenceFromLookAtTargetRotationViaVelocity()
-        {
-            Quaternion start = Quaternion.LookRotation(attachedBody.velocity);
-            Quaternion desired = Quaternion.LookRotation(getNeededDirection());
-            return start * Quaternion.Inverse(desired);
         }
     }
 }

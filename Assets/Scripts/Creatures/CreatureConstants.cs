@@ -191,9 +191,8 @@ namespace rak.creatures
             {
                 Transform gnatMaster = creature.transform.GetChild(0);
                 // Body with constant force //
-                EnginePart bodyFlight = new EnginePart
-                    (CreaturePart.BODY, gnatMaster.transform.parent, CreatureLocomotionType.Flight, .2f,
-                    PartAudioPropToModify.PITCH);
+                EnginePart bodyFlight = new EnginePart(PartAudioPropToModify.PITCH, CreaturePart.BODY, 
+                    gnatMaster.transform.parent, CreatureLocomotionType.Flight, .2f);
 
                 // Body with Rotation turning //
                 TurnPart bodyTurning = new TurnPartRotation
@@ -259,18 +258,7 @@ namespace rak.creatures
             }
             else if (baseSpecies == BASE_SPECIES.Gagk)
             {
-                // Constant force for Z //
-                EnginePart mainEngine = new EnginePart(CreaturePart.ENGINE_Z,
-                    creature.transform.GetChild(0),
-                    CreatureLocomotionType.StandardForwardBack, 1,PartAudioPropToModify.PITCH);
-                TurnPart inchSpine = new TurnPartInching(CreaturePart.BODY,
-                    creature.transform.GetChild(0),
-                    CreatureTurnType.Inch, .5f, Direction.X,
-                    creature.transform.GetChild(1));
-                allParts.Add(mainEngine);
-                allParts.Add(inchSpine);
-                agent.SetCreatureTurnType(CreatureTurnType.Inch);
-                agent.setParts(allParts);
+
             }
         }
 

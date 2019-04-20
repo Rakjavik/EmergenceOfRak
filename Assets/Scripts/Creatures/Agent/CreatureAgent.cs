@@ -13,12 +13,12 @@ namespace rak.creatures
         
 
         // Movement destination //
-        public Vector3 Destination { get; private set; }
         public float velocityWhenMovingWithoutPhysics { get; private set; }
         public float TimeToCollisionAtCurrentVel { get; private set; }
         private float _timeUpdatedCollisionAtVel = 0;
         private float[] distanceToCollision = new float[5];
         private float[] _timeUpdatedDistanceToCollision = new float[5];
+        public Vector3 Destination;
         // Not active skips update method //
         public bool Active { get; private set; }
         // Size of the boxcast when looking for explore targets //
@@ -64,11 +64,6 @@ namespace rak.creatures
 
         private Transform _transform;
         // TODO OPTIMIZE //
-        private const int DISTANCE_ARRAY_SIZE = 5;
-        private float[] distancesMoved = new float[DISTANCE_ARRAY_SIZE];
-        private float distanceMovedLastUpdated;
-        private const float UPDATE_DISTANCE_EVERY = .1f;
-        private int distanceMovedIndex = 0;
         private Dictionary<MiscVariables.AgentMiscVariables, float> miscVariables;
         
 
@@ -250,18 +245,6 @@ namespace rak.creatures
             else
                 return zCollision;
         }
-        public float GetDistanceYFromDestination()
-        {
-            return (creature.transform.position - Destination).y;
-        }
-        public float GetDistanceZFromDestination()
-        {
-            return (creature.transform.position - Destination).z;
-        }
-        public float GetDistanceXFromDestination()
-        {
-            return (creature.transform.position - Destination).x;
-        }
         public float GetDistanceFromDestination()
         {
             float3 destinationNoY = new float3(Destination.x, 0, Destination.z);
@@ -374,14 +357,6 @@ namespace rak.creatures
                 locomotionType = CreatureLocomotionType.Flight;
             else if (baseSpecies == BASE_SPECIES.Gagk)
                 locomotionType = CreatureLocomotionType.StandardForwardBack;
-            foreach (Part part in allParts)
-            {
-                if (part is EnginePart)
-                {
-                    EnginePart movePart = (EnginePart)part;
-                    movePart.InitializeMovementPart();
-                }
-            }
             ignoreIncomingCollisions = false;
             velocityWhenMovingWithoutPhysics = 20;
             initialized = true;
@@ -395,12 +370,6 @@ namespace rak.creatures
             {
                 touchingBodies.Add(collision.gameObject.transform);
             }
-            for (int count = 0;count < allParts.Length; count++)
-            {
-                if (!(allParts[count] is EnginePart)) continue;
-                EnginePart currentPart = (EnginePart)allParts[count];
-                currentPart.OnCollisionEnter(collision);
-            }
         }
         // Called from Creature Object //
         public void OnCollisionExit(Collision collision)
@@ -409,12 +378,6 @@ namespace rak.creatures
             {
                 touchingBodies.Remove(collision.gameObject.transform);
                 //Debug.LogWarning("Body not touching anymore - " + collision.gameObject.name);
-            }
-            for (int count = 0; count < allParts.Length; count++)
-            {
-                if (!(allParts[count] is EnginePart)) continue;
-                EnginePart currentPart = (EnginePart)allParts[count];
-                currentPart.OnCollisionExit(collision);
             }
         }
         public void CollisionRemoveIfPresent(Transform collision)
@@ -426,20 +389,11 @@ namespace rak.creatures
         {
             return touchingBodies.Contains(collision);
         }
-        public bool IsStuck()
-        {
-            float stuckIfDistanceMovedLessThan =
-                miscVariables[MiscVariables.AgentMiscVariables.Agent_Is_Stuck_If_Moved_Less_Than_In_One_Sec];
-            float distanceMoved = GetDistanceMovedInLastFive();
-            //Debug.LogWarning("Moved - " + distanceMoved);
-            return distanceMoved <= stuckIfDistanceMovedLessThan && Time.time > 1;
-        }
         // Called from Creature Object //
         public void Update(float delta, bool visible)
         {
             if (!Active) return;
             lastUpdate += delta;
-            distanceMovedLastUpdated += delta;
             CreatureAI ai = new CreatureAI
             {
                 CurrentAction = creature.GetCurrentAction()
@@ -457,21 +411,18 @@ namespace rak.creatures
                 AgentVariables agentVariables = creature.goEntity.EntityManager.
                     GetComponentData<AgentVariables>(creature.goEntity.Entity);
                 float3 relativeVel = creature.transform.InverseTransformDirection(rigidbody.velocity);
+                Quaternion rotation = creature.transform.rotation;
+                float4 currentRot = new float4(rotation.x, rotation.y, rotation.z, rotation.w);
                 AgentVariables agentData = new AgentVariables
                 {
                     RelativeVelocity = relativeVel,
-                    Position = creature.transform.position
+                    Position = creature.transform.position,
+                    Velocity = rigidbody.velocity,
+                    Rotation = currentRot,
+                    AngularVelocity = rigidbody.angularVelocity
                 };
                 Unity.Entities.World.Active.EntityManager.SetComponentData
                     (creature.goEntity.Entity, agentData);
-                ConstantForce force = GetConstantForceComponent();
-                float3 newForce = new float3
-                {
-                    x = engineData.CurrentForceX,
-                    y = engineData.CurrentForceY,
-                    z = engineData.CurrentForceZ
-                };
-                force.relativeForce = newForce;
             }
             // If not in view, manually move without physics //
             else
@@ -512,27 +463,8 @@ namespace rak.creatures
                     }
                 }
             }
-            if (distanceMovedLastUpdated >= UPDATE_DISTANCE_EVERY)
-            {
-                DistanceMovedLastUpdate = Vector3.Distance(positionLastUpdate, creature.transform.position);
-                distancesMoved[distanceMovedIndex] = DistanceMovedLastUpdate;
-                distanceMovedIndex++;
-                if (distanceMovedIndex == distancesMoved.Length)
-                    distanceMovedIndex = 0;
-                positionLastUpdate = creature.transform.position;
-                distanceMovedLastUpdated = 0;
-            }
         }
         #endregion MONO METHODS
-        public float GetDistanceMovedInLastFive()
-        {
-            float sum = 0;
-            for(int count = 0; count < distancesMoved.Length; count++)
-            {
-                sum += distancesMoved[count];
-            }
-            return sum;
-        }
     }
     public enum CreaturePart { LEG , FOOT, BODY, ENGINE_Z, ENGINE_Y, ENGINE_X, BRAKE, SHIELD,
         TRACTORBEAM, LIGHT_ARM, NONE

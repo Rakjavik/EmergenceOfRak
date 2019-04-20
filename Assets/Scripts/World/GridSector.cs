@@ -47,7 +47,7 @@ public struct GridSector
     {
         float randomX = UnityEngine.Random.Range(0, Grid.CurrentElementSize.x);
         float randomZ = UnityEngine.Random.Range(0, Grid.CurrentElementSize.y);
-        float3 position = new float3(WorldPositionStart.x + randomX, 0, WorldPositionStart.z + randomZ);
+        float3 position = new float3(WorldPositionStart.x + randomX, 70, WorldPositionStart.z + randomZ);
         return position;
     }
     

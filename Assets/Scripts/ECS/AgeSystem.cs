@@ -47,7 +47,7 @@ namespace rak.ecs.ThingComponents
                 prod.timeSinceLastSpawn += delta;
                 if(prod.timeSinceLastSpawn >= prod.spawnThingEvery)
                 {
-                    world.World.CurrentArea.addThingToWorld("fruit");
+                    //world.World.CurrentArea.addThingToWorld("fruit");
                     prod.timeSinceLastSpawn = 0;
                 }
             }

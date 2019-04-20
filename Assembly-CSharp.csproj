@@ -196,7 +196,10 @@
     <Compile Include="Assets\Scripts\Creatures\TaskManager.cs" />
     <Compile Include="Assets\Scripts\Creatures\Tasks.cs" />
     <Compile Include="Assets\Scripts\Creatures\Thing.cs" />
+    <Compile Include="Assets\Scripts\ECS\AgentSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\AgeSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\AntiGravityShieldSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\EngineSoundSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\EngineSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\ThingComponents.cs" />
     <Compile Include="Assets\Scripts\ECS\TurnSystem.cs" />
