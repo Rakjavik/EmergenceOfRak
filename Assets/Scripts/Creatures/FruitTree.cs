@@ -1,5 +1,6 @@
 ﻿using rak.world;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace rak
@@ -25,7 +26,8 @@ namespace rak
             {
                 Vector3 newPosition = new Vector3(Random.Range(-5,5), 10, Random.Range(-5, 5));
                 newPosition += transform.position;
-                //GameObject fruit = World.CurrentArea.addThingToWorld("fruit", newPosition, false);
+                GameObject fruit = World.CurrentArea.addThingToWorld("fruit", newPosition, false);
+                
                 //fruitInstances.Add(fruit);
                 timeSincelastSpawned = 0;
                 //Debug.Log("Fruit from tree - " + gameObject.name);

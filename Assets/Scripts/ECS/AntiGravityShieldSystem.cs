@@ -38,33 +38,36 @@ namespace rak.ecs.ThingComponents
                         {
                             activate = true;
                             shield.IgnoreStuckFor = .2f;
+                            //Debug.LogWarning("Activate Stuck");
                         }
                         // Angular Velocity //
                         else if (agentVar.GetAngularVelocityMag() > 2)
                         {
                             activate = true;
+                            //Debug.LogWarning("Activate AngularVel");
                         }
                         else
                         {
-                            float velMag = agentVar.RelativeVelocity.x + agentVar.RelativeVelocity.y + agentVar.RelativeVelocity.z;
+                            float velMag = Mathf.Abs(agentVar.RelativeVelocity.x + agentVar.RelativeVelocity.y + agentVar.RelativeVelocity.z);
                             float beforeCollision = agent.DistanceFromVel / velMag;
-
+                            
                             // Check for imminent collision //
                             if (Mathf.Abs(beforeCollision) <= shield.BrakeIfCollidingIn &&
                                 Mathf.Abs(beforeCollision) != Mathf.Infinity &&
                                 beforeCollision > .001f &&
                                 velMag > shield.VelocityMagNeededBeforeCollisionActivating)
                             {
+                                //Debug.LogWarning("Activate collision");
                                 activate = true;
                             }
                             // Check if going in wrong direction //
                             else if (velMag > shield.EngageIfWrongDirectionAndMovingFasterThan)
                             {
                                 float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target, 1);
-                                if ((turnNeeded.x > 45 && turnNeeded.x < 315) ||
-                                    (turnNeeded.z > 45 && turnNeeded.z < 315))
+                                if (turnNeeded.x > 15 && turnNeeded.x < 345)
                                 {
                                     activate = true;
+                                    //Debug.LogWarning("Activate wrong dir");
                                 }
                             }
                             if (shield.IgnoreStuckFor > 0)
@@ -82,7 +85,7 @@ namespace rak.ecs.ThingComponents
                         {
                             // Make sure we are pointing in the right direction before deactivating //
                             float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target,0);
-                            float turnNeededMag = turnNeeded.x + turnNeeded.y + turnNeeded.z;
+                            float turnNeededMag = Mathf.Abs(turnNeeded.x + turnNeeded.y + turnNeeded.z);
                             if (turnNeededMag < 1f || turnNeededMag > 359)
                             {
                                 shield.Activated = 0;
@@ -121,10 +124,11 @@ namespace rak.ecs.ThingComponents
                 // Use velocity for start rotation //
                 else
                 {
-                    start = Quaternion.LookRotation(agentVar.Velocity);
+                    float3 normalized = Vector3.Normalize(agentVar.Velocity);
+                    start = Quaternion.LookRotation(normalized, Vector3.up);
                 }
-                float3 neededDirection = target.targetPosition - agentVar.Position;
-                Quaternion desired = Quaternion.LookRotation(neededDirection);
+                float3 neededDirection = Vector3.Normalize(target.targetPosition - agentVar.Position);
+                Quaternion desired = Quaternion.LookRotation(neededDirection,Vector3.up);
                 Quaternion difference = Quaternion.Inverse(desired) * start;
                 return difference.eulerAngles;
             }

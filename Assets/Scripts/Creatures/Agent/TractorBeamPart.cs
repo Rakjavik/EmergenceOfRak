@@ -1,4 +1,5 @@
-﻿using rak.world;
+﻿using rak.ecs.ThingComponents;
+using rak.world;
 using UnityEngine;
 
 namespace rak.creatures
@@ -6,7 +7,6 @@ namespace rak.creatures
     public class TractorBeamPart : Part
     {
         private Thing target { get; set; }
-        private float beamStrength { get; set; }
         private bool locked { get; set; }
         private Rigidbody targetBody { get; set; }
 
@@ -16,40 +16,28 @@ namespace rak.creatures
             attachedBody = transform.GetComponentInParent<Rigidbody>();
             if (attachedBody == null) Debug.LogError("Can't find Rigidbody for tractor beam part");
             locked = false;
-            this.beamStrength = beamStrength;
         }
 
         public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
             base.UpdateDerivedPart(action,delta);
-            if(action == ActionStep.Actions.Add)
+            TractorBeam tb = parentCreature.goEntity.EntityManager.
+                    GetComponentData<TractorBeam>(parentCreature.goEntity.Entity);
+            if (tb.Locked == 1) 
             {
-                // Need to lock //
-                if (!locked)
+                if (targetBody == null && target == null)
                 {
-                    LockOnTarget();
+                    target = attachedAgent.GetCurrentActionTarget();
+                    targetBody = target.RequestRigidBodyAccess(parentCreature);
+                    targetBody.isKinematic = true;
                 }
-                // Already locked //
-                else
-                {
-                    if (targetBody != null && target != null)
-                    {
-                        float distance = Vector3.Distance(targetBody.position, attachedBody.position);
-                        //Debug.LogWarning("Tractor beam on, distance - " + distance);
-                        Vector3 newPosition = Vector3.MoveTowards(targetBody.position, attachedBody.position, beamStrength * Time.deltaTime);
-                        targetBody.position = newPosition;
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Tractor beam target is invalid");
-                        Debug.Break();
-                    }
-                }
+                if (action == ActionStep.Actions.Add)
+                    targetBody.position = tb.NewTargetPosition;
             }
             else
             {
-                if (locked)
-                    disengageBeam();
+                target = null;
+                targetBody = null;
             }
         }
         

@@ -199,9 +199,11 @@
     <Compile Include="Assets\Scripts\ECS\AgentSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\AgeSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\AntiGravityShieldSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\EngineRotationTurningSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\EngineSoundSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\EngineSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\ThingComponents.cs" />
+    <Compile Include="Assets\Scripts\ECS\TractorBeamSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\TurnSystem.cs" />
     <Compile Include="Assets\Scripts\HexCoordinates.cs" />
     <Compile Include="Assets\Scripts\Jobs\ObserveJobFor.cs" />

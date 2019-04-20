@@ -62,8 +62,8 @@ namespace rak
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new AntiGravityShield
                 {
-                    BrakeIfCollidingIn = 2, // Use brake mechanism if a velocity collision is happening
-                    EngageIfWrongDirectionAndMovingFasterThan = 5, // Velocity magnitude before brake will kick in if going wrong direction from target
+                    BrakeIfCollidingIn = .5f, // Use brake mechanism if a velocity collision is happening
+                    EngageIfWrongDirectionAndMovingFasterThan = 15, // Velocity magnitude before brake will kick in if going wrong direction from target
                     VelocityMagNeededBeforeCollisionActivating = 20, // If colliding shortly, this minimum magnitude needs to be met before brake
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new Target
@@ -74,7 +74,11 @@ namespace rak
                 });
                 world.EntityManager.AddComponentData(goEntity.Entity, new EngineRotationTurning
                 {
-                    RotationSpeed = 10, // Modifier for slerp between
+                    RotationSpeed = 50, // Modifier for slerp between
+                });
+                world.EntityManager.AddComponentData(goEntity.Entity, new TractorBeam
+                {
+                    BeamStrength = 5, // Movement modifier
                 });
             }
         }
@@ -238,11 +242,6 @@ namespace rak
                 if (transform.position.y < Area.MinimumHeight)
                     transform.position = new 
                         Vector3(transform.position.x, Area.MaximumHeight, transform.position.z);
-            }
-            if (age >= maxAge)
-            {
-                Debug.Log("Death by age - " + name);
-                DestroyThisThing();
             }
             if(thingAgent != null)
             {
