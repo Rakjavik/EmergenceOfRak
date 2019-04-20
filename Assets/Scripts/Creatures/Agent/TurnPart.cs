@@ -68,8 +68,10 @@ namespace rak.creatures
 
             EngineRotationTurning ert = parentCreature.goEntity.EntityManager.
                 GetComponentData<EngineRotationTurning>(parentCreature.goEntity.Entity);
-            parentCreature.transform.rotation = new Quaternion(ert.RotationUpdate.x, ert.RotationUpdate.y,
+            Quaternion newRotation = new Quaternion(ert.RotationUpdate.x, ert.RotationUpdate.y,
                 ert.RotationUpdate.z, ert.RotationUpdate.w);
+            if (newRotation.eulerAngles != Vector3.zero)
+                parentCreature.transform.rotation = newRotation;
         }
     }
     public abstract class TurnPart : Part

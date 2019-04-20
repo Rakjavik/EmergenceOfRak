@@ -166,7 +166,6 @@ namespace rak.creatures
                 buffer.Clear();
             }
             goEntity.EntityManager.SetComponentData(goEntity.Entity, observeComponent);
-
         }
 
         public void SetInView(bool inView)
@@ -226,6 +225,8 @@ namespace rak.creatures
                 updateCurrentGridSector();
                 updateStateAndTasks(delta);
             }
+            // DEBUG
+            //RequestObservationUpdate();
         }
         private void updateStateAndTasks(float delta)
         { 

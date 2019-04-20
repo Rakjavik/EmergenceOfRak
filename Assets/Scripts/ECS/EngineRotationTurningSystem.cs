@@ -23,6 +23,7 @@ namespace rak.ecs.ThingComponents
             public void Execute(ref EngineRotationTurning ert, ref AgentVariables av, ref Target target)
             {
                 float3 direction = (target.targetPosition - av.Position);
+                if (direction.Equals(float3.zero)) return;
                 Quaternion lookRotation = Quaternion.LookRotation(direction,Vector3.up);
                 Quaternion currentRot = new Quaternion(av.Rotation.x, av.Rotation.y, av.Rotation.z, av.Rotation.w);
                 Quaternion newRotation = Quaternion.Slerp(currentRot, lookRotation, ert.RotationSpeed * delta);

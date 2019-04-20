@@ -205,7 +205,6 @@ namespace rak.ecs.ThingComponents
                     {
                         engine.NonPhysicsPositionUpdate = Vector3.MoveTowards(av.Position, target.targetPosition,
                             engine.VelWhenMovingWithoutPhysics * delta);
-                        Debug.LogWarning(engine.NonPhysicsPositionUpdate);
                     }
                 }
             }

@@ -128,6 +128,8 @@ namespace rak.ecs.ThingComponents
                     start = Quaternion.LookRotation(normalized, Vector3.up);
                 }
                 float3 neededDirection = Vector3.Normalize(target.targetPosition - agentVar.Position);
+                if (neededDirection.Equals(float3.zero))
+                    return float3.zero;
                 Quaternion desired = Quaternion.LookRotation(neededDirection,Vector3.up);
                 Quaternion difference = Quaternion.Inverse(desired) * start;
                 return difference.eulerAngles;
