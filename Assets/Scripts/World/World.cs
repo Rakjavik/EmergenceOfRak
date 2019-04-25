@@ -211,7 +211,7 @@ namespace rak.world
                 
                 sinceLastUpdate = 0;
             }
-            CurrentArea.update(Time.deltaTime);
+            //CurrentArea.update(Time.deltaTime);
         }
 
     }

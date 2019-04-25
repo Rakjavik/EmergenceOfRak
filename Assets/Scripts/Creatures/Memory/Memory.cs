@@ -25,7 +25,7 @@ namespace rak.creatures.memory
             }
             currentMemoryIndex = 0;
         }
-        public Thing GetClosestFoodFromMemory(bool filterOutMoveToFailuresFromShortTerm, CONSUMPTION_TYPE cType,
+        public Thing GetClosestFoodFromMemory(bool filterOutMoveToFailuresFromShortTerm, ConsumptionType cType,
             Vector3 originPosition)
         {
             Thing closest = null;
@@ -123,7 +123,7 @@ namespace rak.creatures.memory
             return closest;
         }
 
-        private Thing[] GetFoodFromMemory(CONSUMPTION_TYPE consumptionType)
+        private Thing[] GetFoodFromMemory(ConsumptionType consumptionType)
         {
             List<Thing> memoriesOfFood = new List<Thing>();
             for (int count = 0; count < shortTermMemory.Length; count++)
@@ -239,7 +239,7 @@ namespace rak.creatures.memory
         {
             return GetAllMemoriesOf(thing).Length > 0;
         }
-        public MemoryInstance[] HasAnyMemoriesOf(Verb verb, CONSUMPTION_TYPE consumptionType)
+        public MemoryInstance[] HasAnyMemoriesOf(Verb verb, ConsumptionType consumptionType)
         {
             List<MemoryInstance> memories = new List<MemoryInstance>();
             for (int count = 0; count < shortTermMemory.Length; count++)
@@ -265,7 +265,7 @@ namespace rak.creatures.memory
             }
             return memories.ToArray();
         }
-        public MemoryInstance HasAnyMemoryOf(Verb verb, CONSUMPTION_TYPE consumptionType, bool invertVerb)
+        public MemoryInstance HasAnyMemoryOf(Verb verb, ConsumptionType consumptionType, bool invertVerb)
         {
             for (int count = 0; count < shortTermMemory.Length; count++)
             {

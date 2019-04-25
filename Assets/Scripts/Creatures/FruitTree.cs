@@ -26,7 +26,7 @@ namespace rak
             {
                 Vector3 newPosition = new Vector3(Random.Range(-5,5), 10, Random.Range(-5, 5));
                 newPosition += transform.position;
-                GameObject fruit = World.CurrentArea.addThingToWorld("fruit", newPosition, false);
+                //GameObject fruit = World.CurrentArea.addThingToWorld("fruit", newPosition, false);
                 
                 //fruitInstances.Add(fruit);
                 timeSincelastSpawned = 0;

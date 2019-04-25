@@ -290,6 +290,10 @@ namespace rak.creatures
                 steps = new ActionStep[1];
                 steps[0] = new ActionStep(ActionStep.Actions.MoveTo, task,30);
             }
+            else
+            {
+                steps = new ActionStep[0];
+            }
             return steps;
         }
 

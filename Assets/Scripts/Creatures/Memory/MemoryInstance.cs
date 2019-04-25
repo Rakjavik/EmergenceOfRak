@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Mathematics;
 
 namespace rak.creatures.memory
 {
@@ -6,11 +7,15 @@ namespace rak.creatures.memory
     public struct MemoryInstance
     {
         public Verb verb { get; private set; }
-        private byte invertVerb { get; set; }
+        public byte invertVerb { get; set; }
         public Guid subject { get; private set; }
         public float timeStamp { get; private set; }
         public int iterations { get; private set; }
-        public MemoryInstance(Verb verb, Guid subject, bool invertVerb, float timestamp)
+        public byte Edible { get; private set; }
+        public float3 Position { get; private set; }
+
+        public MemoryInstance(Verb verb, Guid subject, bool invertVerb, float timestamp,
+            Thing.Base_Types subjectType, ConsumptionType creatureConsumeType,float3 position)
         {
             if (invertVerb)
                 this.invertVerb = 1;
@@ -20,6 +25,16 @@ namespace rak.creatures.memory
             this.subject = subject;
             this.timeStamp = timestamp;
             iterations = 0;
+            Edible = 0;
+            if (creatureConsumeType == ConsumptionType.OMNIVORE)
+            {
+                if (subjectType == Thing.Base_Types.PLANT)
+                {
+                    Edible = 1;
+                }
+            }
+            Position = position;
+
         }
         private void setInvertVerb(bool invertVerb)
         {
@@ -51,7 +66,8 @@ namespace rak.creatures.memory
         }
         public static MemoryInstance GetNewEmptyMemory()
         {
-            return new MemoryInstance(Verb.NA, Guid.Empty, false,0);
+            return new MemoryInstance(Verb.NA, Guid.Empty, false,0,Thing.Base_Types.NA,
+                ConsumptionType.CARNIVORE,float3.zero);
         }
         public void ReplaceMemory(Verb verb, Guid subject, bool invertVerb)
         {
@@ -75,6 +91,15 @@ namespace rak.creatures.memory
                 }
             }
             return false;
+        }
+        public void SetNewMemory(MemoryInstance newMemory)
+        {
+            verb = newMemory.verb;
+            invertVerb = newMemory.invertVerb;
+            subject = newMemory.subject;
+            timeStamp = newMemory.timeStamp;
+            iterations = newMemory.iterations;
+            Edible = newMemory.Edible;
         }
     }
 }

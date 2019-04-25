@@ -60,6 +60,7 @@ namespace rak.creatures
         private Area currentArea;
         private System.Guid[] knownGridSectorsVisited;
         private int knownGridSectorsCount = 0;
+        private EntityManager em;
 
         public bool IsInitialized()
         {
@@ -84,6 +85,7 @@ namespace rak.creatures
         }
         private void Initialize(string name, Area area)
         {
+            em = Unity.Entities.World.Active.EntityManager;
             if (initialized)
             {
                 Debug.LogError("Call to initialize when already initialized");
@@ -96,12 +98,12 @@ namespace rak.creatures
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
                 species = new Species('m', "Gnat", true, BASE_SPECIES.Gnat,
-                    CONSUMPTION_TYPE.OMNIVORE, this);
+                    ConsumptionType.OMNIVORE, this);
             }
             else if (baseSpecies == BASE_SPECIES.Gagk)
             {
                 species = new Species('n', baseSpecies.ToString(), true, BASE_SPECIES.Gagk,
-                    CONSUMPTION_TYPE.HERBIVORE, this);
+                    ConsumptionType.HERBIVORE, this);
             }
             creaturePhysicalStats = CreatureConstants.PhysicalStatsInitialize(species.getBaseSpecies(), this);
             agent = new CreatureAgent(this);
@@ -146,26 +148,13 @@ namespace rak.creatures
         public void RequestObservationUpdate()
         {
             //StartCoroutine(observeSurroundings());
-            Observe observeComponent = goEntity.EntityManager.GetComponentData<Observe>(goEntity.Entity);
+            Observe observeComponent = em.GetComponentData<Observe>(ThingEntity);
             // Need to refresh observations //
             if (observeComponent.ObservationAvailable == 0)
             {
                 observeComponent.RequestObservation = 1;
             }
-            // observations available, write to memory
-            else
-            {
-                DynamicBuffer<MemoryBuffer> buffer = goEntity.EntityManager.GetBuffer<MemoryBuffer>(goEntity.Entity);
-                int bufferSize = buffer.Length;
-                for(int count = 0; count < bufferSize; count++)
-                {
-                    species.memory.AddMemory(buffer[count].memories);
-                }
-                observeComponent.ObservationAvailable = 0;
-                observeComponent.RequestObservation = 0;
-                buffer.Clear();
-            }
-            goEntity.EntityManager.SetComponentData(goEntity.Entity, observeComponent);
+            em.SetComponentData(ThingEntity, observeComponent);
         }
 
         public void SetInView(bool inView)
@@ -254,7 +243,7 @@ namespace rak.creatures
                 if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
                     if (DEBUGSCENE)
                     {
-                        Target target = goEntity.EntityManager.GetComponentData<Target>(goEntity.Entity);
+                        Target target = em.GetComponentData<Target>(ThingEntity);
                         Debug.DrawLine(transform.position, target.targetPosition, Color.cyan, 1f);
                     }
 
@@ -274,7 +263,7 @@ namespace rak.creatures
                 System.Guid guid = System.Guid.Empty;
                 if (targetThing != null)
                     guid = targetThing.guid;
-                goEntity.EntityManager.SetComponentData<Target>(goEntity.Entity, new Target
+                em.SetComponentData<Target>(ThingEntity, new Target
                 {
                     targetGuid = guid,
                     targetPosition = targetPosition
@@ -294,11 +283,6 @@ namespace rak.creatures
         }
         #endregion
 
-        
-        public GameObjectEntity GetCreatureGOEntity()
-        {
-            return goEntity;
-        }
         public Rigidbody GetCreatureAgentBody()
         {
             return agent.GetRigidBody();
@@ -314,7 +298,7 @@ namespace rak.creatures
                 targetPosition = destination,
                 targetGuid = System.Guid.Empty
             };
-            goEntity.EntityManager.SetComponentData(goEntity.Entity, target);
+            em.SetComponentData(ThingEntity, target);
         }
         public bool AddThingToInventory(Thing thing)
         {
@@ -337,7 +321,7 @@ namespace rak.creatures
                 if (failedStep.failReason == ActionStep.FailReason.CouldntGetToTarget ||
                     failedStep.failReason == ActionStep.FailReason.InfinityDistance)
                 {
-                    AddMemory(Verb.MOVEDTO, failedStep._targetThing, true);
+                    AddMemory(Verb.MOVEDTO,Area.GetThingByGUID(failedStep._targetThing), true);
                     //Debug.LogWarning("Memory of couldnt move to " + failedStep._targetThing.thingName);
                 }
             }
@@ -398,11 +382,11 @@ namespace rak.creatures
             }
         }
 
-        public MemoryInstance[] HasAnyMemoriesOf(Verb verb, CONSUMPTION_TYPE consumptionType)
+        public MemoryInstance[] HasAnyMemoriesOf(Verb verb, ConsumptionType consumptionType)
         {
             return species.memory.HasAnyMemoriesOf(verb, consumptionType);
         }
-        public MemoryInstance HasAnyMemoryOf(Verb verb, CONSUMPTION_TYPE consumptionType, bool invertVerb)
+        public MemoryInstance HasAnyMemoryOf(Verb verb, ConsumptionType consumptionType, bool invertVerb)
         {
             return species.memory.HasAnyMemoryOf(verb, consumptionType, invertVerb);
         }

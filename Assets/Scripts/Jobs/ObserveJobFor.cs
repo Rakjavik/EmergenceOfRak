@@ -20,7 +20,6 @@ public struct ObserveJobFor : IJobParallelFor
         float distanceFromThing = Vector3.Distance(allThings[index].position, origin);
         if (distanceFromThing <= observeDistance && distanceFromThing > 1)
         {
-            memories[index] = new MemoryInstance(Verb.SAW, allThings[index].GetGuid(), false,timestamp);
         }
         else
         {

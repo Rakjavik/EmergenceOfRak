@@ -1,4 +1,5 @@
 ﻿using rak.creatures;
+using rak.world;
 using UnityEngine;
 
 namespace rak
@@ -31,10 +32,8 @@ namespace rak
 
         public string GetCurrentTaskTargetName()
         {
-            if (currentActionSteps == null || currentActionSteps.Length == 0
-                || currentActionSteps[_currentStepNum] == null ||
-                currentActionSteps[_currentStepNum]._targetThing == null) return "None";
-            return currentActionSteps[_currentStepNum]._targetThing.thingName;
+            if (currentActionSteps.Length == 0) return "None";
+            return Area.GetThingByGUID(currentActionSteps[_currentStepNum]._targetThing).thingName;
         }
         public ActionStep.FailReason GetPreviousStepsFailReason()
         {
@@ -47,7 +46,7 @@ namespace rak
 
         public ActionStep.Actions GetCurrentAction()
         {
-            if (currentActionSteps == null || currentActionSteps[_currentStepNum] == null)
+            if (currentActionSteps.Length == 0)
             {
                 return ActionStep.Actions.None;
             }
@@ -75,7 +74,7 @@ namespace rak
                     if (!currentStep.HasTargetThing() &&
                         previousStep.HasTargetThing())
                     {
-                        currentStep.SetTarget(previousStep._targetThing);
+                        currentStep.SetTarget(Area.GetThingByGUID(previousStep._targetThing));
                     }
                     else if (!currentStep.HasTargetPosition() &&
                         previousStep.HasTargetPosition())
@@ -122,7 +121,7 @@ namespace rak
 
         private Thing getCurrentTaskStepTarget()
         {
-            return currentActionSteps[_currentStepNum]._targetThing;
+            return Area.GetThingByGUID(currentActionSteps[_currentStepNum]._targetThing);
         }
         public Vector3 GetCurrentTaskDestination()
         {

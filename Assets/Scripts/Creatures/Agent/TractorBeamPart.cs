@@ -1,5 +1,6 @@
 ﻿using rak.ecs.ThingComponents;
 using rak.world;
+using Unity.Entities;
 using UnityEngine;
 
 namespace rak.creatures
@@ -9,6 +10,7 @@ namespace rak.creatures
         private Thing target { get; set; }
         private bool locked { get; set; }
         private Rigidbody targetBody { get; set; }
+        private EntityManager em;
 
         public TractorBeamPart(Transform transform, float updateEvery,float beamStrength) : 
             base(CreaturePart.TRACTORBEAM, transform, updateEvery)
@@ -16,13 +18,14 @@ namespace rak.creatures
             attachedBody = transform.GetComponentInParent<Rigidbody>();
             if (attachedBody == null) Debug.LogError("Can't find Rigidbody for tractor beam part");
             locked = false;
+            em = Unity.Entities.World.Active.EntityManager;
         }
 
         public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
             base.UpdateDerivedPart(action,delta);
-            TractorBeam tb = parentCreature.goEntity.EntityManager.
-                    GetComponentData<TractorBeam>(parentCreature.goEntity.Entity);
+            TractorBeam tb = em.
+                    GetComponentData<TractorBeam>(parentCreature.ThingEntity);
             if (tb.Locked == 1) 
             {
                 if (targetBody == null && target == null)

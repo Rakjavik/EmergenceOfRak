@@ -12,15 +12,16 @@ namespace rak
 {
     public class Thing : MonoBehaviour
     {
+        public Entity ThingEntity { get; set; }
         public void AddECSComponents()
         {
             Unity.Entities.World world = Unity.Entities.World.Active;
             //Debug.LogWarning("Thing type - " + thingType);
-            world.EntityManager.AddComponentData(goEntity.Entity, new Age { Value = 0,MaxAge=10 });
-            world.EntityManager.AddComponentData(goEntity.Entity, new Enabled { Value = 1 });
+            world.EntityManager.AddComponentData(ThingEntity, new Age { Value = 0,MaxAge=10 });
+            world.EntityManager.AddComponentData(ThingEntity, new Enabled { Value = 1 });
             if (thingType == Thing_Types.FruitTree)
             {
-                world.EntityManager.AddComponentData(goEntity.Entity, new Produces
+                world.EntityManager.AddComponentData(ThingEntity, new Produces
                 {
                     spawnThingEvery = 15,
                     thingToProduce = Thing_Types.Fruit,
@@ -31,7 +32,7 @@ namespace rak
             {
                 Creature gnat = (Creature)this;
                 CreatureAgent attachedAgent = gnat.GetCreatureAgent();
-                world.EntityManager.AddComponentData(goEntity.Entity, new Engine
+                world.EntityManager.AddComponentData(ThingEntity, new Engine
                 {
                     moveType = CreatureLocomotionType.Flight, // Engine movement type (Flight)
                     objectBlockDistance = 3, // Distance a raycast forward has to be below before alt flight logic for being blocked
@@ -47,45 +48,58 @@ namespace rak
                     CurrentStateZ = MovementState.IDLE,
                     VelWhenMovingWithoutPhysics = 20
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new EngineSound
+                world.EntityManager.AddComponentData(ThingEntity, new EngineSound
                 {
                     ChangeSpeed = 100,
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new Agent
+                world.EntityManager.AddComponentData(ThingEntity, new Agent
                 {
                     UpdateDistanceEvery = .25f, // How often to add a new entry to distance traveled
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new AgentVariables
+                world.EntityManager.AddComponentData(ThingEntity, new AgentVariables
                 {
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new CreatureAI
+                world.EntityManager.AddComponentData(ThingEntity, new CreatureAI
                 {
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new AntiGravityShield
+                world.EntityManager.AddComponentData(ThingEntity, new AntiGravityShield
                 {
                     BrakeIfCollidingIn = .5f, // Use brake mechanism if a velocity collision is happening
                     EngageIfWrongDirectionAndMovingFasterThan = 15, // Velocity magnitude before brake will kick in if going wrong direction from target
                     VelocityMagNeededBeforeCollisionActivating = 20, // If colliding shortly, this minimum magnitude needs to be met before brake
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new Target
+                world.EntityManager.AddComponentData(ThingEntity, new Target
                 {
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new EngineConstantForce
+                world.EntityManager.AddComponentData(ThingEntity, new EngineConstantForce
                 {
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new EngineRotationTurning
+                world.EntityManager.AddComponentData(ThingEntity, new EngineRotationTurning
                 {
                     RotationSpeed = 20, // Modifier for slerp between
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new TractorBeam
+                world.EntityManager.AddComponentData(ThingEntity, new TractorBeam
                 {
                     BeamStrength = 5, // Movement modifier
                 });
-                world.EntityManager.AddComponentData(goEntity.Entity, new Observe
+                world.EntityManager.AddComponentData(ThingEntity, new Observe
                 {
                     ObserveDistance = 100, // Distance from creature before creature can see it
+                    memoryBuffer = world.EntityManager.AddBuffer<ObserveBuffer>(ThingEntity)
                 });
-                world.EntityManager.AddBuffer<MemoryBuffer>(goEntity.Entity);
+                
+                world.EntityManager.AddComponentData(ThingEntity, new ShortTermMemory
+                {
+                    CurrentMemoryIndex = 0,
+                    MaxShortTermMemories = 100,
+                    memoryBuffer = world.EntityManager.AddBuffer<CreatureMemoryBuf>(ThingEntity)
+                });
+                DynamicBuffer<CreatureMemoryBuf> thisCreaturesBuffer = world.EntityManager.GetBuffer<CreatureMemoryBuf>(ThingEntity);
+                int bufferCapacity = thisCreaturesBuffer.Capacity;
+                for(int count = 0; count < bufferCapacity; count++)
+                {
+                    thisCreaturesBuffer.Add(new CreatureMemoryBuf { memory = MemoryInstance.GetNewEmptyMemory() });
+                }
             }
         }
         
@@ -117,7 +131,7 @@ namespace rak
         }
         protected Rigidbody rb;
         private ThingAgent thingAgent;
-        public GameObjectEntity goEntity { get; private set; }
+        //public GameObjectEntity goEntity { get; private set; }
         private int weight;
         private bool useable;
         private bool consumeable;
@@ -161,7 +175,7 @@ namespace rak
         {
             rb = null;
             guid = Guid.NewGuid();
-            goEntity = GetComponent<GameObjectEntity>();
+            //goEntity = GetComponent<GameObjectEntity>();
             this.thingName = name + "-" + guid.ToString().Substring(0,5);
             // Default to no production //
             produces = Thing_Produces.NA;
@@ -288,9 +302,9 @@ namespace rak
             return this.baseType == baseType;
         }
 
-        public bool matchesConsumptionType(CONSUMPTION_TYPE consumptionType)
+        public bool matchesConsumptionType(ConsumptionType consumptionType)
         {
-            if (consumptionType == CONSUMPTION_TYPE.OMNIVORE)
+            if (consumptionType == ConsumptionType.OMNIVORE)
             {
                 if (consumeable && available)
                 {

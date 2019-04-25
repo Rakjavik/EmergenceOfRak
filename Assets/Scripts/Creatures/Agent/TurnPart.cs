@@ -1,4 +1,5 @@
 ﻿using rak.ecs.ThingComponents;
+using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 
@@ -15,6 +16,8 @@ namespace rak.creatures
         private Rigidbody attachedToBody;
         
         public Direction hingeAxis { get; private set; }
+
+        
 
         public TurnPartInching(CreaturePart creaturePart, Transform transform,
             CreatureTurnType turnType, float updateEvery,Direction hingeAxis,
@@ -66,8 +69,8 @@ namespace rak.creatures
         {
             base.UpdateDerivedPart(action, delta);
 
-            EngineRotationTurning ert = parentCreature.goEntity.EntityManager.
-                GetComponentData<EngineRotationTurning>(parentCreature.goEntity.Entity);
+            EngineRotationTurning ert = em.
+                GetComponentData<EngineRotationTurning>(parentCreature.ThingEntity);
             Quaternion newRotation = new Quaternion(ert.RotationUpdate.x, ert.RotationUpdate.y,
                 ert.RotationUpdate.z, ert.RotationUpdate.w);
             if (newRotation.eulerAngles != Vector3.zero)
@@ -76,6 +79,7 @@ namespace rak.creatures
     }
     public abstract class TurnPart : Part
     {
+        protected EntityManager em = Unity.Entities.World.Active.EntityManager;
         private CreatureTurnType turnType;
         public TurnPart(CreaturePart creaturePart,Transform transform,
             CreatureTurnType turnType,float updateEvery) : 

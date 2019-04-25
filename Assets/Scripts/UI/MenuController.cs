@@ -24,7 +24,7 @@ namespace rak.UI
         {
             availableMenus = new Dictionary<RootMenu, Menu>();
             availableMenus.Add(RootMenu.CreatureBrowser,
-                GameObject.Instantiate(creatureBrowserPrefab).GetComponent<CreatureBrowser>());
+                GameObject.Instantiate(creatureBrowserPrefab).GetComponent<CreatureBrowserMono>());
             availableMenus.Add(RootMenu.WorldBrowser,
                 GameObject.Instantiate(worldBrowserPrefab).GetComponent<WorldBrowser>());
             availableMenus.Add(RootMenu.DebugMenu,

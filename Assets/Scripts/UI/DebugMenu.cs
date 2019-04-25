@@ -78,7 +78,7 @@ public class DebugMenu : MonoBehaviour, Menu
     public void SetFocusObject(object focus)
     {
         if (MenuController.previousMenu == (int)RootMenu.CreatureBrowser)
-            thingInFocus = CreatureBrowser.SelectedCreature;
+            thingInFocus = CreatureBrowserMono.SelectedCreature;
         else
         {
             thingInFocus = (Thing)focus;

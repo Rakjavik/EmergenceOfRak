@@ -55,7 +55,7 @@ namespace rak.creatures
                 for (int count = 0; count < members.Length; count++)
                 {
                     members[count] = new Species('m', "GnatPrime", false,
-                        BASE_SPECIES.Gnat, CONSUMPTION_TYPE.OMNIVORE);
+                        BASE_SPECIES.Gnat, ConsumptionType.OMNIVORE);
                 }
                 population = UnityEngine.Random.Range(minPop,maxPop);
             }

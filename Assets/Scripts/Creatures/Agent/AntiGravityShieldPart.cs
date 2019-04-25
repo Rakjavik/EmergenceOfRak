@@ -44,7 +44,7 @@ namespace rak.creatures
         public override void UpdateDerivedPart(ActionStep.Actions action,float delta)
         {
             
-            AntiGravityShield shield = World.Active.EntityManager.GetComponentData<AntiGravityShield>(creature.goEntity.Entity);
+            AntiGravityShield shield = World.Active.EntityManager.GetComponentData<AntiGravityShield>(creature.ThingEntity);
             bool shieldActive = (shield.Activated == 1);
             if (shieldActive != Activated)
             {

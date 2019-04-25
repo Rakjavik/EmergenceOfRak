@@ -4,7 +4,7 @@ using System;
 namespace rak.creatures
 {
     public enum BASE_SPECIES { Gnat, Gagk };
-    public enum CONSUMPTION_TYPE { HERBIVORE, CARNIVORE, OMNIVORE }
+    public enum ConsumptionType { HERBIVORE, CARNIVORE, OMNIVORE }
     public class Species
     {
         private char gender;
@@ -12,21 +12,21 @@ namespace rak.creatures
         private bool intelligent;
         public Personality personality { get; private set; }
         private BASE_SPECIES baseSpecies;
-        private CONSUMPTION_TYPE consumptionType;
+        private ConsumptionType consumptionType;
         public Memory memory { get; private set; }
 
         public Species(char gender, string speciesName, bool intelligent, BASE_SPECIES baseSpecies,
-            CONSUMPTION_TYPE consumptionType)
+            ConsumptionType consumptionType)
         {
             Initialize(gender, speciesName, intelligent, baseSpecies, consumptionType,null);
         }
         public Species(char gender, string speciesName, bool intelligent, BASE_SPECIES baseSpecies,
-            CONSUMPTION_TYPE consumptionType,Creature creature)
+            ConsumptionType consumptionType,Creature creature)
         {
             Initialize(gender, speciesName, intelligent, baseSpecies, consumptionType,creature);
         }
         private void Initialize(char gender, string speciesName, bool intelligent, BASE_SPECIES baseSpecies,
-            CONSUMPTION_TYPE consumptionType,Creature creature)
+            ConsumptionType consumptionType,Creature creature)
         {
             this.memory = new Memory();
             this.speciesName = speciesName;
@@ -46,7 +46,7 @@ namespace rak.creatures
         
         #region GETTERS, SETTERS
         public BASE_SPECIES getBaseSpecies() { return baseSpecies; }
-        public CONSUMPTION_TYPE getConsumptionType() { return consumptionType; }
+        public ConsumptionType getConsumptionType() { return consumptionType; }
         #endregion
     }
 

@@ -73,17 +73,19 @@ namespace rak.creatures
         }
         public float GetSustainHeight()
         {
-            Engine engine = creature.goEntity.EntityManager.GetComponentData<Engine>(creature.goEntity.Entity);
+            EntityManager em = Unity.Entities.World.Active.EntityManager;
+            Engine engine = em.GetComponentData<Engine>(creature.ThingEntity);
             return engine.sustainHeight;
         }
         public void SetDestination(float3 destination)
         {
+            EntityManager em = Unity.Entities.World.Active.EntityManager;
             Target target = new Target
             {
                 targetGuid = System.Guid.Empty,
                 targetPosition = destination
             };
-            creature.goEntity.EntityManager.SetComponentData(creature.goEntity.Entity, target);
+            em.SetComponentData(creature.ThingEntity, target);
 
         }
         #endregion
@@ -131,7 +133,7 @@ namespace rak.creatures
         public float GetDistanceFromDestination()
         {
             EntityManager manager = Unity.Entities.World.Active.EntityManager;
-            Target target = manager.GetComponentData<Target>(creature.goEntity.Entity);
+            Target target = manager.GetComponentData<Target>(creature.ThingEntity);
             return target.distance;
         }
         #endregion CALCULATION METHODS
@@ -172,15 +174,16 @@ namespace rak.creatures
         {
             if (!Active) return;
             lastUpdate += delta;
+            EntityManager manager = Unity.Entities.World.Active.EntityManager;
             CreatureAI ai = new CreatureAI
             {
                 CurrentAction = creature.GetCurrentAction(),
             };
-            Unity.Entities.World.Active.EntityManager.SetComponentData(creature.goEntity.Entity, ai);
-            EntityManager manager = creature.goEntity.EntityManager;
-            Engine engineData = manager.GetComponentData<Engine>(creature.goEntity.Entity);
-            AgentVariables agentVariables = creature.goEntity.EntityManager.
-                GetComponentData<AgentVariables>(creature.goEntity.Entity);
+            manager.SetComponentData(creature.ThingEntity, ai);
+            
+            Engine engineData = manager.GetComponentData<Engine>(creature.ThingEntity);
+            AgentVariables agentVariables = manager.
+                GetComponentData<AgentVariables>(creature.ThingEntity);
             float3 relativeVel = creature.transform.InverseTransformDirection(rigidbody.velocity);
             Quaternion rotation = creature.transform.rotation;
             float4 currentRot = new float4(rotation.x, rotation.y, rotation.z, rotation.w);
@@ -199,7 +202,7 @@ namespace rak.creatures
             // If In View update everything normally //
             if (visible)
             {
-                manager.SetComponentData(creature.goEntity.Entity, agentData);
+                manager.SetComponentData(creature.ThingEntity, agentData);
                 // Part updates //
                 foreach (Part part in allParts)
                 {
@@ -213,7 +216,7 @@ namespace rak.creatures
                 ActionStep.Actions currentAction = creature.GetCurrentAction();
                 if (currentAction == ActionStep.Actions.MoveTo)
                 {
-                    Engine engine = manager.GetComponentData<Engine>(creature.goEntity.Entity);
+                    Engine engine = manager.GetComponentData<Engine>(creature.ThingEntity);
                     Vector3 newPosition = engine.NonPhysicsPositionUpdate;
                     GridSector currentSector = creature.currentSector;
 
@@ -228,7 +231,7 @@ namespace rak.creatures
                         };
                         agentData.Position = creature.transform.position;
                     }
-                    manager.SetComponentData(creature.goEntity.Entity, agentData);
+                    manager.SetComponentData(creature.ThingEntity, agentData);
                     // Update these parts when not visible //
                     for (int count = 0; count < allParts.Length; count++)
                     {

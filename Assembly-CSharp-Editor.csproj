@@ -62,28 +62,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\AssetStoreImports\LowPolyGround\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\AntialiasingEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\BloomAndFlaresEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\BloomEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\CameraMotionBlurEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\ColorCorrectionCurvesEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\ColorCorrectionLookupEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\CreaseShadingEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\DepthOfFieldDeprecatedEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\DepthOfFieldEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\EdgeDetectionEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\NoiseAndGrainEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\SunShaftsEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\TonemappingEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\NatureStarterKit2\Editor\ImageEffects\VignetteAndChromaticAberrationEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\PolarisStarter\Scripts\Editor\CompileLogger.cs" />
-    <Compile Include="Assets\AssetStoreImports\PolarisStarter\Scripts\Editor\CreateGameObjectUtilities.cs" />
-    <Compile Include="Assets\AssetStoreImports\PolarisStarter\Scripts\Editor\EditorMenus.cs" />
-    <Compile Include="Assets\AssetStoreImports\PolarisStarter\Scripts\Editor\FoliageSpawnerEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\PolarisStarter\Scripts\Editor\IslandGeneratorEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\PolarisStarter\Scripts\Editor\UvExporterEditor.cs" />
-    <Compile Include="Assets\AssetStoreImports\RainMaker\Editor\RainMakerEditor.cs" />
     <Compile Include="Assets\PostProcessing\Editor\Attributes\PostProcessingModelEditorAttribute.cs" />
     <Compile Include="Assets\PostProcessing\Editor\Models\AmbientOcclusionModelEditor.cs" />
     <Compile Include="Assets\PostProcessing\Editor\Models\AntialiasingModelEditor.cs" />
@@ -119,6 +97,28 @@
     <Compile Include="Assets\PostProcessing\Editor\Utils\FxStyles.cs" />
     <Compile Include="Assets\PostProcessing\Editor\Utils\ReflectionUtils.cs" />
     <Compile Include="Assets\Scripts\Editor\HexCoordinatesDrawer.cs" />
+    <Compile Include="Assets\zAssetStoreImports\LowPolyGround\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\AntialiasingEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\BloomAndFlaresEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\BloomEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\CameraMotionBlurEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\ColorCorrectionCurvesEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\ColorCorrectionLookupEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\CreaseShadingEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\DepthOfFieldDeprecatedEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\DepthOfFieldEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\EdgeDetectionEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\NoiseAndGrainEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\SunShaftsEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\TonemappingEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\NatureStarterKit2\Editor\ImageEffects\VignetteAndChromaticAberrationEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\PolarisStarter\Scripts\Editor\CompileLogger.cs" />
+    <Compile Include="Assets\zAssetStoreImports\PolarisStarter\Scripts\Editor\CreateGameObjectUtilities.cs" />
+    <Compile Include="Assets\zAssetStoreImports\PolarisStarter\Scripts\Editor\EditorMenus.cs" />
+    <Compile Include="Assets\zAssetStoreImports\PolarisStarter\Scripts\Editor\FoliageSpawnerEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\PolarisStarter\Scripts\Editor\IslandGeneratorEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\PolarisStarter\Scripts\Editor\UvExporterEditor.cs" />
+    <Compile Include="Assets\zAssetStoreImports\RainMaker\Editor\RainMakerEditor.cs" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>

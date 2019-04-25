@@ -34,20 +34,28 @@ namespace rak.world
             jobHandles.Add(handle);
         }
         private static NativeArray<BlittableThing> allThingsBlittableCache;
+        private static NativeArray<ObservableThing> observableThings;
         public static void WorldDisabled()
         {
             allThingsBlittableCache.Dispose();
+            observableThings.Dispose();
         }
 
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
         private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
         private static readonly int MAX_VISIBLE_CREATURES = 10;
         private static int MAXPOP = 100;
+        private void InitializeDebug(Tribe tribe)
+        {
+            MAXPOP = 3;
+            //dayLength = 360;
+        }
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
         public static float dayLength = 240;
 
         // How many entries in the cache before empty structs are placed //
         public static int AllThingsCacheEntriesFilled { get; private set; }
+        public static int ObservableThingsEntriesFilled { get; private set; }
         private static List<Thing> _removeTheseThings = new List<Thing>();
         private static float updateSunEvery = .1f;
         private static float timeSinceUpdatedThings = 0;
@@ -95,8 +103,6 @@ namespace rak.world
         public static void AddThingToAllThings(Thing thingToAdd)
         {
             allThings.Add(thingToAdd);
-            if (thingToAdd == null)
-                Debug.LogError("NULL");
             thingMasterList.Add(thingToAdd.guid, thingToAdd);
             if(thingToAdd is Creature)
             {
@@ -105,15 +111,19 @@ namespace rak.world
                     agents.Add(creature.GetCreatureAgent());
             }
             Unity.Entities.World world = Unity.Entities.World.Active;
-            Entity sourceEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(thingToAdd.gameObject, world);
+            thingToAdd.ThingEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(thingToAdd.gameObject, world);
             NativeArray<Entity> entities = new NativeArray<Entity>(1,Allocator.Temp);
-            world.EntityManager.Instantiate(sourceEntity, entities);
+            world.EntityManager.Instantiate(thingToAdd.ThingEntity, entities);
             entities.Dispose();
             thingToAdd.AddECSComponents();
         }
         public static NativeArray<BlittableThing> GetBlittableThings()
         {
             return allThingsBlittableCache;
+        }
+        public static NativeArray<ObservableThing> GetObservableThings()
+        {
+            return observableThings;
         }
         private static void updateAllBlittableThingsCache()
         {
@@ -124,10 +134,24 @@ namespace rak.world
             }
             jobHandles = new List<JobHandle>();
             AllThingsCacheEntriesFilled = allThings.Count;
+            
+            int validThings = 0;
             for (int count = 0; count < AllThingsCacheEntriesFilled; count++)
             {
                 allThingsBlittableCache[count] = allThings[count].GetBlittableThing();
+                if (!allThingsBlittableCache[count].IsEmpty())
+                {
+                    observableThings[validThings] = new ObservableThing
+                    {
+                        index = count,
+                        position = allThingsBlittableCache[count].position,
+                        guid = allThingsBlittableCache[count].GetGuid(),
+                        BaseType = allThingsBlittableCache[count].BaseType
+                    };
+                    validThings++;
+                }
             }
+            ObservableThingsEntriesFilled = validThings;
         }
         public static List<Thing> GetAllThings()
         {
@@ -176,12 +200,7 @@ namespace rak.world
             walls = new GameObject[4];
             debug = World.ISDEBUGSCENE;
         }
-        private void InitializeDebug(Tribe tribe)
-        {
-            MAXPOP = 10;
-            //dayLength = 360;
-
-        }
+        
         public void Initialize(Tribe tribe)
         {
             
@@ -192,6 +211,7 @@ namespace rak.world
             }
             jobHandles = new List<JobHandle>();
             allThingsBlittableCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
+            observableThings = new NativeArray<ObservableThing>(MAX_CONCURRENT_THINGS, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             thingMasterList = new Dictionary<System.Guid, Thing>();
             mainCamera = Camera.main;
             if (debug) // DEBUG
@@ -251,7 +271,7 @@ namespace rak.world
             initialized = true;
         }
 
-        public Thing[] findConsumeable(CONSUMPTION_TYPE consumptionType)
+        public Thing[] findConsumeable(ConsumptionType consumptionType)
         {
             List<Thing> things = new List<Thing>();
             List<Thing> allThingsLocal = GetAllThings();
@@ -434,7 +454,7 @@ namespace rak.world
             {
                 if (!(allThings[count] is Creature))
                     continue;
-                Entity entity = allThings[count].goEntity.Entity;
+                Entity entity = allThings[count].ThingEntity;
                 Agent agentData = manager.GetComponentData<Agent>(entity);
                 if (agentData.RequestRaycastUpdateDirectionLeft == 1)
                 {

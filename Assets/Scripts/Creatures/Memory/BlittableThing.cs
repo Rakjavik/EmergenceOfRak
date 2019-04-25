@@ -9,7 +9,7 @@ namespace rak.creatures.memory
     public struct BlittableThing
     {
         private Guid guid;
-        private Thing.Base_Types baseType;
+        public Thing.Base_Types BaseType;
         public Thing.Thing_Produces produces;
         private float age;
         private float bornAt;
@@ -20,7 +20,7 @@ namespace rak.creatures.memory
         {
             if (guid.Equals(Guid.Empty))
             {
-                this.baseType = Thing.Base_Types.NA;
+                this.BaseType = Thing.Base_Types.NA;
                 this.age = -1;
                 this.bornAt = -1;
                 this.position = float3.zero;
@@ -30,7 +30,7 @@ namespace rak.creatures.memory
             else
             {
                 this.guid = guid;
-                this.baseType = baseType;
+                this.BaseType = baseType;
                 this.age = age;
                 this.bornAt = bornAt;
                 this.position = position;
@@ -53,7 +53,7 @@ namespace rak.creatures.memory
         public void RefreshValue(Thing thing)
         {
             guid = thing.guid;
-            baseType = thing.baseType;
+            BaseType = thing.baseType;
             age = thing.age;
             bornAt = thing.bornAt;
             position = thing.transform.position;
@@ -69,5 +69,13 @@ namespace rak.creatures.memory
 
             return false;
         }
+    }
+
+    public struct ObservableThing
+    {
+        public float3 position;
+        public int index;
+        public System.Guid guid;
+        public Thing.Base_Types BaseType;
     }
 }
