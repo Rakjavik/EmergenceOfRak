@@ -175,20 +175,14 @@ namespace rak.creatures
             if (!Active) return;
             lastUpdate += delta;
             EntityManager manager = Unity.Entities.World.Active.EntityManager;
-            CreatureAI ai = new CreatureAI
-            {
-                CurrentAction = creature.GetCurrentAction(),
-            };
-            manager.SetComponentData(creature.ThingEntity, ai);
-            
-            Engine engineData = manager.GetComponentData<Engine>(creature.ThingEntity);
+
             AgentVariables agentVariables = manager.
                 GetComponentData<AgentVariables>(creature.ThingEntity);
             float3 relativeVel = creature.transform.InverseTransformDirection(rigidbody.velocity);
             Quaternion rotation = creature.transform.rotation;
             float4 currentRot = new float4(rotation.x, rotation.y, rotation.z, rotation.w);
             byte visibleByte = 0;
-            if (creature.Visible) visibleByte = 1;
+            if (visible) visibleByte = 1;
             AgentVariables agentData = new AgentVariables
             {
                 RelativeVelocity = relativeVel,
@@ -198,11 +192,10 @@ namespace rak.creatures
                 AngularVelocity = rigidbody.angularVelocity,
                 Visible = visibleByte
             };
-            
+            manager.SetComponentData(creature.ThingEntity, agentData);
             // If In View update everything normally //
             if (visible)
             {
-                manager.SetComponentData(creature.ThingEntity, agentData);
                 // Part updates //
                 foreach (Part part in allParts)
                 {
@@ -211,7 +204,7 @@ namespace rak.creatures
                 
             }
             // If not in view, manually move without physics //
-            else
+            else if (false == true)
             {
                 ActionStep.Actions currentAction = creature.GetCurrentAction();
                 if (currentAction == ActionStep.Actions.MoveTo)

@@ -1,92 +1,93 @@
-﻿using Unity.Entities;
+﻿using rak.creatures;
+using Unity.Collections;
+using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace rak.ecs.ThingComponents
 {
+    public struct CreatureAI : IComponentData
+    {
+        public ActionStep.Actions CurrentAction;
+        public ActionStep.FailReason FailReason;
+        public Tasks.TASK_STATUS CurrentStepStatus;
+        public byte DestinationSet;
+        public float ElapsedTime;
+        public float MaxAllowedTime;
+        public float DistanceForCompletion;
+        public ConsumptionType ConsumptionType;
+        public byte IsKinematic;
+    }
+
     public class CreatureAISystem : JobComponentSystem
     {
+        protected override void OnCreate()
+        {
+            RequireForUpdate(GetEntityQuery(new EntityQueryDesc[] { new EntityQueryDesc {
+                Any = new ComponentType[]{typeof(ShortTermMemory)}
+            } }));
+            Enabled = true;
+        }
+
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             CreatureAIJob job = new CreatureAIJob
             {
-                Delta = Time.deltaTime
+                Delta = Time.deltaTime,
+                memoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>()
             };
             return job.Schedule(this, inputDeps);
         }
 
-        struct CreatureAIJob : IJobForEach<CreatureAI, Target,Observe,ShortTermMemory,AgentVariables>
+        struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory>
         {
             public float Delta;
+            [NativeDisableParallelForRestriction]
+            public BufferFromEntity<CreatureMemoryBuf> memoryBuffers;
 
-            public void Execute(ref CreatureAI cai, ref Target target, ref Observe obs, ref ShortTermMemory stm,ref AgentVariables av)
+            public void Execute(Entity entity, int index, ref CreatureAI cai, ref Target target, ref Observe obs, 
+                ref ShortTermMemory stm)
             {
-                cai.ElapsedTime += Delta;
-                if(cai.ElapsedTime > cai.MaxAllowedTime)
+                if(cai.CurrentAction == ActionStep.Actions.None)
                 {
-                    cai.CurrentStatus = Tasks.TASK_STATUS.Failed;
-                    cai.FailReason = ActionStep.FailReason.ExceededTimeLimit;
-                    return;
-                }
-
-                // LOCATE //
-                if(cai.CurrentAction == ActionStep.Actions.Locate)
-                {
-                    obs.RequestObservation = 1;
-                    if(cai.CurrentTask == Tasks.CreatureTasks.EAT)
+                    DynamicBuffer<CreatureMemoryBuf> memoryBuffer = memoryBuffers[entity];
+                    int memoryLength = memoryBuffer.Length;
+                    bool found = false;
+                    if (memoryBuffer.IsCreated && memoryLength > 1000)
                     {
-                        int length = stm.MaxShortTermMemories;
-                        float closestDistance = float.MaxValue;
-                        int closestIndex = -1;
-                        for (int count = 0; count < length; count++)
+                        for (int count = 0; count < memoryLength; count++)
                         {
-                            if (stm.memoryBuffer[count].memory.Edible == 1)
+                            if(memoryBuffer[count].memory.Edible == 1)
                             {
-                                float distance = Vector3.Distance(av.Position, stm.memoryBuffer[count].memory.Position);
-                                if (distance < closestDistance)
-                                {
-                                    closestDistance = distance;
-                                    closestIndex = count;
-                                }
+                                target.targetGuid = stm.memoryBuffer[count].memory.subject;
+                                target.targetPosition = stm.memoryBuffer[count].memory.Position;
+                                cai.CurrentAction = ActionStep.Actions.MoveTo;
+                                found = true;
+                                break;
                             }
                         }
-                        if(closestIndex == -1)
-                        {
-                            cai.FailReason = ActionStep.FailReason.NoKnownFood;
-                            cai.CurrentStatus = Tasks.TASK_STATUS.Failed;
-                            return;
-                        }
-                        else
-                        {
-                            target.targetGuid = stm.memoryBuffer[closestIndex].memory.subject;
-                            target.targetPosition = stm.memoryBuffer[closestIndex].memory.Position;
-                            cai.CurrentStatus = Tasks.TASK_STATUS.Complete;
-                        }
+                    }
+                    if (!found)
+                    {
+                        if (obs.ObservationAvailable == 0)
+                            obs.RequestObservation = 1;
+                        target.targetGuid = System.Guid.Empty;
+                        Unity.Mathematics.Random random = new Unity.Mathematics.Random();
+                        random.InitState((uint)(Delta*500));
+                        random.NextInt();
+                        int randomPosX = random.NextInt(512);
+                        int randomPosZ = random.NextInt(512);
+                        target.targetPosition = new float3(randomPosX, 50, randomPosZ);
+                        cai.CurrentAction = ActionStep.Actions.MoveTo;
                     }
                 }
-                // MOVE TO //
+
                 else if (cai.CurrentAction == ActionStep.Actions.MoveTo)
                 {
-                    if (target.distance == Mathf.Infinity)
+                    if(target.distance < 50 || target.targetPosition.Equals(float3.zero))
                     {
-                        cai.FailReason = ActionStep.FailReason.InfinityDistance;
-                        cai.CurrentStatus = Tasks.TASK_STATUS.Failed;
-                    }
-                    if (cai.CurrentTask == Tasks.CreatureTasks.MOVE_AND_OBSERVE)
-                        obs.RequestObservation = 1;
-                    if (target.distance <= cai.DistanceForCompletion)
-                    {
-                        cai.CurrentStatus = Tasks.TASK_STATUS.Complete;
-                        return;
-                    }
-                }
-                // ADD //
-                else if (cai.CurrentAction == ActionStep.Actions.Add)
-                {
-                    if(target.distance < .5f)
-                    {
-                        cai.CurrentStatus = Tasks.TASK_STATUS.Complete;
-                        return;
+                        cai.CurrentAction = ActionStep.Actions.None;
                     }
                 }
             }

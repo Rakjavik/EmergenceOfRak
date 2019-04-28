@@ -4,7 +4,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-public struct ObserveJobFor : IJobParallelFor
+/*public struct ObserveJobFor : IJobParallelFor
 {
     [ReadOnly]
     public NativeArray<BlittableThing> allThings;
@@ -61,4 +61,5 @@ public struct GetTerrainAtPointJob : IJobParallelFor
             }
         }
     }
-}
+    }*/
+

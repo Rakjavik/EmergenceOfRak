@@ -47,7 +47,7 @@ namespace rak.world
         private static int MAXPOP = 100;
         private void InitializeDebug(Tribe tribe)
         {
-            MAXPOP = 3;
+            MAXPOP = 1;
             //dayLength = 360;
         }
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
@@ -183,10 +183,6 @@ namespace rak.world
         private GameObject[] walls;
         private Transform sun;
         private float sinceLastSunUpdated = 0;
-        private static int batchSize = 20;
-        private static float batchDelta = 0;
-        private static int currentThingIndex = 0;
-        private static int currentBatch = 0;
         
         public Area(HexCell cell,World world)
         {
@@ -333,7 +329,9 @@ namespace rak.world
             }
             else
             {
-                newThing.transform.position = GetRandomPositionOnNavMesh();
+                Vector3 random = UnityEngine.Random.insideUnitSphere;
+                random.y = 15;
+                newThing.transform.position = random;
             }
             AddThingToAllThings(newThing.GetComponent<Thing>());
             return newThing;
@@ -342,32 +340,7 @@ namespace rak.world
         {
             _removeTheseThings.Add(thing);
         }
-        public Vector3 GetRandomPositionOnNavMesh(Vector3 startPosition,float maxDistance)
-        {
-            int maxTries = 100;
-            int currentTry = 0;
-            while (true)
-            {
-                float x = UnityEngine.Random.Range(startPosition.x-maxDistance, startPosition.x+maxDistance);
-                float z = UnityEngine.Random.Range(startPosition.z - maxDistance, startPosition.z + maxDistance);
-                Vector2 targetSpawn = new Vector2(x, z);
-                float y = RAKTerrainMaster.GetTerrainHeightAt(targetSpawn, RAKTerrainMaster.GetTerrainAtPoint(targetSpawn));
-                Vector3 randomPosition = new Vector3(x, y, z);
-                NavMeshHit hit;
-                if (NavMesh.SamplePosition(randomPosition, out hit, maxDistance, NavMesh.AllAreas))
-                {
-                    return hit.position;
-                }
-                currentTry++;
-                if (currentTry >= maxTries) break;
-            }
-            Debug.LogError("Couldn't find a valid random position on nav mesh");
-            return Vector3.zero;
-        }
-        public Vector3 GetRandomPositionOnNavMesh()
-        {
-            return GetRandomPositionOnNavMesh(Vector3.zero, 1000);
-        }
+        
         public static GridSector GetCurrentGridSector(Transform transform)
         {
             Vector3 position = transform.position;
@@ -463,7 +436,7 @@ namespace rak.world
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
-                        distance = 20,
+                        distance = 50,
                         from = transform.position,
                         maxHits = 1
                     };
@@ -479,7 +452,7 @@ namespace rak.world
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
-                        distance = 20,
+                        distance = 50,
                         from = transform.position,
                         maxHits = 1
                     };
@@ -623,7 +596,6 @@ namespace rak.world
         {
             
             sinceLastSunUpdated += delta;
-            batchDelta += delta;
             timeSinceLastCreatureDistanceSightCheck += delta;
             // DO THESE EVERY UPDATE //
             NumberOfVisibleThings = 0;
@@ -643,83 +615,66 @@ namespace rak.world
                 sinceLastSunUpdated = 0;
             }
             
-            // DO THESE BEFORE STARTING BATCHES, BUT NOT DURING BATCH PROCESSING //
-            if (currentThingIndex == 0)
+            lengthOfArray = _removeTheseThings.Count;
+            for (int count = 0; count < lengthOfArray; count++)
             {
-                lengthOfArray = _removeTheseThings.Count;
-                for (int count = 0; count < lengthOfArray; count++)
-                {
-                    Thing singleThing = _removeTheseThings[count];
-                    allThings.Remove(singleThing);
-                    singleThing.Deactivate();
-                    singleThing.transform.SetParent(disabledContainer.transform);
-                }
-                _removeTheseThings = new List<Thing>();
+                Thing singleThing = _removeTheseThings[count];
+                allThings.Remove(singleThing);
+                singleThing.Deactivate();
+                singleThing.transform.SetParent(disabledContainer.transform);
+            }
+            _removeTheseThings = new List<Thing>();
 
-                foreach (Tribe tribe in tribesPresent)
-                {
-                    tribe.Update();
-                }
+            foreach (Tribe tribe in tribesPresent)
+            {
+                tribe.Update();
+            }
                 
-                timeSinceUpdatedThings += Time.deltaTime;
-                if (timeSinceUpdatedThings > updateThingsEvery)
-                {
-                    updateAllBlittableThingsCache();
-                    timeSinceUpdatedThings = 0;
-                }
+            timeSinceUpdatedThings += Time.deltaTime;
+            if (timeSinceUpdatedThings > updateThingsEvery)
+            {
+                updateAllBlittableThingsCache();
+                timeSinceUpdatedThings = 0;
             }
             // THING UPDATES //
-            int startIndex = currentThingIndex;
             lengthOfArray = allThings.Count;
-            for (int count = currentThingIndex;count < lengthOfArray; count++)
+            for (int count = 0;count < lengthOfArray; count++)
             {
                 Vector3 cameraPosition = mainCamera.transform.position;
                 Thing thing = allThings[count];
-                thing.ManualUpdate(batchDelta);
+                thing.ManualUpdate(delta);
                 if (thing is Creature)
                 {
                     Creature creature = (Creature)thing;
-                    creature.ManualCreatureUpdate(batchDelta);
+                    creature.ManualCreatureUpdate(delta);
                     if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
                     {
                         _removeTheseThings.Add(creature);
                     }
-                    if (creature.InView)
+                    //if (creature.InView){
+                    float distanceFromCamera = Vector3.Distance(cameraPosition, creature.transform.position);
+                    if (distanceFromCamera > MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA)
                     {
-                        float distanceFromCamera = Vector3.Distance(cameraPosition, creature.transform.position);
-                        //Debug.LogWarning("Distance from cam " + distanceFromCamera);
-                        if (distanceFromCamera > MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA)
+                        if (creature.Visible)
                         {
-                            if (creature.Visible)
-                            {
-                                creature.SetVisible(false);
-                            }
+                            Debug.Log("Make invisible");
+                            creature.SetVisible(false);
                         }
-                        else
-                        {
-                            if (!creature.Visible)
-                            {
-                                if(NumberOfVisibleThings < MAX_VISIBLE_CREATURES)
-                                    creature.SetVisible(true);
-                            }
-                        }
-                        
-                        timeSinceLastCreatureDistanceSightCheck = 0;
                     }
-                }
-                currentThingIndex++;
-                if(currentThingIndex-startIndex >= batchSize)
-                {
-                    currentBatch++;
-                    break;
-                }
-                if(currentThingIndex == allThings.Count)
-                {
-                    //Debug.LogWarning("All batches complete # - " + currentBatch + " batchdelta - " + batchDelta);
-                    currentThingIndex = 0;
-                    currentBatch = 0;
-                    batchDelta = 0;
-                    break;
+                    else
+                    {
+                        if (!creature.Visible)
+                        {
+                            if (NumberOfVisibleThings < MAX_VISIBLE_CREATURES)
+                            {
+                                creature.SetVisible(true);
+                                Debug.Log("Make visible");
+                            }
+                        }
+                    }
+                        
+                    timeSinceLastCreatureDistanceSightCheck = 0;
+                    //}
                 }
             }
         }

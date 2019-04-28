@@ -37,8 +37,7 @@ namespace rak.creatures
                 Debug.LogWarning("Call to DeActivate shield when already Deactive");
                 return;
             }
-            if(creature.Visible && attachedBody.isKinematic == true)
-                attachedBody.isKinematic = false;
+            attachedBody.isKinematic = false;
             Activated = false;
         }
         public override void UpdateDerivedPart(ActionStep.Actions action,float delta)

@@ -18,8 +18,7 @@ namespace rak.ecs.ThingComponents
     {
         protected override void OnCreate()
         {
-            base.OnCreate();
-            //Enabled = false;
+            Enabled = true;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -33,14 +32,19 @@ namespace rak.ecs.ThingComponents
         }
 
         struct AntiGravityShieldJob : IJobForEach
-            <AntiGravityShield,AgentVariables,Agent,Target,CreatureAI>
+            <AntiGravityShield,AgentVariables,Agent,Target,CreatureAI,Engine>
         {
             public float delta;
 
             public void Execute
                 (ref AntiGravityShield shield, ref AgentVariables agentVar,ref Agent agent,ref Target target
-                ,ref CreatureAI ai)
+                ,ref CreatureAI ai, ref Engine engine)
             {
+                if (agentVar.Visible == 0)
+                {
+                    shield.Activated = 0;
+                    return;
+                }
                 ActionStep.Actions currentAction = ai.CurrentAction;
                 if (currentAction == ActionStep.Actions.MoveTo)
                 {
@@ -56,10 +60,10 @@ namespace rak.ecs.ThingComponents
                             //Debug.LogWarning("Activate Stuck");
                         }
                         // Angular Velocity //
-                        else if (agentVar.GetAngularVelocityMag() > 2)
+                        else if (agentVar.GetAngularVelocityMag() > 5 && agentVar.GetVelocityMagnitude() > 2.5f)
                         {
                             activate = true;
-                            //Debug.LogWarning("Activate AngularVel");
+                            //Debug.LogWarning("Activate AngularVel - " + agentVar.AngularVelocity.ToString());
                         }
                         else
                         {
@@ -86,7 +90,9 @@ namespace rak.ecs.ThingComponents
                                 }
                             }
                             if (shield.IgnoreStuckFor > 0)
+                            {
                                 shield.IgnoreStuckFor = shield.IgnoreStuckFor - delta;
+                            }
                         }
                         if (activate)
                         {
@@ -101,10 +107,11 @@ namespace rak.ecs.ThingComponents
                             // Make sure we are pointing in the right direction before deactivating //
                             float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target,0);
                             float turnNeededMag = Mathf.Abs(turnNeeded.x + turnNeeded.y + turnNeeded.z);
-                            if (turnNeededMag < 1f || turnNeededMag > 359)
+                            if (turnNeededMag < 1f || turnNeededMag > 359 || engine.AvoidingObstacles == 1)
                             {
                                 shield.Activated = 0;
-                                shield.IgnoreStuckFor = .05f;
+                                shield.IgnoreStuckFor = .5f;
+                                //Debug.Log("Deactivate shield");
                             }
                         }
                     }
@@ -127,6 +134,7 @@ namespace rak.ecs.ThingComponents
                             shield.Activated = 1;
                     }
                 }
+                ai.IsKinematic = shield.Activated;
             }
             private float3 getAmountOfTurnNeeded(ref AgentVariables agentVar,ref Target target,byte velocity)
             {

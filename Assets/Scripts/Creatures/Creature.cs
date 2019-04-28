@@ -40,7 +40,6 @@ namespace rak.creatures
         private float lastUpdated = 0;
         private float observeEvery = 5f;
         private float lastObserved = 2.5f;
-        private ObserveJobFor jobFor;
         private bool initialized = false;
         private JobHandle observeHandle;
         private bool awaitingObservation = false;
@@ -212,7 +211,12 @@ namespace rak.creatures
             {
                 lastUpdated = 0;
                 updateCurrentGridSector();
-                updateStateAndTasks(delta);
+                //updateStateAndTasks(delta);
+            }
+            if (rak.world.World.ISDEBUGSCENE)
+            {
+                //Target target = em.GetComponentData<Target>(ThingEntity);
+                //Debug.DrawLine(transform.position+transform.forward*5, target.targetPosition, Color.cyan, .3f);
             }
             // DEBUG
             //RequestObservationUpdate();
@@ -327,37 +331,6 @@ namespace rak.creatures
             }
         }
 
-        IEnumerator observeSurroundings()
-        {
-            // Observe Things //
-            if (lastObserved < observeEvery || awaitingObservation || !initialized)
-                yield break;
-            lastObserved = 0;
-            long start = System.DateTime.Now.ToBinary();
-            jobFor = new ObserveJobFor();
-            jobFor.allThings = Area.GetBlittableThings();
-            jobFor.observeDistance = miscVariables[MiscVariables.CreatureMiscVariables.Observe_Distance];
-            jobFor.origin = transform.position;
-            jobFor.memories = new NativeArray<MemoryInstance>(jobFor.allThings.Length,Allocator.Persistent);
-            jobFor.timestamp = start;
-            observeHandle = jobFor.Schedule(jobFor.allThings.Length, 1);
-            Area.AddJobHandle(observeHandle);
-            //yield return new WaitUntil(() => observeHandle.IsCompleted);
-            observeHandle.Complete();
-            //Debug.LogWarning("TIme to complete - " + (System.DateTime.Now.ToBinary() - start));
-            updateThingsWithinProximityAndDisposeCache();
-        }
-
-        private void updateThingsWithinProximityAndDisposeCache()
-        {
-            for (int count = 0; count < jobFor.memories.Length; count++)
-            {
-                MemoryInstance memory = jobFor.memories[count];
-                if(!memory.IsEmpty())
-                    species.memory.AddMemory(memory);
-            }
-            jobFor.memories.Dispose();
-        }
         private void updateCurrentGridSector()
         {
             // Observe Areas //
@@ -502,7 +475,7 @@ namespace rak.creatures
         public CreatureAgent GetCreatureAgent() { return agent; }
         public ActionStep.Actions GetCurrentAction()
         {
-            return taskManager.GetCurrentAction();
+            return em.GetComponentData<CreatureAI>(ThingEntity).CurrentAction;
         }
         public Tasks.CreatureTasks GetCurrentTask()
         {

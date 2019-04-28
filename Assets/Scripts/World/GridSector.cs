@@ -28,7 +28,10 @@ public struct GridSector
             terrain.AddGridSectorHash(this);
         }
         else
+        {
             this.parentTerrain = System.Guid.Empty;
+            Debug.LogError("Null parent terrain - " + name);
+        }
         
         Debug.DrawLine(WorldPositionStart, new Vector3(WorldPositionEnd.x,0,WorldPositionStart.z),
             Color.yellow, 1);

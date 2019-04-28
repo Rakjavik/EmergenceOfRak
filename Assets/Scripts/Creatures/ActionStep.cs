@@ -18,8 +18,8 @@ namespace rak
 
         public Actions Action;
         public FailReason failReason { get; private set; }
-        public float3 _targetPosition { get; private set; }
-        public System.Guid _targetThing { get; private set; }
+        public float3 _targetPosition { get; set; }
+        public System.Guid _targetThing { get; set; }
         public Tasks.CreatureTasks associatedTask { get; private set; }
         public void SetTarget(Thing thing)
         {

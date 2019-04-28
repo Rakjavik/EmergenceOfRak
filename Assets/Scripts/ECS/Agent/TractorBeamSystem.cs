@@ -19,7 +19,7 @@ namespace rak.ecs.ThingComponents
         protected override void OnCreate()
         {
             base.OnCreate();
-            Enabled = false;
+            Enabled = true;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

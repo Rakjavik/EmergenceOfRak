@@ -37,6 +37,7 @@ namespace rak.UI
         }
         void Update()
         {
+            if (!World.Initialized) return;
             if (Input.GetKeyUp(KeyCode.Space))
             {
                 toggleMovement();

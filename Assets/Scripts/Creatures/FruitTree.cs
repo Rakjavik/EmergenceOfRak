@@ -17,7 +17,7 @@ namespace rak
             fruitInstances = new List<GameObject>();
         }
 
-        public void Update()
+        /*public void Update()
         {
             if(timeSincelastSpawned == -1)
                 timeSincelastSpawned = Random.Range(0, spawnsThingEvery);
@@ -32,6 +32,6 @@ namespace rak
                 timeSincelastSpawned = 0;
                 //Debug.Log("Fruit from tree - " + gameObject.name);
             }
-        }
+        }*/
     }
 }

@@ -46,6 +46,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
     private int width = TileSize+1; // Terrain width/height needs a plus one due to Unity being weird
     private int height = TileSize+1; // // Terrain width/height needs a plus one due to Unity being weird
     private static int worldSize = 16; // Number of total terrain objects
+    public static bool Initialized = false;
 
     private void InitializeDebugTerrain(World world,HexCell cell)
     {
@@ -697,6 +698,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     }
                     singleTerrain.terrainData.SetHeights((int)startPoint.x, (int)startPoint.y, thisTerrainsEdge);
                     terrain[terrainCount].getTerrainComponenet().Flush();
+                    Initialized = true;
                     yield return null;
                 }
             }

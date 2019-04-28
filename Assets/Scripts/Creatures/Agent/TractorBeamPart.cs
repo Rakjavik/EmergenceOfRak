@@ -26,12 +26,13 @@ namespace rak.creatures
             base.UpdateDerivedPart(action,delta);
             TractorBeam tb = em.
                     GetComponentData<TractorBeam>(parentCreature.ThingEntity);
+            Target ecsTarget = em.GetComponentData<Target>(parentCreature.ThingEntity);
             if (tb.Locked == 1) 
             {
-                if (targetBody == null && target == null)
+                if (targetBody == null)
                 {
-                    target = attachedAgent.GetCurrentActionTarget();
-                    targetBody = target.RequestRigidBodyAccess(parentCreature);
+                    this.target = Area.GetThingByGUID(ecsTarget.targetGuid);
+                    targetBody = this.target.RequestRigidBodyAccess(parentCreature);
                     targetBody.isKinematic = true;
                 }
                 if (action == ActionStep.Actions.Add)
@@ -39,7 +40,7 @@ namespace rak.creatures
             }
             else
             {
-                target = null;
+                this.target = null;
                 targetBody = null;
             }
         }

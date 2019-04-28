@@ -13,6 +13,7 @@ namespace rak.creatures.memory
         public int iterations { get; private set; }
         public byte Edible { get; private set; }
         public float3 Position { get; private set; }
+        public Thing.Base_Types SubjectType { get; private set; }
 
         public MemoryInstance(Verb verb, Guid subject, bool invertVerb, float timestamp,
             Thing.Base_Types subjectType, ConsumptionType creatureConsumeType,float3 position)
@@ -26,16 +27,22 @@ namespace rak.creatures.memory
             this.timeStamp = timestamp;
             iterations = 0;
             Edible = 0;
-            if (creatureConsumeType == ConsumptionType.OMNIVORE)
+            Position = position;
+            SubjectType = subjectType;
+        }
+        public void RefreshEdible(ConsumptionType creatureConsumeType)
+        {
+            if (creatureConsumeType == ConsumptionType.HERBIVORE)
             {
-                if (subjectType == Thing.Base_Types.PLANT)
+                if (SubjectType == Thing.Base_Types.PLANT)
                 {
                     Edible = 1;
+                    return;
                 }
             }
-            Position = position;
-
+            Edible = 0;
         }
+
         private void setInvertVerb(bool invertVerb)
         {
             if (invertVerb)

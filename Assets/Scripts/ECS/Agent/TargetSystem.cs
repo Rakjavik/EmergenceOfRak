@@ -17,8 +17,7 @@ namespace rak.ecs.ThingComponents
     {
         protected override void OnCreate()
         {
-            base.OnCreate();
-            //Enabled = false;
+            Enabled = true;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -27,7 +26,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        [BurstCompile]
+        //[BurstCompile]
         struct TargetJob : IJobForEach<Target, AgentVariables>
         {
             public void Execute(ref Target target, ref AgentVariables av)

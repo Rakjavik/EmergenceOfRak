@@ -1,7 +1,11 @@
 ﻿using rak.creatures;
+using rak.ecs.ThingComponents;
 using rak.UI;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace rak.world
@@ -22,6 +26,7 @@ namespace rak.world
         public static HexCell currentCell { get; private set; }
         public static World GetWorld() { return world; }
         public static Area CurrentArea { get; private set; }
+        public static Tribe ActiveTribe { get; private set; }
 
         public bool AutoLoadArea;
 
@@ -52,7 +57,7 @@ namespace rak.world
         public AudioClip AmbientSound;
 
         private bool editing = false;
-        private bool _initialized;
+        public static bool Initialized;
         private float worldUpdatesEvery = 1; //Seconds
         private float sinceLastUpdate = 0;
 
@@ -61,7 +66,7 @@ namespace rak.world
             civilizations = new List<Civilization>();
             civilizations.Add(new Civilization(BASE_SPECIES.Gnat, "DaGnats", true, 5, 15));
             Tribe debugTribe = new Tribe(5,BASE_SPECIES.Gnat);
-            
+            ActiveTribe = debugTribe;
             //civilizations[0].AddTribe(debugTribe);
             Debug.LogWarning("DEBUG MODE ENABLED");
             world = this;
@@ -72,11 +77,10 @@ namespace rak.world
             hexGrid = HexGrid.generate(this);
             currentCell = debugTribe.FindHome(this, true);
             masterTerrain.Initialize(this, currentCell);
-            CurrentArea = currentCell.MakeArea(this,debugTribe);
-            MenuController menuController = new MenuController(creatureBrowserPrefab, worldBrowserPrefab, debugMenuPrefab);
-            FollowCamera = followCamera;
-            menuController.Initialize(RootMenu.CreatureBrowser);
-            _initialized = true;
+            
+            em = Unity.Entities.World.Active.EntityManager;
+
+
         }
 
         // ENTRY METHOD //
@@ -92,14 +96,15 @@ namespace rak.world
 
         private void FixedUpdate()
         {
-            CurrentArea.FixedUpdate(Time.deltaTime);
+            if(Initialized)
+                CurrentArea.FixedUpdate(Time.deltaTime);
         }
 
         private void Initialize()
         {
             ISDEBUGSCENE = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower().Contains("debug");
             WORLD_DATAPATH = Application.persistentDataPath + "/Worlds/";
-            if (ISDEBUGSCENE && !_initialized)
+            if (ISDEBUGSCENE && !Initialized)
             {
                 InitializeDebugWorld();
                 return;
@@ -139,7 +144,17 @@ namespace rak.world
             }
             else
                 mainMenu.Initialize(RootMenu.WorldBrowser);
-            _initialized = true;
+            em = Unity.Entities.World.Active.EntityManager;
+            Initialized = true;
+        }
+        private void completeInitialize()
+        {
+            CurrentArea = currentCell.MakeArea(this, ActiveTribe);
+            MenuController menuController = new MenuController(creatureBrowserPrefab, worldBrowserPrefab, debugMenuPrefab);
+            FollowCamera = followCamera;
+            menuController.Initialize(RootMenu.CreatureBrowser);
+
+            Initialized = true;
         }
 
         public void LoadArea(HexCell cell)
@@ -203,15 +218,43 @@ namespace rak.world
             }
         }
 
+        private EntityManager em;
         private void Update()
         {
+            if (!Initialized)
+            {
+                if (RAKTerrainMaster.Initialized)
+                    completeInitialize();
+                return;
+            }
             sinceLastUpdate += Time.deltaTime;
             if(sinceLastUpdate > worldUpdatesEvery)
             {
-                
                 sinceLastUpdate = 0;
+                EntityQuery query = em.CreateEntityQuery(new ComponentType[] { typeof(Produces),typeof(Position) });
+                NativeArray<Entity> entities = query.ToEntityArray(Unity.Collections.Allocator.TempJob);
+                for(int count = 0; count < entities.Length; count++)
+                {
+                    Produces producer = em.GetComponentData<Produces>(entities[count]);
+                    if(producer.ProductionAvailable == 1)
+                    {
+                        Position position = em.GetComponentData<Position>(entities[count]);
+                        string prefab;
+                        if (producer.thingToProduce == Thing.Thing_Types.Fruit)
+                            prefab = "fruit";
+                        else
+                            prefab = "None";
+                        float3 spawnPosition = position.Value;
+                        spawnPosition.y += 10;
+                        CurrentArea.addThingToWorld(prefab,spawnPosition,false);
+                        producer.ProductionAvailable = 0;
+                        producer.timeSinceLastSpawn = 0;
+                        em.SetComponentData(entities[count], producer);
+                    }
+                }
+                entities.Dispose();
             }
-            //CurrentArea.update(Time.deltaTime);
+            CurrentArea.update(Time.deltaTime);
         }
 
     }

@@ -21,11 +21,16 @@ namespace rak
             world.EntityManager.AddComponentData(ThingEntity, new Enabled { Value = 1 });
             if (thingType == Thing_Types.FruitTree)
             {
+                int spawnThingsEvery = 60;
                 world.EntityManager.AddComponentData(ThingEntity, new Produces
                 {
-                    spawnThingEvery = 15,
+                    spawnThingEvery = spawnThingsEvery,
                     thingToProduce = Thing_Types.Fruit,
-                    timeSinceLastSpawn = -1
+                    timeSinceLastSpawn = UnityEngine.Random.Range(0, spawnThingsEvery)
+                });
+                world.EntityManager.AddComponentData(ThingEntity, new Position
+                {
+                    Value = transform.position
                 });
             }
             else if (thingType == Thing_Types.Gnat)
@@ -35,14 +40,14 @@ namespace rak
                 world.EntityManager.AddComponentData(ThingEntity, new Engine
                 {
                     moveType = CreatureLocomotionType.Flight, // Engine movement type (Flight)
-                    objectBlockDistance = 3, // Distance a raycast forward has to be below before alt flight logic for being blocked
+                    objectBlockDistance = 10, // Distance a raycast forward has to be below before alt flight logic for being blocked
                     sustainHeight = 5, // Target height when in flight
-                    MaxForceX = 4, // Max force for ConstantForceComponent
+                    MaxForceX = 8, // Max force for ConstantForceComponent
                     MaxForceY = 15,
                     MaxForceZ = 8,
-                    MinForceX = 0, // Min force for ConstantForceComponent
+                    MinForceX = -8, // Min force for ConstantForceComponent
                     MinForceY = 8,
-                    MinForceZ = 0,
+                    MinForceZ = -8,
                     CurrentStateX = MovementState.IDLE,
                     CurrentStateY = MovementState.IDLE,
                     CurrentStateZ = MovementState.IDLE,
@@ -61,12 +66,14 @@ namespace rak
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new CreatureAI
                 {
+                    CurrentAction = ActionStep.Actions.None
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new AntiGravityShield
                 {
                     BrakeIfCollidingIn = .5f, // Use brake mechanism if a velocity collision is happening
                     EngageIfWrongDirectionAndMovingFasterThan = 15, // Velocity magnitude before brake will kick in if going wrong direction from target
                     VelocityMagNeededBeforeCollisionActivating = 20, // If colliding shortly, this minimum magnitude needs to be met before brake
+                    Activated = 0,
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new Target
                 {

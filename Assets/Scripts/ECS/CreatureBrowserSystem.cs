@@ -9,7 +9,8 @@ namespace rak.ecs.ThingComponents
 {
     public struct CreatureBrowser : IComponentData
     {
-        [WriteOnly]
+        //[WriteOnly]
+        [NativeDisableParallelForRestriction]
         public DynamicBuffer<CreatureMemoryBuf> MemoryBuffer;
     }
     public class CreatureBrowserSystem : JobComponentSystem

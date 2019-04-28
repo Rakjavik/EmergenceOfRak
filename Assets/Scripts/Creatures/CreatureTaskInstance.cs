@@ -1,4 +1,5 @@
 ﻿using rak.creatures;
+using rak.ecs.ThingComponents;
 using rak.world;
 using UnityEngine;
 
@@ -125,7 +126,9 @@ namespace rak
         }
         public Vector3 GetCurrentTaskDestination()
         {
-            return currentActionSteps[_currentStepNum]._targetPosition;
+            Target target = Unity.Entities.World.Active.EntityManager.
+                GetComponentData<Target>(creature.ThingEntity);
+            return target.targetPosition;
         }
         public Thing GetCurrentTaskTarget()
         {

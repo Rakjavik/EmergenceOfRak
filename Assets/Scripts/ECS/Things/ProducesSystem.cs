@@ -10,40 +10,41 @@ namespace rak.ecs.ThingComponents
         public Thing.Thing_Types thingToProduce;
         public float spawnThingEvery;
         public float timeSinceLastSpawn;
+        public byte ProductionAvailable;
     }
 
     public class ProducesSystem : JobComponentSystem
     {
+        BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+
         protected override void OnCreate()
         {
-            base.OnCreate();
-            Enabled = false;
+            Enabled = true;
+            m_EntityCommandBufferSystem = World.GetOrCreateSystem <BeginInitializationEntityCommandBufferSystem>();
         }
-
-        struct ProducesJob : IJobForEach<Produces>
-        {
-            public float delta;
-
-            public void Execute(ref Produces prod)
-            {
-                prod.timeSinceLastSpawn += delta;
-                if(prod.timeSinceLastSpawn >= prod.spawnThingEvery)
-                {
-                    // CANT DO THIS FROM NON MAIN THREAD
-                    //world.World.CurrentArea.addThingToWorld("fruit");
-                    prod.timeSinceLastSpawn = 0;
-                }
-            }
-        }
-
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             ProducesJob job = new ProducesJob
             {
-                delta = Time.deltaTime
+                delta = Time.deltaTime,
             };
-            return job.Schedule(this, inputDeps);
+            JobHandle handle = job.Schedule(this, inputDeps);
+            return handle;
+        }
+
+        struct ProducesJob : IJobForEachWithEntity<Produces>
+        {
+            public float delta;
+
+            public void Execute(Entity entity, int index, ref Produces prod)
+            {
+                prod.timeSinceLastSpawn += delta;
+                if(prod.timeSinceLastSpawn >= prod.spawnThingEvery)
+                {
+                    prod.ProductionAvailable = 1;
+                }
+            }
         }
     }
 }

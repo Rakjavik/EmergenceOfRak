@@ -152,6 +152,7 @@
     <Compile Include="Assets\Scripts\ECS\CreatureBrowserSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\AgeSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\CreatureAISystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Things\CreatureTaskSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ObserveSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ProducesSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ShortTermMemorySystem.cs" />

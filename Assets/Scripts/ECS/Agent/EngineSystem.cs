@@ -17,6 +17,7 @@ namespace rak.ecs.ThingComponents
         public float sustainHeight;
         public float3 NonPhysicsPositionUpdate;
         public float VelWhenMovingWithoutPhysics;
+        public byte AvoidingObstacles;
 
         public MovementState CurrentStateX;
         public MovementState CurrentStateY;
@@ -27,14 +28,14 @@ namespace rak.ecs.ThingComponents
         public float MinForceX;
         public float MinForceY;
         public float MinForceZ;
+
     }
 
     public class EngineSystem : JobComponentSystem
     {
         protected override void OnCreate()
         {
-            base.OnCreate();
-            //Enabled = false;
+            Enabled = true;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -168,8 +169,8 @@ namespace rak.ecs.ThingComponents
                         }
                         bool objectBlockingForward = agent.DistanceFromFirstZHit < engine.objectBlockDistance;
                         MovementState stateToSetY = MovementState.IDLE;
+                        
                         // Moving down or close to ground, throttle up //
-
                         if (av.RelativeVelocity.y < -.5f || agent.DistanceFromGround < engine.sustainHeight)
                         {
                             stateToSetY = MovementState.FORWARD;
@@ -179,6 +180,7 @@ namespace rak.ecs.ThingComponents
                         {
 
                         }
+                        // Going up a little, maintain //
                         else if (av.RelativeVelocity.y > .5f)
                         {
                             stateToSetY = MovementState.IDLE;
@@ -193,6 +195,7 @@ namespace rak.ecs.ThingComponents
                             setState(MovementState.FORWARD, Direction.Z, ref engine, ref ecf);
                         if (objectBlockingForward)
                         {
+                            engine.AvoidingObstacles = 1;
                             agent.RequestRaycastUpdateDirectionLeft = 1;
                             agent.RequestRaycastUpdateDirectionRight = 1;
                             agent.RequestRaycastUpdateDirectionForward = 1;
@@ -208,17 +211,23 @@ namespace rak.ecs.ThingComponents
                                     setState(MovementState.REVERSE, Direction.X, ref engine, ref ecf);
                                 }
                             }
+                            else if (engine.CurrentStateX == MovementState.REVERSE)
+                            {
+                                if (distanceLeft <= engine.objectBlockDistance)
+                                    setState(MovementState.FORWARD, Direction.X, ref engine, ref ecf);
+                            }
                             if (engine.CurrentStateZ == MovementState.FORWARD)
                                 setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
                             else if (engine.CurrentStateZ == MovementState.IDLE &&
-                                agent.DistanceFromFirstZHit < .5f)
+                                agent.DistanceFromFirstZHit < 2f)
                                 setState(MovementState.REVERSE, Direction.Z, ref engine, ref ecf);
                             else if (engine.CurrentStateZ == MovementState.REVERSE &&
-                                agent.DistanceFromFirstZHit >= .5f)
+                                agent.DistanceFromFirstZHit >= 2f)
                                 setState(MovementState.IDLE, Direction.Z, ref engine, ref ecf);
                         }
                         else
                         {
+                            engine.AvoidingObstacles = 0;
                             if (engine.CurrentStateX != MovementState.IDLE)
                                 setState(MovementState.IDLE, Direction.X, ref engine, ref ecf);
                         }

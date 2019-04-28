@@ -16,20 +16,11 @@ namespace rak.ecs.ThingComponents
         public float3 CurrentForce;
     }
 
-    public struct CreatureAI : IComponentData
+    public struct Position : IComponentData
     {
-        public ActionStep.Actions CurrentAction;
-        public ActionStep.FailReason FailReason;
-        public Tasks.CreatureTasks CurrentTask;
-        public Tasks.TASK_STATUS CurrentStatus;
-        public byte DestinationSet;
-        public float ElapsedTime;
-        public float MaxAllowedTime;
-        public float DistanceForCompletion;
-        public Thing.Base_Types TargetBaseType;
-        public ConsumptionType ConsumptionType;
+        public float3 Value;
     }
-
+    
     // USED FOR MONO TO WRITE TO ECS VARIABLES FOR HYBRID //
     public struct AgentVariables : IComponentData
     {

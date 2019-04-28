@@ -28,7 +28,7 @@ namespace rak.ecs.ThingComponents
         protected override void OnCreate()
         {
             base.OnCreate();
-            //Enabled = false;
+            Enabled = true;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -37,7 +37,8 @@ namespace rak.ecs.ThingComponents
             {
                 TimeStamp = Time.time,
                 observeBuffers = GetBufferFromEntity<ObserveBuffer>(false),
-                ObservableThings = new NativeArray<ObservableThing>(Area.GetObservableThings(),Allocator.TempJob)
+                ObservableThings = new NativeArray<ObservableThing>(Area.GetObservableThings(),Allocator.TempJob),
+                ObservableThingsLength = Area.ObservableThingsEntriesFilled
             };
             JobHandle handle = job.Schedule(this, inputDeps);
             return handle;
@@ -45,7 +46,8 @@ namespace rak.ecs.ThingComponents
 
         struct ObserveJob : IJobForEachWithEntity<Observe,AgentVariables,CreatureAI>
         {
-            [ReadOnly]
+            //[ReadOnly]
+            [NativeDisableParallelForRestriction]
             [DeallocateOnJobCompletion]
             public NativeArray<ObservableThing> ObservableThings;
 
@@ -53,9 +55,11 @@ namespace rak.ecs.ThingComponents
             public BufferFromEntity<ObserveBuffer> observeBuffers;
 
             public float TimeStamp;
+            public int ObservableThingsLength;
 
             public void Execute(Entity entity, int index, ref Observe ob,ref AgentVariables av, ref CreatureAI ai)
             {
+                ob.RequestObservation = 1;
                 // Only run if observation was requested, and we won't already have an observation waiting to be read //
                 if (ob.RequestObservation == 1 && ob.ObservationAvailable == 0)
                 {
@@ -64,7 +68,7 @@ namespace rak.ecs.ThingComponents
                     buffer.Clear();
                     
                     float3 origin = av.Position;
-                    for (int count = 0; count < ObservableThings.Length; count++)
+                    for (int count = 0; count < ObservableThingsLength; count++)
                     {
                         float distance = Vector3.Distance(origin, ObservableThings[count].position);
                         if (distance <= ob.ObserveDistance && distance > 0)

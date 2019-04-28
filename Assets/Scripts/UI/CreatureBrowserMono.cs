@@ -117,7 +117,8 @@ namespace rak.UI
                                 if (memBuffers[count].memory.GetInvertVerb())
                                     columnText.Append("!");
                                 columnText.Append(memBuffers[count].memory.verb.ToString() + "-" + 
-                                    Area.GetThingByGUID(memBuffers[count].memory.subject).thingName + "\n");
+                                    Area.GetThingByGUID(memBuffers[count].memory.subject).thingName +
+                                    " " + memBuffers[count].memory.iterations + "\n");
                             }
                             else
                             {

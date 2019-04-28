@@ -16,7 +16,6 @@ namespace rak.ecs.ThingComponents
     {
         protected override void OnCreate()
         {
-            base.OnCreate();
             RequireForUpdate(GetEntityQuery(new EntityQueryDesc[] { new EntityQueryDesc {
                 Any = new ComponentType[]{typeof(Observe)}
             } }));
@@ -29,18 +28,21 @@ namespace rak.ecs.ThingComponents
                 memoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>(false),
                 observeBuffers = GetBufferFromEntity<ObserveBuffer>(true)
             };
+            inputDeps.Complete();
             return job.Schedule(this, inputDeps);
         }
 
-        struct ShortTermMemoryJob : IJobForEachWithEntity<ShortTermMemory, Observe>
+        struct ShortTermMemoryJob : IJobForEachWithEntity<ShortTermMemory, Observe,CreatureAI>
         {
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<CreatureMemoryBuf> memoryBuffers;
+
             [NativeDisableParallelForRestriction]
             [ReadOnly]
             public BufferFromEntity<ObserveBuffer> observeBuffers;
 
-            public void Execute(Entity creatureEntity, int index, ref ShortTermMemory stm, ref Observe observe)
+            public void Execute(Entity creatureEntity, int index, ref ShortTermMemory stm, ref Observe observe,
+                ref CreatureAI ai)
             {
                 if(observe.ObservationAvailable == 1)
                 {
@@ -59,10 +61,15 @@ namespace rak.ecs.ThingComponents
                         MemoryInstance memoryInstance = observe.memoryBuffer[count].memory;
                         if (searchTheseMemoriesFor(ref creatureMemArray, ref memoryInstance) == 0)
                         {
-                            creatureMemory[stm.CurrentMemoryIndex].memory.SetNewMemory(memoryInstance);
+                            memoryInstance.RefreshEdible(ai.ConsumptionType);
+                            creatureMemory[stm.CurrentMemoryIndex] = new CreatureMemoryBuf { memory = memoryInstance };
                             stm.CurrentMemoryIndex++;
                             if (stm.CurrentMemoryIndex >= stm.MaxShortTermMemories)
                                 stm.CurrentMemoryIndex = 0;
+                        }
+                        else
+                        {
+                            creatureMemory[stm.CurrentMemoryIndex].memory.AddIteration();
                         }
                     }
                     stm.memoryBuffer = creatureMemory;
