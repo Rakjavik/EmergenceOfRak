@@ -52,7 +52,6 @@ namespace rak.creatures
         private AudioSource audioSource;
 
         protected Inventory inventory;
-        private TaskManager taskManager;
 
         private CreatureAgent agent;
         private Tribe memberOfTribe;
@@ -92,7 +91,6 @@ namespace rak.creatures
             }
             initialize(name);
             this.currentArea = area;
-            taskManager = new TaskManager(this);
             inventory = new Inventory(this);
             if (baseSpecies == BASE_SPECIES.Gnat)
             {
@@ -211,69 +209,14 @@ namespace rak.creatures
             {
                 lastUpdated = 0;
                 updateCurrentGridSector();
-                //updateStateAndTasks(delta);
             }
             if (rak.world.World.ISDEBUGSCENE)
             {
-                //Target target = em.GetComponentData<Target>(ThingEntity);
-                //Debug.DrawLine(transform.position+transform.forward*5, target.targetPosition, Color.cyan, .3f);
+                Target target = em.GetComponentData<Target>(ThingEntity);
+                Debug.DrawLine(transform.position+transform.forward*5, target.targetPosition, Color.cyan, .3f);
             }
-            // DEBUG
-            //RequestObservationUpdate();
         }
-        private void updateStateAndTasks(float delta)
-        { 
-            // CREATURE IS IDLE, LOOK FOR SOMETHING TO DO //
-            if (currentState == CREATURE_STATE.IDLE)
-            {
-                debug("Creature is idle, looking for new task");
-                taskManager.GetNewTask(this);
-                if (taskManager.hasTask())
-                {
-                    currentState = CREATURE_STATE.WAIT;
-                }
-            }
-            // CREATURE IS NOT IDLE //
-            else
-            {
-                debug("Performing current tasks - " + taskManager.getCurrentTaskType());
-                taskManager.PerformCurrentTask();
-                // Task was cancelled, mark creature as idle to get a new task next update //
-                if (taskManager.GetCurrentTaskStatus() == Tasks.TASK_STATUS.Cancelled &&
-                    currentState != CREATURE_STATE.IDLE)
-                {
-                    ChangeState(CREATURE_STATE.IDLE);
-                }
-                if (taskManager.GetCurrentAction() == ActionStep.Actions.MoveTo)
-                    if (DEBUGSCENE)
-                    {
-                        Target target = em.GetComponentData<Target>(ThingEntity);
-                        Debug.DrawLine(transform.position, target.targetPosition, Color.cyan, 1f);
-                    }
 
-            }
-            //Debug.LogWarning("Current state - " + currentState);
-            if (!taskManager.hasTask() && !CreatureConstants.CreatureIsIncapacitatedState(currentState))
-            {
-                debug("No task found, marking Idle");
-                currentState = CREATURE_STATE.IDLE;
-            }
-            // CREATURE PHYSICAL STATS UPDATES //
-            if (currentState != CREATURE_STATE.DEAD)
-            {
-                creaturePhysicalStats.Update();
-                Vector3 targetPosition = taskManager.GetCurrentTaskDestination();
-                Thing targetThing = taskManager.GetCurrentTaskTarget();
-                System.Guid guid = System.Guid.Empty;
-                if (targetThing != null)
-                    guid = targetThing.guid;
-                em.SetComponentData<Target>(ThingEntity, new Target
-                {
-                    targetGuid = guid,
-                    targetPosition = targetPosition
-                });
-            }
-        }
         private void OnCollisionEnter(Collision collision)
         {
             if (currentState == CREATURE_STATE.DEAD) return;
@@ -325,7 +268,7 @@ namespace rak.creatures
                 if (failedStep.failReason == ActionStep.FailReason.CouldntGetToTarget ||
                     failedStep.failReason == ActionStep.FailReason.InfinityDistance)
                 {
-                    AddMemory(Verb.MOVEDTO,Area.GetThingByGUID(failedStep._targetThing), true);
+                    //AddMemory(Verb.MOVEDTO,Area.GetThingByGUID(failedStep._targetThing), true);
                     //Debug.LogWarning("Memory of couldnt move to " + failedStep._targetThing.thingName);
                 }
             }
@@ -450,11 +393,17 @@ namespace rak.creatures
         }
         public Thing GetCurrentActionTarget()
         {
-            return taskManager.GetCurrentTaskTarget();
+            System.Guid guid = em.GetComponentData<Target>(ThingEntity).targetGuid;
+            Debug.Log("Fetchign thing with guid - " + guid);
+            if (!guid.Equals(System.Guid.Empty))
+            {
+                return Area.GetThingByGUID(guid);
+            }
+            return null;
         }
         public Vector3 GetCurrentActionTargetDestination()
         {
-            return taskManager.GetCurrentTaskDestination();
+            return em.GetComponentData<Target>(ThingEntity).targetPosition;
         }
         public Tribe GetTribe()
         {
@@ -479,11 +428,16 @@ namespace rak.creatures
         }
         public Tasks.CreatureTasks GetCurrentTask()
         {
-            return taskManager.getCurrentTaskType();
+            return em.GetComponentData<CreatureAI>(ThingEntity).CurrentTask;
         }
         public string GetCurrentTaskTargetName()
         {
-            return taskManager.GetCurrentTaskTargetName();
+            System.Guid targetGuid = em.GetComponentData<Target>(ThingEntity).targetGuid;
+            if (!targetGuid.Equals(System.Guid.Empty))
+            {
+                return Area.GetThingByGUID(targetGuid).thingName;
+            }
+            return "None";
         }
         public CREATURE_STATE GetCurrentState() { return currentState; }
 

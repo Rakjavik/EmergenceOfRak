@@ -7,7 +7,7 @@ namespace rak
 {
     public class CreatureTaskInstance
     {
-        public Tasks.CreatureTasks taskType { get; private set; }
+        /*public Tasks.CreatureTasks taskType { get; private set; }
         private Tasks.TASK_STATUS taskStatus = Tasks.TASK_STATUS.Incomplete;
         public ActionStep[] currentActionSteps { get; private set; }
         private ActionStep[] _previousActionSteps;
@@ -34,7 +34,8 @@ namespace rak
         public string GetCurrentTaskTargetName()
         {
             if (currentActionSteps.Length == 0) return "None";
-            return Area.GetThingByGUID(currentActionSteps[_currentStepNum]._targetThing).thingName;
+            //return Area.GetThingByGUID(currentActionSteps[_currentStepNum]._targetThing).thingName;
+            return null;
         }
         public ActionStep.FailReason GetPreviousStepsFailReason()
         {
@@ -54,7 +55,7 @@ namespace rak
             return currentActionSteps[_currentStepNum].getAction();
         }
 
-        public void performCurrentTask()
+        /*public void performCurrentTask()
         {
             _previousActionSteps = currentActionSteps;
             // DO TASK //
@@ -137,6 +138,6 @@ namespace rak
         public ActionStep.FailReason GetCurrentTaskStepFailReason()
         {
             return currentActionSteps[_currentStepNum].failReason;
-        }
+        }*/
     }
 }

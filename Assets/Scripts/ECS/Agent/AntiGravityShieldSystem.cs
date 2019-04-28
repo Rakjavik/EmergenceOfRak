@@ -60,7 +60,7 @@ namespace rak.ecs.ThingComponents
                             //Debug.LogWarning("Activate Stuck");
                         }
                         // Angular Velocity //
-                        else if (agentVar.GetAngularVelocityMag() > 5 && agentVar.GetVelocityMagnitude() > 2.5f)
+                        else if (agentVar.GetAngularVelocityMag() > 2)
                         {
                             activate = true;
                             //Debug.LogWarning("Activate AngularVel - " + agentVar.AngularVelocity.ToString());
@@ -83,10 +83,10 @@ namespace rak.ecs.ThingComponents
                             else if (velMag > shield.EngageIfWrongDirectionAndMovingFasterThan)
                             {
                                 float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target, 1);
-                                if (turnNeeded.x > 15 && turnNeeded.x < 345)
+                                if ((turnNeeded.x > 2f && turnNeeded.x < 358) && engine.AvoidingObstacles == 0)
                                 {
                                     activate = true;
-                                    //Debug.LogWarning("Activate wrong dir");
+                                    //Debug.LogWarning("Activate Wrong Direction - " + turnNeeded);
                                 }
                             }
                             if (shield.IgnoreStuckFor > 0)
@@ -134,7 +134,6 @@ namespace rak.ecs.ThingComponents
                             shield.Activated = 1;
                     }
                 }
-                ai.IsKinematic = shield.Activated;
             }
             private float3 getAmountOfTurnNeeded(ref AgentVariables agentVar,ref Target target,byte velocity)
             {

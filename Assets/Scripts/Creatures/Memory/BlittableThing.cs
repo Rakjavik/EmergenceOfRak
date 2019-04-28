@@ -14,9 +14,10 @@ namespace rak.creatures.memory
         private float age;
         private float bornAt;
         public float3 position;
+        public float Mass;
 
         public BlittableThing(Thing.Base_Types baseType,Guid guid,float age,float bornAt, float3 position,
-            Thing.Thing_Produces produces)
+            Thing.Thing_Produces produces,float mass)
         {
             if (guid.Equals(Guid.Empty))
             {
@@ -26,6 +27,7 @@ namespace rak.creatures.memory
                 this.position = float3.zero;
                 this.guid = Guid.Empty;
                 this.produces = Thing.Thing_Produces.NA;
+                this.Mass = 0;
             }
             else
             {
@@ -35,12 +37,13 @@ namespace rak.creatures.memory
                 this.bornAt = bornAt;
                 this.position = position;
                 this.produces = produces;
+                this.Mass = mass;
             }
         }
         
         public static BlittableThing GetNewEmptyThing()
         {
-            return new BlittableThing(Thing.Base_Types.NA,Guid.Empty,-1,-1, float3.zero,Thing.Thing_Produces.NA);
+            return new BlittableThing(Thing.Base_Types.NA,Guid.Empty,-1,-1, float3.zero,Thing.Thing_Produces.NA,0);
         }
         public Thing GetThing()
         {
@@ -57,6 +60,7 @@ namespace rak.creatures.memory
             age = thing.age;
             bornAt = thing.bornAt;
             position = thing.transform.position;
+            Mass = thing.getWeight();
         }
         public void SetToEmpty()
         {
@@ -77,5 +81,6 @@ namespace rak.creatures.memory
         public int index;
         public System.Guid guid;
         public Thing.Base_Types BaseType;
+        public float Mass;
     }
 }

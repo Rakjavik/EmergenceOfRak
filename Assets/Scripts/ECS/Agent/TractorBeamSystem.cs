@@ -49,6 +49,7 @@ namespace rak.ecs.ThingComponents
                         if (tb.Locked == 0)
                         {
                             tb.Locked = 1;
+                            target.NeedTargetPositionRefresh = 1;
                         }
                     }
                     // Target invalid //

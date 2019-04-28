@@ -21,7 +21,7 @@ namespace rak
             world.EntityManager.AddComponentData(ThingEntity, new Enabled { Value = 1 });
             if (thingType == Thing_Types.FruitTree)
             {
-                int spawnThingsEvery = 60;
+                int spawnThingsEvery = 360;
                 world.EntityManager.AddComponentData(ThingEntity, new Produces
                 {
                     spawnThingEvery = spawnThingsEvery,
@@ -41,7 +41,7 @@ namespace rak
                 {
                     moveType = CreatureLocomotionType.Flight, // Engine movement type (Flight)
                     objectBlockDistance = 10, // Distance a raycast forward has to be below before alt flight logic for being blocked
-                    sustainHeight = 5, // Target height when in flight
+                    sustainHeight = 15, // Target height when in flight
                     MaxForceX = 8, // Max force for ConstantForceComponent
                     MaxForceY = 15,
                     MaxForceZ = 8,
@@ -66,7 +66,9 @@ namespace rak
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new CreatureAI
                 {
-                    CurrentAction = ActionStep.Actions.None
+                    CurrentAction = ActionStep.Actions.None,
+                    PreviousSteps = world.EntityManager.AddBuffer<ActionStepBufferPrevious>(ThingEntity),
+                    CurrentSteps = world.EntityManager.AddBuffer<ActionStepBufferCurrent>(ThingEntity),
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new AntiGravityShield
                 {
@@ -87,7 +89,7 @@ namespace rak
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new TractorBeam
                 {
-                    BeamStrength = 5, // Movement modifier
+                    BeamStrength = 1, // Movement modifier
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new Observe
                 {
@@ -159,6 +161,7 @@ namespace rak
                 Creature creature = (Creature)this;
                 creature.DeactivateAllParts();
             }
+            Unity.Entities.World.Active.EntityManager.DestroyEntity(ThingEntity);
         }
 
         public bool beConsumed(Creature consumer)

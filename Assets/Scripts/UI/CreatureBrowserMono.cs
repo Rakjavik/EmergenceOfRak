@@ -110,15 +110,15 @@ namespace rak.UI
                     {
                         if (count == memBuffers.Length)
                             break;
-                        if (!memBuffers[count].memory.subject.Equals(System.Guid.Empty))
+                        if (!memBuffers[count].memory.Subject.Equals(System.Guid.Empty))
                         {
-                            if (Area.GetThingByGUID(memBuffers[count].memory.subject) != null)
+                            if (Area.GetThingByGUID(memBuffers[count].memory.Subject) != null)
                             {
                                 if (memBuffers[count].memory.GetInvertVerb())
                                     columnText.Append("!");
-                                columnText.Append(memBuffers[count].memory.verb.ToString() + "-" + 
-                                    Area.GetThingByGUID(memBuffers[count].memory.subject).thingName +
-                                    " " + memBuffers[count].memory.iterations + "\n");
+                                columnText.Append(memBuffers[count].memory.Verb.ToString() + "-" +
+                                    Area.GetThingByGUID(memBuffers[count].memory.Subject).thingName + "\n");
+                                //+ " " + memBuffers[count].memory.Iterations + "\n");
                             }
                             else
                             {

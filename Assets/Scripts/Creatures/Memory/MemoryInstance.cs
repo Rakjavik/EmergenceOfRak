@@ -6,29 +6,31 @@ namespace rak.creatures.memory
     [Serializable]
     public struct MemoryInstance
     {
-        public Verb verb { get; private set; }
-        public byte invertVerb { get; set; }
-        public Guid subject { get; private set; }
-        public float timeStamp { get; private set; }
-        public int iterations { get; private set; }
+        public Verb Verb;
+        public byte InvertVerb;
+        public Guid Subject;
+        public float TimeStamp;
+        public int Iterations;
         public byte Edible { get; private set; }
-        public float3 Position { get; private set; }
-        public Thing.Base_Types SubjectType { get; private set; }
+        public float3 Position;
+        public Thing.Base_Types SubjectType;
+        public float SubjectMass;
 
         public MemoryInstance(Verb verb, Guid subject, bool invertVerb, float timestamp,
-            Thing.Base_Types subjectType, ConsumptionType creatureConsumeType,float3 position)
+            Thing.Base_Types subjectType, ConsumptionType creatureConsumeType,float3 position,float subjectMass)
         {
             if (invertVerb)
-                this.invertVerb = 1;
+                this.InvertVerb = 1;
             else
-                this.invertVerb = 0;
-            this.verb = verb;
-            this.subject = subject;
-            this.timeStamp = timestamp;
-            iterations = 0;
+                this.InvertVerb = 0;
+            this.Verb = verb;
+            this.Subject = subject;
+            this.TimeStamp = timestamp;
+            Iterations = 0;
             Edible = 0;
             Position = position;
             SubjectType = subjectType;
+            SubjectMass = subjectMass;
         }
         public void RefreshEdible(ConsumptionType creatureConsumeType)
         {
@@ -46,13 +48,13 @@ namespace rak.creatures.memory
         private void setInvertVerb(bool invertVerb)
         {
             if (invertVerb)
-                this.invertVerb = 1;
+                this.InvertVerb = 1;
             else
-                this.invertVerb = 0;
+                this.InvertVerb = 0;
         }
         public bool GetInvertVerb()
         {
-            return getInvertVerb(invertVerb);
+            return getInvertVerb(InvertVerb);
         }
         private bool getInvertVerb(short invertVerb)
         {
@@ -63,36 +65,36 @@ namespace rak.creatures.memory
         }
         public void MakeEmpty()
         {
-            verb = Verb.NA;
+            Verb = Verb.NA;
         }
         public bool IsEmpty()
         {
-            if (verb == Verb.NA)
+            if (Verb == Verb.NA)
                 return true;
             return false;
         }
         public static MemoryInstance GetNewEmptyMemory()
         {
             return new MemoryInstance(Verb.NA, Guid.Empty, false,0,Thing.Base_Types.NA,
-                ConsumptionType.CARNIVORE,float3.zero);
+                ConsumptionType.CARNIVORE,float3.zero,0);
         }
         public void ReplaceMemory(Verb verb, Guid subject, bool invertVerb)
         {
-            this.verb = verb;
-            this.subject = subject;
+            this.Verb = verb;
+            this.Subject = subject;
             setInvertVerb(invertVerb);
-            timeStamp = DateTime.Now.ToBinary();
-            iterations = 0;
+            TimeStamp = DateTime.Now.ToBinary();
+            Iterations = 0;
         }
 
-        public void AddIteration() { iterations++; }
+        public void AddIteration() { Iterations++; }
         public bool IsSameAs(Verb verb, Guid subject, bool invertVerb)
         {
             if (subject != Guid.Empty)
             {
-                if (invertVerb == getInvertVerb(this.invertVerb) &&
-                    subject == this.subject &&
-                    verb == this.verb)
+                if (invertVerb == getInvertVerb(this.InvertVerb) &&
+                    subject == this.Subject &&
+                    verb == this.Verb)
                 {
                     return true;
                 }
@@ -101,11 +103,11 @@ namespace rak.creatures.memory
         }
         public void SetNewMemory(MemoryInstance newMemory)
         {
-            verb = newMemory.verb;
-            invertVerb = newMemory.invertVerb;
-            subject = newMemory.subject;
-            timeStamp = newMemory.timeStamp;
-            iterations = newMemory.iterations;
+            Verb = newMemory.Verb;
+            InvertVerb = newMemory.InvertVerb;
+            Subject = newMemory.Subject;
+            TimeStamp = newMemory.TimeStamp;
+            Iterations = newMemory.Iterations;
             Edible = newMemory.Edible;
         }
     }

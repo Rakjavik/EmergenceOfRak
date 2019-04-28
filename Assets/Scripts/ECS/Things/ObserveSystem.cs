@@ -73,10 +73,20 @@ namespace rak.ecs.ThingComponents
                         float distance = Vector3.Distance(origin, ObservableThings[count].position);
                         if (distance <= ob.ObserveDistance && distance > 0)
                         {
+                            MemoryInstance memory = new MemoryInstance
+                            {
+                                Verb = Verb.SAW,
+                                Subject = ObservableThings[count].guid,
+                                InvertVerb = 0,
+                                TimeStamp = TimeStamp,
+                                SubjectType = ObservableThings[count].BaseType,
+                                Position = ObservableThings[count].position,
+                                SubjectMass = ObservableThings[count].Mass,
+                            };
+                            memory.RefreshEdible(ai.ConsumptionType);
                             buffer.Add(new ObserveBuffer
                             {
-                                memory = new MemoryInstance(Verb.SAW, ObservableThings[count].guid, false, TimeStamp,
-                                    ObservableThings[count].BaseType, ai.ConsumptionType,ObservableThings[count].position)
+                                memory = memory
                             });
                         }
                     }

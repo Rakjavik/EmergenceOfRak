@@ -18,19 +18,17 @@ namespace rak
 
         public Actions Action;
         public FailReason failReason { get; private set; }
-        public float3 _targetPosition { get; set; }
-        public System.Guid _targetThing { get; set; }
-        public Tasks.CreatureTasks associatedTask { get; private set; }
+        public Tasks.CreatureTasks associatedTask;
         public void SetTarget(Thing thing)
         {
-            this._targetThing = thing.guid;
-            this._targetPosition = thing.transform.position;
+            //this._targetThing = thing.guid;
+            //this._targetPosition = thing.transform.position;
             CreatureAgentDestinationHasBeenSet = 1;
         }
         public void SetTargetPosition(float3 target)
         {
             CreatureAgentDestinationHasBeenSet = 1;
-            _targetPosition = target;
+            //_targetPosition = target;
         }
 
 
@@ -49,7 +47,6 @@ namespace rak
             this.associatedTask = task;
             this.Action = action;
             // No target, set to zero //
-            _targetPosition = float3.zero;
             failReason = FailReason.NA;
             CreatureAgentDestinationHasBeenSet = 0;
             DistanceRequiredToCompleteModifier = distanceRequiredToCompleteModifier;
@@ -64,7 +61,6 @@ namespace rak
             this.associatedTask = task;
             this.Action = action;
             // No target, set to zero //
-            _targetPosition = float3.zero;
             failReason = FailReason.NA;
             CreatureAgentDestinationHasBeenSet = 0;
             DistanceRequiredToCompleteModifier = 1;
@@ -79,7 +75,6 @@ namespace rak
             this.associatedTask = task;
             this.Action = action;
             // No target, set to zero //
-            _targetPosition = float3.zero;
             failReason = FailReason.NA;
             CreatureAgentDestinationHasBeenSet = 0;
             Status = Tasks.TASK_STATUS.Started;
@@ -92,8 +87,6 @@ namespace rak
             failReason = FailReason.NA;
             this.associatedTask = task;
             this.Action = action;
-            // No target, set to zero //
-            _targetPosition = float3.zero;
             failReason = FailReason.NA;
             CreatureAgentDestinationHasBeenSet = 0;
             this.DistanceRequiredToCompleteModifier = distanceRequiredToCompleteModifier;
@@ -134,8 +127,8 @@ namespace rak
                     }
                     else
                     {
-                        _targetThing = target.guid;
-                        _targetPosition = target.transform.position;
+                        //_targetThing = target.guid;
+                        //_targetPosition = target.transform.position;
                         // TODO MAKE TARGET UNAVAILABLE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         //_targetThing.MakeUnavailable();
                         //Debug.LogWarning("Locate task complete with target - " + _targetThing.name);
@@ -160,14 +153,14 @@ namespace rak
                             explorePoint.x,
                             terrainHeight + performer.GetCreatureAgent().GetSustainHeight(),
                             explorePoint.z);
-                        _targetPosition = explorePoint;
+                        //_targetPosition = explorePoint;
                     }
                     else
                     {
                         //Debug.Log("No unexplored sectors!");
-                        _targetPosition = performer.GetRandomKnownSectorPosition();
+                        //_targetPosition = performer.GetRandomKnownSectorPosition();
                     }
-                    performer.GetCreatureAgent().SetDestination(_targetPosition);
+                    //performer.GetCreatureAgent().SetDestination(_targetPosition);
                     CreatureAgentDestinationHasBeenSet = 1;
                     Status = Tasks.TASK_STATUS.Complete;
                     return;
@@ -182,7 +175,7 @@ namespace rak
             // MOVE TO //
             else if (Action == Actions.MoveTo)
             {
-                Debug.DrawLine(performer.transform.position, _targetPosition, Color.cyan, .5f);
+                //Debug.DrawLine(performer.transform.position, _targetPosition, Color.cyan, .5f);
                 // The agent should have a destination before getting to this point //
                 if (CreatureAgentDestinationHasBeenSet == 0)
                 {
@@ -286,16 +279,16 @@ namespace rak
         }
         public bool HasTargetPosition()
         {
-            if ((Vector3)_targetPosition != Vector3.zero)
-            {
-                return true;
-            }
+            //if ((Vector3)_targetPosition != Vector3.zero)
+            //{
+              //  return true;
+            //}
             return false;
         }
         public bool HasTargetThing()
         {
-            if (_targetThing != null)
-                return true;
+            //if (_targetThing != null)
+              //  return true;
             return false;
         }
         public bool isStatus(Tasks.TASK_STATUS status)

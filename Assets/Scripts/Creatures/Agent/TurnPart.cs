@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace rak.creatures
 {
-    public class TurnPartInching : TurnPart
+    public class TurnPartInching : Part
     {
         public enum InchState { NONE,Rest,Raise,Move }
 
@@ -22,7 +22,7 @@ namespace rak.creatures
         public TurnPartInching(CreaturePart creaturePart, Transform transform,
             CreatureTurnType turnType, float updateEvery,Direction hingeAxis,
             Transform hingeAttachedTo) :
-            base(creaturePart, transform,CreatureTurnType.Inch, updateEvery)
+            base(creaturePart, transform, updateEvery)
         {
             state = InchState.NONE;
             this.hingeAxis = hingeAxis;
@@ -58,12 +58,14 @@ namespace rak.creatures
             base.UpdateDerivedPart(action,delta);
         }
     }
-    public class TurnPartRotation : TurnPart
+    public class TurnPartRotation : Part
     {
-
-        public TurnPartRotation(CreaturePart creaturePart, Transform transform,
-            CreatureTurnType turnType, float updateEvery) :
-            base(creaturePart, transform, CreatureTurnType.Inch, updateEvery){}
+        private EntityManager em;
+        public TurnPartRotation(CreaturePart creaturePart, Transform transform, float updateEvery) :
+            base(creaturePart,transform,updateEvery)
+        {
+            em = Unity.Entities.World.Active.EntityManager;
+        }
 
         public override void UpdateDerivedPart(ActionStep.Actions action, float delta)
         {
@@ -75,17 +77,6 @@ namespace rak.creatures
                 ert.RotationUpdate.z, ert.RotationUpdate.w);
             if (newRotation.eulerAngles != Vector3.zero)
                 parentCreature.transform.rotation = newRotation;
-        }
-    }
-    public abstract class TurnPart : Part
-    {
-        protected EntityManager em = Unity.Entities.World.Active.EntityManager;
-        private CreatureTurnType turnType;
-        public TurnPart(CreaturePart creaturePart,Transform transform,
-            CreatureTurnType turnType,float updateEvery) : 
-            base(creaturePart, transform, updateEvery)
-        {
-            this.turnType = turnType;
         }
     }
 }

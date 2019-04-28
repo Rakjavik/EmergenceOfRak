@@ -11,6 +11,7 @@ namespace rak.ecs.ThingComponents
         public System.Guid targetGuid;
         public float3 targetPosition;
         public float distance;
+        public byte NeedTargetPositionRefresh;
     }
 
     public class TargetSystem : JobComponentSystem

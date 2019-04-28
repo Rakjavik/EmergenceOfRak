@@ -8,7 +8,7 @@ namespace rak
     public class TaskManager
     {
 
-        private CreatureTaskInstance currentTask;
+        /*private CreatureTaskInstance currentTask;
 
         private bool busy;
         private Creature creature;
@@ -34,7 +34,7 @@ namespace rak
                     neededTask = posting.requestedTask;
                 }
             }
-            else*/
+            else
                 neededTask = Tasks.GetAppropriateTask(highestNeed);
 
             if (neededTask == Tasks.CreatureTasks.SLEEP && creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
@@ -93,6 +93,6 @@ namespace rak
         public string GetCurrentTaskTargetName()
         {
             return currentTask.GetCurrentTaskTargetName();
-        }
+        }*/
     }
 }

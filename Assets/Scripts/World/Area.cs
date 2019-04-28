@@ -42,15 +42,15 @@ namespace rak.world
         }
 
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
-        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 128;
-        private static readonly int MAX_VISIBLE_CREATURES = 10;
+        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 12800;
+        private static readonly int MAX_VISIBLE_CREATURES = 100;
         private static int MAXPOP = 100;
         private void InitializeDebug(Tribe tribe)
         {
             MAXPOP = 1;
             //dayLength = 360;
         }
-        public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 5;
+        public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 50;
         public static float dayLength = 240;
 
         // How many entries in the cache before empty structs are placed //
@@ -146,7 +146,8 @@ namespace rak.world
                         index = count,
                         position = allThingsBlittableCache[count].position,
                         guid = allThingsBlittableCache[count].GetGuid(),
-                        BaseType = allThingsBlittableCache[count].BaseType
+                        BaseType = allThingsBlittableCache[count].BaseType,
+                        Mass = allThingsBlittableCache[count].Mass
                     };
                     validThings++;
                 }
@@ -468,7 +469,7 @@ namespace rak.world
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
-                        distance = 20,
+                        distance = 50,
                         from = transform.position,
                         maxHits = 1
                     };
@@ -594,7 +595,7 @@ namespace rak.world
         
         private void masterUpdate(float delta)
         {
-            
+            EntityManager em = Unity.Entities.World.Active.EntityManager;
             sinceLastSunUpdated += delta;
             timeSinceLastCreatureDistanceSightCheck += delta;
             // DO THESE EVERY UPDATE //
@@ -614,27 +615,10 @@ namespace rak.world
                 sun.rotation = Quaternion.Euler(new Vector3((timeOfDay / dayLength) * 360, 0, 0));
                 sinceLastSunUpdated = 0;
             }
-            
-            lengthOfArray = _removeTheseThings.Count;
-            for (int count = 0; count < lengthOfArray; count++)
-            {
-                Thing singleThing = _removeTheseThings[count];
-                allThings.Remove(singleThing);
-                singleThing.Deactivate();
-                singleThing.transform.SetParent(disabledContainer.transform);
-            }
-            _removeTheseThings = new List<Thing>();
 
             foreach (Tribe tribe in tribesPresent)
             {
                 tribe.Update();
-            }
-                
-            timeSinceUpdatedThings += Time.deltaTime;
-            if (timeSinceUpdatedThings > updateThingsEvery)
-            {
-                updateAllBlittableThingsCache();
-                timeSinceUpdatedThings = 0;
             }
             // THING UPDATES //
             lengthOfArray = allThings.Count;
@@ -651,7 +635,13 @@ namespace rak.world
                     {
                         _removeTheseThings.Add(creature);
                     }
-                    //if (creature.InView){
+                    CreatureAI cai = em.GetComponentData<CreatureAI>(creature.ThingEntity);
+                    if (!cai.DestroyedThingInPosession.Equals(System.Guid.Empty))
+                    {
+                        _removeTheseThings.Add(GetThingByGUID(cai.DestroyedThingInPosession));
+                        cai.DestroyedThingInPosession = System.Guid.Empty;
+                        em.SetComponentData(creature.ThingEntity, cai);
+                    }
                     float distanceFromCamera = Vector3.Distance(cameraPosition, creature.transform.position);
                     if (distanceFromCamera > MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA)
                     {
@@ -672,10 +662,25 @@ namespace rak.world
                             }
                         }
                     }
-                        
                     timeSinceLastCreatureDistanceSightCheck = 0;
-                    //}
                 }
+            }
+
+            lengthOfArray = _removeTheseThings.Count;
+            for (int count = 0; count < lengthOfArray; count++)
+            {
+                Thing singleThing = _removeTheseThings[count];
+                allThings.Remove(singleThing);
+                singleThing.Deactivate();
+                singleThing.transform.SetParent(disabledContainer.transform);
+            }
+            _removeTheseThings = new List<Thing>();
+
+            timeSinceUpdatedThings += Time.deltaTime;
+            if (timeSinceUpdatedThings > updateThingsEvery)
+            {
+                updateAllBlittableThingsCache();
+                timeSinceUpdatedThings = 0;
             }
         }
     }

@@ -6,12 +6,12 @@ namespace rak.UI
 {
     public class FollowCamera : MonoBehaviour
     {
-        private static Vector3 _defaultOffset = Vector3.one*2;
+        private static Vector3 _defaultOffset = Vector3.one*10;
         private static int speed = 3;
         private static float mouseLookSpeed = 1f;
         private static float mouseWheelZoomModifier = 1;
         private static float maxZoomIn = .5f;
-        private static float maxZoomOut = 5;
+        private static float maxZoomOut = 30;
         private static Transform _target = null;
         private static Vector3 cameraOffset = Vector3.one;
         private static float targetZoomDistance = _defaultOffset.z;

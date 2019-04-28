@@ -48,7 +48,7 @@ namespace rak.ecs.ThingComponents
                 {
                     DynamicBuffer<CreatureMemoryBuf> creatureMemory = memoryBuffers[creatureEntity];
                     DynamicBuffer<ObserveBuffer> observeMemory = observeBuffers[creatureEntity];
-                    if (!observeMemory.IsCreated)
+                    if (!observeMemory.IsCreated) 
                     {
                         return;
                     }
@@ -81,9 +81,9 @@ namespace rak.ecs.ThingComponents
             {
                 for (int count = 0; count < memories.Length; count++)
                 {
-                    if (memories[count].memory.verb.Equals(findThis.verb) && 
-                        memories[count].memory.subject.Equals(findThis.subject) &&
-                        memories[count].memory.invertVerb == findThis.invertVerb)
+                    if (memories[count].memory.Verb.Equals(findThis.Verb) && 
+                        memories[count].memory.Subject.Equals(findThis.Subject) &&
+                        memories[count].memory.InvertVerb == findThis.InvertVerb)
                     {
                         return 1;
                     }

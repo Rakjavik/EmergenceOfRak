@@ -169,8 +169,8 @@ namespace rak.creatures
                     gnatMaster.transform.parent, CreatureLocomotionType.Flight, .2f);
 
                 // Body with Rotation turning //
-                TurnPart bodyTurning = new TurnPartRotation
-                    (CreaturePart.BODY, gnatMaster.transform.parent, CreatureTurnType.Rotate, .2f);
+                TurnPartRotation bodyTurning = new TurnPartRotation
+                    (CreaturePart.BODY, gnatMaster.transform.parent, .2f);
 
                 // Backward Propeller //
                 AnimationPart zPropeller = new AnimationPart(CreaturePart.ENGINE_Z, gnatMaster.transform.GetChild(1),
