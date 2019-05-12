@@ -243,7 +243,7 @@ namespace rak.creatures
             Target target = new Target
             {
                 targetPosition = destination,
-                targetGuid = System.Guid.Empty
+                targetEntity = Entity.Null
             };
             em.SetComponentData(ThingEntity, target);
         }
@@ -393,11 +393,11 @@ namespace rak.creatures
         }
         public Thing GetCurrentActionTarget()
         {
-            System.Guid guid = em.GetComponentData<Target>(ThingEntity).targetGuid;
+            Entity guid = em.GetComponentData<Target>(ThingEntity).targetEntity;
             Debug.Log("Fetchign thing with guid - " + guid);
-            if (!guid.Equals(System.Guid.Empty))
+            if (!guid.Equals(Entity.Null))
             {
-                return Area.GetThingByGUID(guid);
+                return Area.GetThingByEntity(guid);
             }
             return null;
         }
@@ -432,10 +432,10 @@ namespace rak.creatures
         }
         public string GetCurrentTaskTargetName()
         {
-            System.Guid targetGuid = em.GetComponentData<Target>(ThingEntity).targetGuid;
-            if (!targetGuid.Equals(System.Guid.Empty))
+            Entity targetEntity = em.GetComponentData<Target>(ThingEntity).targetEntity;
+            if (!targetEntity.Equals(Entity.Null))
             {
-                return Area.GetThingByGUID(targetGuid).thingName;
+                return Area.GetThingByEntity(targetEntity).thingName;
             }
             return "None";
         }

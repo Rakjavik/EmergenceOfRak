@@ -151,12 +151,15 @@
     <Compile Include="Assets\Scripts\ECS\Agent\TractorBeamSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\CreatureBrowserSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\AgeSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Things\AnimationPartSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\CreatureAISystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\CreatureTaskSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Things\NeedsSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ObserveSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ProducesSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ShortTermMemorySystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ThingComponents.cs" />
+    <Compile Include="Assets\Scripts\ECS\World\AreaComponents.cs" />
     <Compile Include="Assets\Scripts\HexCoordinates.cs" />
     <Compile Include="Assets\Scripts\Jobs\ObserveJobFor.cs" />
     <Compile Include="Assets\Scripts\RAKAudioClip.cs" />

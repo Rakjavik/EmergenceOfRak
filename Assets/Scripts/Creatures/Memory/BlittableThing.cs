@@ -1,5 +1,6 @@
 ﻿using rak.world;
 using System;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ namespace rak.creatures.memory
     [Serializable]
     public struct BlittableThing
     {
-        private Guid guid;
+        private Entity entity;
         public Thing.Base_Types BaseType;
         public Thing.Thing_Produces produces;
         private float age;
@@ -16,22 +17,22 @@ namespace rak.creatures.memory
         public float3 position;
         public float Mass;
 
-        public BlittableThing(Thing.Base_Types baseType,Guid guid,float age,float bornAt, float3 position,
+        public BlittableThing(Thing.Base_Types baseType,Entity entity,float age,float bornAt, float3 position,
             Thing.Thing_Produces produces,float mass)
         {
-            if (guid.Equals(Guid.Empty))
+            if (entity.Equals(Entity.Null))
             {
                 this.BaseType = Thing.Base_Types.NA;
                 this.age = -1;
                 this.bornAt = -1;
                 this.position = float3.zero;
-                this.guid = Guid.Empty;
+                this.entity = Entity.Null;
                 this.produces = Thing.Thing_Produces.NA;
                 this.Mass = 0;
             }
             else
             {
-                this.guid = guid;
+                this.entity = entity;
                 this.BaseType = baseType;
                 this.age = age;
                 this.bornAt = bornAt;
@@ -43,19 +44,19 @@ namespace rak.creatures.memory
         
         public static BlittableThing GetNewEmptyThing()
         {
-            return new BlittableThing(Thing.Base_Types.NA,Guid.Empty,-1,-1, float3.zero,Thing.Thing_Produces.NA,0);
+            return new BlittableThing(Thing.Base_Types.NA,Entity.Null,-1,-1, float3.zero,Thing.Thing_Produces.NA,0);
         }
         public Thing GetThing()
         {
-            return Area.GetThingByGUID(guid);
+            return Area.GetThingByEntity(entity);
         }
-        public Guid GetGuid()
+        public Entity GetEntity()
         {
-            return guid;
+            return entity;
         }
         public void RefreshValue(Thing thing)
         {
-            guid = thing.guid;
+            entity = thing.ThingEntity;
             BaseType = thing.baseType;
             age = thing.age;
             bornAt = thing.bornAt;
@@ -64,11 +65,11 @@ namespace rak.creatures.memory
         }
         public void SetToEmpty()
         {
-            guid = Guid.Empty;
+            entity = Entity.Null;
         }
         public bool IsEmpty()
         {
-            if(guid.Equals(Guid.Empty))
+            if(entity.Equals(Entity.Null))
                 return true;
 
             return false;
@@ -79,7 +80,7 @@ namespace rak.creatures.memory
     {
         public float3 position;
         public int index;
-        public System.Guid guid;
+        public Entity entity;
         public Thing.Base_Types BaseType;
         public float Mass;
     }

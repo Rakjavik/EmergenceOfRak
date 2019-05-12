@@ -43,7 +43,7 @@ namespace rak.ecs.ThingComponents
                     {
                         tb.NewTargetPosition = target.targetPosition;
                     }
-                    if (!target.targetGuid.Equals(Guid.Empty))
+                    if (!target.targetEntity.Equals(Entity.Null))
                     {
                         // Need to lock //
                         if (tb.Locked == 0)

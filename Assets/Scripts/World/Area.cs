@@ -27,7 +27,7 @@ namespace rak.world
         }
         private static List<Thing> allThings;
         private static List<CreatureAgent> agents;
-        private static Dictionary<System.Guid, Thing> thingMasterList;
+        private static Dictionary<Entity, Thing> thingMasterList;
         private static List<JobHandle> jobHandles;
         public static void AddJobHandle(JobHandle handle)
         {
@@ -47,7 +47,7 @@ namespace rak.world
         private static int MAXPOP = 100;
         private void InitializeDebug(Tribe tribe)
         {
-            MAXPOP = 1;
+            MAXPOP = 150;
             //dayLength = 360;
         }
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 50;
@@ -68,10 +68,10 @@ namespace rak.world
         public static float AreaLocalTime { get; private set; }
         public static int NumberOfVisibleThings { get; private set; }
 
-        public static Thing GetThingByGUID(System.Guid guid)
+        public static Thing GetThingByEntity(Entity entity)
         {
-            if(thingMasterList.ContainsKey(guid))
-                return thingMasterList[guid];
+            if(thingMasterList.ContainsKey(entity))
+                return thingMasterList[entity];
             return null;
         }
 
@@ -103,7 +103,7 @@ namespace rak.world
         public static void AddThingToAllThings(Thing thingToAdd)
         {
             allThings.Add(thingToAdd);
-            thingMasterList.Add(thingToAdd.guid, thingToAdd);
+            thingMasterList.Add(thingToAdd.ThingEntity, thingToAdd);
             if(thingToAdd is Creature)
             {
                 Creature creature = (Creature)thingToAdd;
@@ -145,7 +145,7 @@ namespace rak.world
                     {
                         index = count,
                         position = allThingsBlittableCache[count].position,
-                        guid = allThingsBlittableCache[count].GetGuid(),
+                        entity = allThingsBlittableCache[count].GetEntity(),
                         BaseType = allThingsBlittableCache[count].BaseType,
                         Mass = allThingsBlittableCache[count].Mass
                     };
@@ -209,7 +209,7 @@ namespace rak.world
             jobHandles = new List<JobHandle>();
             allThingsBlittableCache = new NativeArray<BlittableThing>(MAX_CONCURRENT_THINGS,Allocator.Persistent,NativeArrayOptions.UninitializedMemory);
             observableThings = new NativeArray<ObservableThing>(MAX_CONCURRENT_THINGS, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            thingMasterList = new Dictionary<System.Guid, Thing>();
+            thingMasterList = new Dictionary<Entity, Thing>();
             mainCamera = Camera.main;
             if (debug) // DEBUG
             {
@@ -636,10 +636,10 @@ namespace rak.world
                         _removeTheseThings.Add(creature);
                     }
                     CreatureAI cai = em.GetComponentData<CreatureAI>(creature.ThingEntity);
-                    if (!cai.DestroyedThingInPosession.Equals(System.Guid.Empty))
+                    if (!cai.DestroyedThingInPosession.Equals(Entity.Null))
                     {
-                        _removeTheseThings.Add(GetThingByGUID(cai.DestroyedThingInPosession));
-                        cai.DestroyedThingInPosession = System.Guid.Empty;
+                        _removeTheseThings.Add(GetThingByEntity(cai.DestroyedThingInPosession));
+                        cai.DestroyedThingInPosession = Entity.Null;
                         em.SetComponentData(creature.ThingEntity, cai);
                     }
                     float distanceFromCamera = Vector3.Distance(cameraPosition, creature.transform.position);

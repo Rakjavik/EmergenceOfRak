@@ -8,7 +8,7 @@ namespace rak.ecs.ThingComponents
 {
     public struct Target : IComponentData
     {
-        public System.Guid targetGuid;
+        public Entity targetEntity;
         public float3 targetPosition;
         public float distance;
         public byte NeedTargetPositionRefresh;

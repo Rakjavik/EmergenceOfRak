@@ -110,14 +110,14 @@ namespace rak.UI
                     {
                         if (count == memBuffers.Length)
                             break;
-                        if (!memBuffers[count].memory.Subject.Equals(System.Guid.Empty))
+                        if (!memBuffers[count].memory.Subject.Equals(Entity.Null))
                         {
-                            if (Area.GetThingByGUID(memBuffers[count].memory.Subject) != null)
+                            if (Area.GetThingByEntity(memBuffers[count].memory.Subject) != null)
                             {
                                 if (memBuffers[count].memory.GetInvertVerb())
                                     columnText.Append("!");
                                 columnText.Append(memBuffers[count].memory.Verb.ToString() + "-" +
-                                    Area.GetThingByGUID(memBuffers[count].memory.Subject).thingName + "\n");
+                                    Area.GetThingByEntity(memBuffers[count].memory.Subject).thingName + "\n");
                                 //+ " " + memBuffers[count].memory.Iterations + "\n");
                             }
                             else
@@ -148,12 +148,12 @@ namespace rak.UI
                 text = text.Replace("{task}", selectedCreature.GetCurrentTask().ToString());
                 text = text.Replace("{taskTarget}", selectedCreature.GetCurrentTaskTargetName());
                 text = text.Replace("{currentAction}", selectedCreature.GetCurrentAction().ToString());
-                text = text.Replace("{hunger}", selectedCreature.GetNeedAmount(Needs.NEEDTYPE.HUNGER).ToString());
+                text = text.Replace("{hunger}", selectedCreature.GetNeedAmount(creatures.Needs.NEEDTYPE.HUNGER).ToString());
                 text = text.Replace("{hungerRelative}", selectedCreature.
-                    GetRelativeNeedAmount(Needs.NEEDTYPE.HUNGER).ToString());
-                text = text.Replace("{sleep}", ((int)selectedCreature.GetNeedAmount(Needs.NEEDTYPE.SLEEP)).ToString());
+                    GetRelativeNeedAmount(creatures.Needs.NEEDTYPE.HUNGER).ToString());
+                text = text.Replace("{sleep}", ((int)selectedCreature.GetNeedAmount(creatures.Needs.NEEDTYPE.SLEEP)).ToString());
                 text = text.Replace("{sleepRelative}", ((int)selectedCreature.
-                    GetRelativeNeedAmount(Needs.NEEDTYPE.SLEEP)).ToString());
+                    GetRelativeNeedAmount(creatures.Needs.NEEDTYPE.SLEEP)).ToString());
                 detailText.text = text;
             }
             int cc = world.World.CurrentArea.ActiveCreatureCount;

@@ -82,7 +82,7 @@ namespace rak.creatures
             EntityManager em = Unity.Entities.World.Active.EntityManager;
             Target target = new Target
             {
-                targetGuid = System.Guid.Empty,
+                targetEntity = Entity.Null,
                 targetPosition = destination
             };
             em.SetComponentData(creature.ThingEntity, target);

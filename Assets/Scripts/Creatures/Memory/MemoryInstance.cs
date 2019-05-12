@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Entities;
 using Unity.Mathematics;
 
 namespace rak.creatures.memory
@@ -8,7 +9,7 @@ namespace rak.creatures.memory
     {
         public Verb Verb;
         public byte InvertVerb;
-        public Guid Subject;
+        public Entity Subject;
         public float TimeStamp;
         public int Iterations;
         public byte Edible { get; private set; }
@@ -16,7 +17,7 @@ namespace rak.creatures.memory
         public Thing.Base_Types SubjectType;
         public float SubjectMass;
 
-        public MemoryInstance(Verb verb, Guid subject, bool invertVerb, float timestamp,
+        public MemoryInstance(Verb verb, Entity subject, bool invertVerb, float timestamp,
             Thing.Base_Types subjectType, ConsumptionType creatureConsumeType,float3 position,float subjectMass)
         {
             if (invertVerb)
@@ -75,10 +76,10 @@ namespace rak.creatures.memory
         }
         public static MemoryInstance GetNewEmptyMemory()
         {
-            return new MemoryInstance(Verb.NA, Guid.Empty, false,0,Thing.Base_Types.NA,
+            return new MemoryInstance(Verb.NA, Entity.Null, false,0,Thing.Base_Types.NA,
                 ConsumptionType.CARNIVORE,float3.zero,0);
         }
-        public void ReplaceMemory(Verb verb, Guid subject, bool invertVerb)
+        public void ReplaceMemory(Verb verb, Entity subject, bool invertVerb)
         {
             this.Verb = verb;
             this.Subject = subject;
@@ -88,9 +89,9 @@ namespace rak.creatures.memory
         }
 
         public void AddIteration() { Iterations++; }
-        public bool IsSameAs(Verb verb, Guid subject, bool invertVerb)
+        public bool IsSameAs(Verb verb, Entity subject, bool invertVerb)
         {
-            if (subject != Guid.Empty)
+            if (subject != Entity.Null)
             {
                 if (invertVerb == getInvertVerb(this.InvertVerb) &&
                     subject == this.Subject &&

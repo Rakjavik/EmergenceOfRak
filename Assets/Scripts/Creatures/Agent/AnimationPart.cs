@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using rak.ecs.ThingComponents;
+using Unity.Entities;
+using UnityEngine;
 
 namespace rak.creatures
 {
@@ -7,12 +9,13 @@ namespace rak.creatures
 
     public class AnimationPart : Part
     {
-        private Vector3 movementDirection;
-        protected float movementMultiplier;
+        public Vector3 MovementDirection;
+        public float MovementMultiplier;
         private ActionStep.Actions[] AnimateDuring;
-        private PartMovesWith partMovesRelativeTo;
-        private PartAnimationType animationType;
-        private bool visibleIfNotAnimating;
+        public PartMovesWith PartMovesRelativeTo;
+        public PartAnimationType AnimationType;
+        public bool VisibleIfNotAnimating;
+        public int IndexInComponentArray;
 
         private bool visible {get; set;}
 
@@ -21,12 +24,12 @@ namespace rak.creatures
             PartMovesWith partMovesRelativeTo,PartAnimationType animationType, bool visibleIfNotAnimating)
             : base(creaturePart, transform, updateEvery)
         {
-            this.movementDirection = movementDirection;
-            this.movementMultiplier = movementMultiplier;
+            this.MovementDirection = movementDirection;
+            this.MovementMultiplier = movementMultiplier;
             this.AnimateDuring = animateDuring;
-            this.partMovesRelativeTo = partMovesRelativeTo;
-            this.animationType = animationType;
-            this.visibleIfNotAnimating = visibleIfNotAnimating;
+            this.PartMovesRelativeTo = partMovesRelativeTo;
+            this.AnimationType = animationType;
+            this.VisibleIfNotAnimating = visibleIfNotAnimating;
             visible = true;
         }
 
@@ -34,13 +37,13 @@ namespace rak.creatures
         {
             if (!animateDuringThis(currentCreatureAction))
             {
-                if (!visibleIfNotAnimating && visible)
+                if (!VisibleIfNotAnimating && visible)
                 {
                     SetVisibility(false);
                 }
                 return;
             }
-            if (animationType == PartAnimationType.Movement)
+            if (AnimationType == PartAnimationType.Movement)
             {
                 animateMovement();
             }
@@ -73,32 +76,37 @@ namespace rak.creatures
         private void animateMovement()
         {
             float relativeMultiplier;
-            if (partMovesRelativeTo == PartMovesWith.ConstantForceY)
+            if (PartMovesRelativeTo == PartMovesWith.ConstantForceY)
                 relativeMultiplier = attachedAgent.GetConstantForceComponent().relativeForce.y;
-            else if (partMovesRelativeTo == PartMovesWith.ConstantForceZ)
+            else if (PartMovesRelativeTo == PartMovesWith.ConstantForceZ)
                 relativeMultiplier = attachedAgent.GetConstantForceComponent().relativeForce.z;
-            else if (partMovesRelativeTo == PartMovesWith.Velocity)
+            else if (PartMovesRelativeTo == PartMovesWith.Velocity)
                 relativeMultiplier = attachedAgent.GetRigidBody().velocity.magnitude;
-            else if (partMovesRelativeTo == PartMovesWith.IsKinematic)
+            else if (PartMovesRelativeTo == PartMovesWith.IsKinematic)
                 relativeMultiplier = attachedAgent.IsKinematic();
-            else if (partMovesRelativeTo == PartMovesWith.TargetPosition)
+            else if (PartMovesRelativeTo == PartMovesWith.TargetPosition)
                 relativeMultiplier = 0;
             else
                 relativeMultiplier = 1;
             // NO changes //
             if (relativeMultiplier == 0)
             {
-                if (!visibleIfNotAnimating && visible)
+                if (!VisibleIfNotAnimating && visible)
                     SetVisibility(false);
             }
             else
             {
-                if (!visibleIfNotAnimating && !visible)
+                if (!VisibleIfNotAnimating && !visible)
                     SetVisibility(true);
 
-                Vector3 rotation = movementDirection * relativeMultiplier;
-                PartTransform.Rotate(rotation * movementMultiplier);
+                Vector3 rotation = MovementDirection * relativeMultiplier;
+                PartTransform.Rotate(rotation * MovementMultiplier);
             }
+            
+            // ECS, NOT WORKING RIGHT YET //
+            /*DynamicBuffer<AnimationBuffer> buffer = World.Active.EntityManager.
+                GetBuffer<AnimationBuffer>(parentCreature.ThingEntity);
+            PartTransform.rotation = buffer[IndexInComponentArray].ac.CurrentRotation;*/
         }
         
         private bool animateDuringThis(ActionStep.Actions action)

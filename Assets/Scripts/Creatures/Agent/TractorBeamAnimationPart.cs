@@ -58,7 +58,7 @@ namespace rak.creatures
         private void updateMainModuleStartSpeedBasedOffDistFromTarget()
         {
             float distanceFromTarget = Vector3.Distance(PartTransform.position, target.position);
-            mainModule.startSpeed = new ParticleSystem.MinMaxCurve(distanceFromTarget * movementMultiplier);
+            mainModule.startSpeed = new ParticleSystem.MinMaxCurve(distanceFromTarget * MovementMultiplier);
         }
         private void verifyParticlesAreOff()
         {

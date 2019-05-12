@@ -28,7 +28,7 @@ namespace rak.creatures
             {
                 if (this.target == null || targetBody == null)
                 {
-                    this.target = Area.GetThingByGUID(ecsTarget.targetGuid);
+                    this.target = Area.GetThingByEntity(ecsTarget.targetEntity);
                     targetBody = this.target.RequestRigidBodyAccess(parentCreature);
                     targetBody.isKinematic = true;
                 }

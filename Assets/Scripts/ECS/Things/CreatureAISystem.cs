@@ -22,7 +22,7 @@ namespace rak.ecs.ThingComponents
         public DynamicBuffer<ActionStepBufferCurrent> CurrentSteps;
         public DynamicBuffer<ActionStepBufferPrevious> PreviousSteps;
         public int CurrentStepNum;
-        public System.Guid DestroyedThingInPosession;
+        public Entity DestroyedThingInPosession;
     }
     [InternalBufferCapacity(10)]
     public struct ActionStepBufferCurrent : IBufferElementData
@@ -78,7 +78,7 @@ namespace rak.ecs.ThingComponents
                     if (cai.CurrentStepNum >= currentBuffer.Length)
                     {
                         cai.CurrentAction = ActionStep.Actions.None;
-                        target.targetGuid = System.Guid.Empty;
+                        target.targetEntity = Entity.Null;
                         target.targetPosition = float3.zero;
                     }
                     else
@@ -190,13 +190,13 @@ namespace rak.ecs.ThingComponents
             private void eat(ref CreatureAI cai,ref Target target,ref ShortTermMemory stm,ref Entity entity)
             {
                 cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
-                cai.DestroyedThingInPosession = target.targetGuid;
+                cai.DestroyedThingInPosession = target.targetEntity;
                 DynamicBuffer<CreatureMemoryBuf> buffer = memoryBuffers[entity];
                 int bufferLength = buffer.Length;
                 for(int count = 0; count < bufferLength; count++)
                 {
                     if(buffer[count].memory.InvertVerb == 0 && buffer[count].memory.Verb == Verb.SAW 
-                        && buffer[count].memory.Subject.Equals(target.targetGuid))
+                        && buffer[count].memory.Subject.Equals(target.targetEntity))
                     {
                         MemoryInstance newMemory = buffer[count].memory;
                         newMemory.InvertVerb = 1;
@@ -234,7 +234,7 @@ namespace rak.ecs.ThingComponents
                     if (closestIndex != -1)
                     {
                         targetFound = true;
-                        target.targetGuid = stm.memoryBuffer[closestIndex].memory.Subject;
+                        target.targetEntity = stm.memoryBuffer[closestIndex].memory.Subject;
                         target.targetPosition = stm.memoryBuffer[closestIndex].memory.Position;
                         cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
                     }
@@ -244,7 +244,7 @@ namespace rak.ecs.ThingComponents
                 {
                     if (obs.ObservationAvailable == 0)
                         obs.RequestObservation = 1;
-                    target.targetGuid = System.Guid.Empty;
+                    target.targetEntity = Entity.Null;
                     Unity.Mathematics.Random random = new Unity.Mathematics.Random();
                     random.InitState((uint)(Delta * 500));
                     random.NextInt();

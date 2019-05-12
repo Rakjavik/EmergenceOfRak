@@ -59,7 +59,6 @@ namespace rak.ecs.ThingComponents
 
             public void Execute(Entity entity, int index, ref Observe ob,ref AgentVariables av, ref CreatureAI ai)
             {
-                ob.RequestObservation = 1;
                 // Only run if observation was requested, and we won't already have an observation waiting to be read //
                 if (ob.RequestObservation == 1 && ob.ObservationAvailable == 0)
                 {
@@ -76,7 +75,7 @@ namespace rak.ecs.ThingComponents
                             MemoryInstance memory = new MemoryInstance
                             {
                                 Verb = Verb.SAW,
-                                Subject = ObservableThings[count].guid,
+                                Subject = ObservableThings[count].entity,
                                 InvertVerb = 0,
                                 TimeStamp = TimeStamp,
                                 SubjectType = ObservableThings[count].BaseType,
@@ -92,6 +91,7 @@ namespace rak.ecs.ThingComponents
                     }
                     ob.memoryBuffer = buffer;
                     ob.ObservationAvailable = 1;
+                    ob.RequestObservation = 0;
                 }
             }
         }

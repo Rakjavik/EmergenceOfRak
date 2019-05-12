@@ -112,7 +112,7 @@ namespace rak
             // LOCATE //
             if (Action == Actions.Locate)
             {
-                performer.RequestObservationUpdate();
+                //performer.RequestObservationUpdate();
                 // LOCATE EAT //
                 if (associatedTask == Tasks.CreatureTasks.EAT)
                 {
@@ -193,8 +193,8 @@ namespace rak
                         Status = Tasks.TASK_STATUS.Failed;
                         return;
                     }
-                    if (associatedTask == Tasks.CreatureTasks.MOVE_AND_OBSERVE)
-                        performer.RequestObservationUpdate();
+                    //if (associatedTask == Tasks.CreatureTasks.MOVE_AND_OBSERVE)
+                        //performer.RequestObservationUpdate();
                     // Raycast if we're close enough to the target to where we should be able to see it //
                     float distanceBeforeRayCastCheckOnTarget = performer.miscVariables
                         [MiscVariables.CreatureMiscVariables.Agent_MoveTo_Raycast_For_Target_When_Distance_Below];

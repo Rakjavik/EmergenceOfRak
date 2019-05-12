@@ -91,12 +91,44 @@ namespace rak
                 {
                     BeamStrength = 1, // Movement modifier
                 });
+                world.EntityManager.AddComponentData(ThingEntity, new AnimationComponentGroup
+                {
+                    AnimationParts = world.EntityManager.AddBuffer<AnimationBuffer>(ThingEntity)
+                });
+                Part[] parts = attachedAgent.GetAllParts();
+                DynamicBuffer<AnimationBuffer> animationECSParts = world.EntityManager.GetBuffer<AnimationBuffer>(ThingEntity);
+                int animationPartCount = 0;
+                for(int count = 0; count < parts.Length; count++)
+                {
+                    if(parts[count] is creatures.AnimationPart)
+                    {
+                        creatures.AnimationPart part = (creatures.AnimationPart)parts[count];
+                        byte visibleIfNotAnimating = 0;
+                        if (part.VisibleIfNotAnimating)
+                            visibleIfNotAnimating = 1;
+                        AnimationBuffer newECSPart = new AnimationBuffer
+                        {
+                            ac = new ecs.ThingComponents.AnimationPart
+                            {
+                                AnimationType = part.AnimationType,
+                                CurrentRotation = part.GetPartTransform().rotation,
+                                MovementMult = part.MovementMultiplier,
+                                MovmeentDirection = part.MovementDirection,
+                                PartMovesWith = part.PartMovesRelativeTo,
+                                VisibleIfNotAnimating = visibleIfNotAnimating,
+                            }
+                        };
+                        animationECSParts.Add(newECSPart);
+                        part.IndexInComponentArray = animationPartCount;
+                        animationPartCount++;
+                    }
+                }
+
                 world.EntityManager.AddComponentData(ThingEntity, new Observe
                 {
                     ObserveDistance = 100, // Distance from creature before creature can see it
                     memoryBuffer = world.EntityManager.AddBuffer<ObserveBuffer>(ThingEntity)
                 });
-                
                 world.EntityManager.AddComponentData(ThingEntity, new ShortTermMemory
                 {
                     CurrentMemoryIndex = 0,
@@ -109,6 +141,7 @@ namespace rak
                 {
                     thisCreaturesBuffer.Add(new CreatureMemoryBuf { memory = MemoryInstance.GetNewEmptyMemory() });
                 }
+                world.EntityManager.AddComponentData(ThingEntity, new ecs.ThingComponents.Needs { });
             }
         }
         
@@ -129,7 +162,7 @@ namespace rak
         public float age { get; private set; }
         public float maxAge { get; private set; }
         public float bornAt { get; private set; }
-        public Guid guid { get; private set; }
+        public Entity entity { get; private set; }
         public int entityIndex { get; set; }
 
         private BlittableThing blittableThing = BlittableThing.GetNewEmptyThing();
@@ -184,9 +217,11 @@ namespace rak
         public void initialize(string name)
         {
             rb = null;
-            guid = Guid.NewGuid();
+            EntityManager em = Unity.Entities.World.Active.EntityManager;
+            entity = em.CreateEntity();
+            ThingEntity = entity;
             //goEntity = GetComponent<GameObjectEntity>();
-            this.thingName = name + "-" + guid.ToString().Substring(0,5);
+            this.thingName = name + "-" + entity.ToString().Substring(0,5);
             // Default to no production //
             produces = Thing_Produces.NA;
             if (name.Equals("fruit"))
