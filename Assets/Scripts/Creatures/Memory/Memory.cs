@@ -226,12 +226,12 @@ namespace rak.creatures.memory
             List<MemoryInstance> foundThings = new List<MemoryInstance>();
             foreach (MemoryInstance memory in shortTermMemory)
             {
-                if (!memory.IsEmpty() && memory.Subject.Equals(thing.entity))
+                if (!memory.IsEmpty() && memory.Subject.Equals(thing.ThingEntity))
                     foundThings.Add(memory);
             }
             foreach (MemoryInstance memory in longTermMemory)
             {
-                if (memory.Subject.Equals(thing.entity))
+                if (memory.Subject.Equals(thing.ThingEntity))
                     foundThings.Add(memory);
             }
             return foundThings.ToArray();

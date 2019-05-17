@@ -28,11 +28,11 @@ namespace rak.ecs.ThingComponents
         }
 
         //[BurstCompile]
-        struct TargetJob : IJobForEach<Target, AgentVariables>
+        struct TargetJob : IJobForEach<Target, Position>
         {
-            public void Execute(ref Target target, ref AgentVariables av)
+            public void Execute(ref Target target, ref Position pos)
             {
-                target.distance = Vector3.Distance(av.Position, target.targetPosition);
+                target.distance = Vector3.Distance(pos.Value, target.targetPosition);
             }
         }
     }

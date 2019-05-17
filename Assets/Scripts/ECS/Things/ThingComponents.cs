@@ -25,7 +25,6 @@ namespace rak.ecs.ThingComponents
     public struct AgentVariables : IComponentData
     {
         public float3 RelativeVelocity;
-        public float3 Position;
         public float3 Velocity;
         public float4 Rotation;
         public float3 AngularVelocity;

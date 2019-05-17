@@ -82,11 +82,7 @@ namespace rak.UI
         public void Initialize()
         {
             EntityManager manager = Unity.Entities.World.Active.EntityManager;
-            NativeArray<Entity> entities = new NativeArray<Entity>(1, Allocator.Temp);
-            BrowserEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy
-                (gameObject, Unity.Entities.World.Active);
-            manager.Instantiate(BrowserEntity, entities);
-            entities.Dispose();
+            BrowserEntity = manager.CreateEntity();
             manager.AddComponentData(BrowserEntity, new CreatureBrowser
             {
                 MemoryBuffer = manager.AddBuffer<CreatureMemoryBuf>(BrowserEntity)
@@ -122,7 +118,8 @@ namespace rak.UI
                             }
                             else
                             {
-                                columnText.Append("Destroyed\n");
+                                //columnText.Append("Destroyed\n");
+                                columnText.Append("Entity - " + memBuffers[count].memory.Subject + "\n");
                             }
 
                         }
@@ -188,8 +185,11 @@ namespace rak.UI
                     livingCreatures.Add(creatureMap[count]);
                     
             }
-            creatureMap = livingCreatures.ToArray();
-            RefreshMainText();
+            if (livingCreatures.Count > 0)
+            {
+                creatureMap = livingCreatures.ToArray();
+                RefreshMainText();
+            }
         }
         private void Update()
         {

@@ -16,6 +16,11 @@ namespace rak.ecs.ThingComponents
         public DynamicBuffer<ObserveBuffer> memoryBuffer;
         public int NumberOfObservations;
     }
+    public struct Observable : IComponentData
+    {
+        public Thing.Base_Types BaseType;
+        public float Mass;
+    }
 
     [InternalBufferCapacity(20)]
     public struct ObserveBuffer : IBufferElementData
@@ -25,6 +30,11 @@ namespace rak.ecs.ThingComponents
 
     public class ObserveSystem : JobComponentSystem
     {
+        [ReadOnly]
+        private NativeArray<Position> positions;
+        [ReadOnly]
+        private NativeArray<Entity> entities;
+
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -33,12 +43,19 @@ namespace rak.ecs.ThingComponents
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            
+            EntityQuery query = EntityManager.CreateEntityQuery(new ComponentType[] { typeof(Observable),typeof(Position) });
+            positions = query.ToComponentDataArray<Position>(Allocator.TempJob);
+            entities = query.ToEntityArray(Allocator.TempJob);
             ObserveJob job = new ObserveJob
             {
                 TimeStamp = Time.time,
                 observeBuffers = GetBufferFromEntity<ObserveBuffer>(false),
-                ObservableThings = new NativeArray<ObservableThing>(Area.GetObservableThings(),Allocator.TempJob),
-                ObservableThingsLength = Area.ObservableThingsEntriesFilled
+                positions = positions,
+                entities = entities,
+                origins = GetComponentDataFromEntity<Position>(true),
+                observables = GetComponentDataFromEntity<Observable>(true),
+                ObservableThingsLength = positions.Length,
             };
             JobHandle handle = job.Schedule(this, inputDeps);
             return handle;
@@ -49,10 +66,22 @@ namespace rak.ecs.ThingComponents
             //[ReadOnly]
             [NativeDisableParallelForRestriction]
             [DeallocateOnJobCompletion]
-            public NativeArray<ObservableThing> ObservableThings;
+            public NativeArray<Position> positions;
+
+            [DeallocateOnJobCompletion]
+            [ReadOnly]
+            public NativeArray<Entity> entities;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Observable> observables;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Position> origins;
+
 
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<ObserveBuffer> observeBuffers;
+            
 
             public float TimeStamp;
             public int ObservableThingsLength;
@@ -65,22 +94,21 @@ namespace rak.ecs.ThingComponents
                     // Start from a clean slate //
                     DynamicBuffer<ObserveBuffer> buffer = observeBuffers[entity];
                     buffer.Clear();
-                    
-                    float3 origin = av.Position;
+
                     for (int count = 0; count < ObservableThingsLength; count++)
                     {
-                        float distance = Vector3.Distance(origin, ObservableThings[count].position);
+                        float distance = Vector3.Distance(origins[entity].Value, positions[count].Value);
                         if (distance <= ob.ObserveDistance && distance > 0)
                         {
                             MemoryInstance memory = new MemoryInstance
                             {
                                 Verb = Verb.SAW,
-                                Subject = ObservableThings[count].entity,
+                                Subject = entities[count],
                                 InvertVerb = 0,
                                 TimeStamp = TimeStamp,
-                                SubjectType = ObservableThings[count].BaseType,
-                                Position = ObservableThings[count].position,
-                                SubjectMass = ObservableThings[count].Mass,
+                                SubjectType = observables[entities[count]].BaseType,
+                                Position = positions[count].Value,
+                                SubjectMass = observables[entities[count]].Mass,
                             };
                             memory.RefreshEdible(ai.ConsumptionType);
                             buffer.Add(new ObserveBuffer

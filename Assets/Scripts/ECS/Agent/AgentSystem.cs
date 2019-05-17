@@ -52,11 +52,11 @@ namespace rak.ecs.ThingComponents
         }
         
         //[BurstCompile]
-        struct AgentJob : IJobForEach<Agent,AgentVariables,CreatureAI>
+        struct AgentJob : IJobForEach<Agent,AgentVariables,CreatureAI,Position>
         {
             public float currentTime;
 
-            public void Execute(ref Agent agent, ref AgentVariables av,ref CreatureAI ai)
+            public void Execute(ref Agent agent, ref AgentVariables av,ref CreatureAI ai,ref Position pos)
             {
                 // VISIBLE TO CAMERA //
                 if (av.Visible == 1)
@@ -64,7 +64,7 @@ namespace rak.ecs.ThingComponents
                     if (currentTime - agent.DistanceLastUpdated >= agent.UpdateDistanceEvery)
                     {
 
-                        float3 currentPosition = av.Position;
+                        float3 currentPosition = pos.Value;
                         agent.DistanceLastUpdated = currentTime;
                         float distanceMovedSinceLastCheck = Vector3.Distance(
                             agent.PreviousPositionMeasured, currentPosition);

@@ -32,6 +32,11 @@ namespace rak
                 {
                     Value = transform.position
                 });
+                world.EntityManager.AddComponentData(ThingEntity, new Observable
+                {
+                    BaseType = Base_Types.PLANT,
+                    Mass = 5000
+                });
             }
             else if (thingType == Thing_Types.Gnat)
             {
@@ -142,6 +147,25 @@ namespace rak
                     thisCreaturesBuffer.Add(new CreatureMemoryBuf { memory = MemoryInstance.GetNewEmptyMemory() });
                 }
                 world.EntityManager.AddComponentData(ThingEntity, new ecs.ThingComponents.Needs { });
+                world.EntityManager.AddComponentData(ThingEntity, new Position { Value = transform.position });
+                world.EntityManager.AddComponentData(ThingEntity, new Observable
+                {
+                    BaseType = Base_Types.CREATURE,
+                    Mass = 5
+                });
+            }
+            else if (thingType == Thing_Types.Fruit)
+            {
+                world.EntityManager.AddComponentData(ThingEntity, new Observable
+                {
+                    BaseType = Base_Types.PLANT,
+                    Mass = 1,
+                });
+                world.EntityManager.AddComponentData(ThingEntity, new Position { Value = transform.position });
+            }
+            else
+            {
+                Debug.LogError("Object not recognized - " + thingType);
             }
         }
         
@@ -162,7 +186,6 @@ namespace rak
         public float age { get; private set; }
         public float maxAge { get; private set; }
         public float bornAt { get; private set; }
-        public Entity entity { get; private set; }
         public int entityIndex { get; set; }
 
         private BlittableThing blittableThing = BlittableThing.GetNewEmptyThing();
@@ -218,10 +241,10 @@ namespace rak
         {
             rb = null;
             EntityManager em = Unity.Entities.World.Active.EntityManager;
-            entity = em.CreateEntity();
-            ThingEntity = entity;
+            ThingEntity = em.CreateEntity();
+            
             //goEntity = GetComponent<GameObjectEntity>();
-            this.thingName = name + "-" + entity.ToString().Substring(0,5);
+            this.thingName = name + "-" + ThingEntity.ToString().Substring(0,5);
             // Default to no production //
             produces = Thing_Produces.NA;
             if (name.Equals("fruit"))
@@ -244,8 +267,6 @@ namespace rak
                     consumeable = false;
                     useable = false;
                 }
-                
-
             }
             else if (name.Equals(RAKUtilities.NON_TERRAIN_OBJECT_FRUIT_TREE))
             {
@@ -297,6 +318,7 @@ namespace rak
                     useable = false;
                 }
             }
+            AddECSComponents();
         }
 
         public void ManualUpdate(float delta)
@@ -307,6 +329,10 @@ namespace rak
                 if (transform.position.y < Area.MinimumHeight)
                     transform.position = new 
                         Vector3(transform.position.x, Area.MaximumHeight, transform.position.z);
+                Unity.Entities.World.Active.EntityManager.SetComponentData<Position>(ThingEntity, new Position
+                {
+                    Value = transform.position
+                });
             }
             if(thingAgent != null)
             {

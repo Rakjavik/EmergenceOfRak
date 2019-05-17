@@ -28,16 +28,17 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        struct EngineRotationTurningJob : IJobForEach<EngineRotationTurning, AgentVariables,Target,Agent>
+        struct EngineRotationTurningJob : IJobForEach<EngineRotationTurning, AgentVariables,Target,Agent,Position>
         {
             public float delta;
 
-            public void Execute(ref EngineRotationTurning ert, ref AgentVariables av, ref Target target, ref Agent agent)
+            public void Execute(ref EngineRotationTurning ert, ref AgentVariables av, ref Target target, ref Agent agent,
+                ref Position pos)
             {
                 // Disabled turning if we're avoiding obstacles //
                 if (agent.DistanceFromFirstZHit <= 3)
                     return;
-                float3 direction = (target.targetPosition - av.Position);
+                float3 direction = (target.targetPosition - pos.Value);
                 if (direction.Equals(float3.zero)) return;
                 Quaternion lookRotation = Quaternion.LookRotation(direction,Vector3.up);
                 Quaternion currentRot = new Quaternion(av.Rotation.x, av.Rotation.y, av.Rotation.z, av.Rotation.w);

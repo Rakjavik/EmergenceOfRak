@@ -160,6 +160,7 @@
     <Compile Include="Assets\Scripts\ECS\Things\ShortTermMemorySystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ThingComponents.cs" />
     <Compile Include="Assets\Scripts\ECS\World\AreaComponents.cs" />
+    <Compile Include="Assets\Scripts\ECS\World\GridSector.cs" />
     <Compile Include="Assets\Scripts\HexCoordinates.cs" />
     <Compile Include="Assets\Scripts\Jobs\ObserveJobFor.cs" />
     <Compile Include="Assets\Scripts\RAKAudioClip.cs" />

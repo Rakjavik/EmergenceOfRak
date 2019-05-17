@@ -57,7 +57,7 @@ namespace rak.world
         public AudioClip AmbientSound;
 
         private bool editing = false;
-        public static bool Initialized;
+        public static bool Initialized = false;
         private float worldUpdatesEvery = 1; //Seconds
         private float sinceLastUpdate = 0;
 
@@ -79,8 +79,6 @@ namespace rak.world
             masterTerrain.Initialize(this, currentCell);
             
             em = Unity.Entities.World.Active.EntityManager;
-
-
         }
 
         // ENTRY METHOD //
@@ -145,7 +143,6 @@ namespace rak.world
             else
                 mainMenu.Initialize(RootMenu.WorldBrowser);
             em = Unity.Entities.World.Active.EntityManager;
-            Initialized = true;
         }
         private void completeInitialize()
         {
@@ -232,7 +229,7 @@ namespace rak.world
             {
                 sinceLastUpdate = 0;
                 EntityQuery query = em.CreateEntityQuery(new ComponentType[] { typeof(Produces),typeof(Position) });
-                NativeArray<Entity> entities = query.ToEntityArray(Unity.Collections.Allocator.TempJob);
+                NativeArray<Entity> entities = query.ToEntityArray(Allocator.TempJob);
                 for(int count = 0; count < entities.Length; count++)
                 {
                     Produces producer = em.GetComponentData<Produces>(entities[count]);

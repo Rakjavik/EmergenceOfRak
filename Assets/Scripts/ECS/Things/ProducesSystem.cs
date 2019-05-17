@@ -15,12 +15,9 @@ namespace rak.ecs.ThingComponents
 
     public class ProducesSystem : JobComponentSystem
     {
-        BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
-
         protected override void OnCreate()
         {
             Enabled = true;
-            m_EntityCommandBufferSystem = World.GetOrCreateSystem <BeginInitializationEntityCommandBufferSystem>();
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

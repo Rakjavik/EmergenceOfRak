@@ -698,11 +698,12 @@ public partial class RAKTerrainMaster : MonoBehaviour
                     }
                     singleTerrain.terrainData.SetHeights((int)startPoint.x, (int)startPoint.y, thisTerrainsEdge);
                     terrain[terrainCount].getTerrainComponenet().Flush();
-                    Initialized = true;
+                    //Initialized = true;
                     yield return null;
                 }
             }
         }
+        Initialized = true;
     }
     private float[,] swapDimensions(float[,] array)
     {

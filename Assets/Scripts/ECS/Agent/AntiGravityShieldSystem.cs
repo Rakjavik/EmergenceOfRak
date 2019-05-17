@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -25,20 +26,24 @@ namespace rak.ecs.ThingComponents
         {
             AntiGravityShieldJob job = new AntiGravityShieldJob
             {
-                delta = Time.deltaTime
+                delta = Time.deltaTime,
+                origins = GetComponentDataFromEntity<Position>(true)
             };
             JobHandle handle = job.Schedule(this, inputDeps);
             return handle;
         }
 
-        struct AntiGravityShieldJob : IJobForEach
+        struct AntiGravityShieldJob : IJobForEachWithEntity
             <AntiGravityShield,AgentVariables,Agent,Target,CreatureAI,Engine>
         {
             public float delta;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Position> origins;
+
             public void Execute
-                (ref AntiGravityShield shield, ref AgentVariables agentVar,ref Agent agent,ref Target target
-                ,ref CreatureAI ai, ref Engine engine)
+                (Entity entity, int index, ref AntiGravityShield shield, ref AgentVariables agentVar,ref Agent agent,
+                ref Target target,ref CreatureAI ai, ref Engine engine)
             {
                 if (agentVar.Visible == 0)
                 {
@@ -82,7 +87,7 @@ namespace rak.ecs.ThingComponents
                             // Check if going in wrong direction //
                             else if (velMag > shield.EngageIfWrongDirectionAndMovingFasterThan)
                             {
-                                float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target, 1);
+                                float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target, 1,origins[entity].Value);
                                 if ((turnNeeded.x > 2f && turnNeeded.x < 358) && engine.AvoidingObstacles == 0)
                                 {
                                     activate = true;
@@ -105,7 +110,7 @@ namespace rak.ecs.ThingComponents
                         if(ai.CurrentAction == ActionStep.Actions.MoveTo)
                         {
                             // Make sure we are pointing in the right direction before deactivating //
-                            float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target,0);
+                            float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target,0,origins[entity].Value);
                             float turnNeededMag = Mathf.Abs(turnNeeded.x + turnNeeded.y + turnNeeded.z);
                             if (turnNeededMag < 1f || turnNeededMag > 359 || engine.AvoidingObstacles == 1)
                             {
@@ -135,7 +140,8 @@ namespace rak.ecs.ThingComponents
                     }
                 }
             }
-            private float3 getAmountOfTurnNeeded(ref AgentVariables agentVar,ref Target target,byte velocity)
+            private float3 getAmountOfTurnNeeded(ref AgentVariables agentVar,ref Target target,byte velocity
+                ,float3 origin)
             {
                 Quaternion start;
                 // Start rotation does not use velocity //
@@ -149,7 +155,7 @@ namespace rak.ecs.ThingComponents
                     float3 normalized = Vector3.Normalize(agentVar.Velocity);
                     start = Quaternion.LookRotation(normalized, Vector3.up);
                 }
-                float3 neededDirection = Vector3.Normalize(target.targetPosition - agentVar.Position);
+                float3 neededDirection = Vector3.Normalize(target.targetPosition - origin);
                 if (neededDirection.Equals(float3.zero))
                     return float3.zero;
                 Quaternion desired = Quaternion.LookRotation(neededDirection,Vector3.up);

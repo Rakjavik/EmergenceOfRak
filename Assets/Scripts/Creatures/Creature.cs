@@ -1,9 +1,7 @@
 using rak.creatures.memory;
 using rak.ecs.ThingComponents;
 using rak.world;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
@@ -89,7 +87,6 @@ namespace rak.creatures
                 Debug.LogError("Call to initialize when already initialized");
                 return;
             }
-            initialize(name);
             this.currentArea = area;
             inventory = new Inventory(this);
             if (baseSpecies == BASE_SPECIES.Gnat)
@@ -116,6 +113,7 @@ namespace rak.creatures
             mainCamera = Camera.main.transform;
             InView = false;
             agent.GetRigidBody().isKinematic = true;
+            initialize(name);
             initialized = true;
         }
         public void PlayOneShot()
@@ -428,7 +426,14 @@ namespace rak.creatures
         }
         public Tasks.CreatureTasks GetCurrentTask()
         {
-            return em.GetComponentData<CreatureAI>(ThingEntity).CurrentTask;
+            try
+            {
+                return em.GetComponentData<CreatureAI>(ThingEntity).CurrentTask;
+            }
+            catch(System.Exception ex)
+            {
+                return Tasks.CreatureTasks.NONE;
+            }
         }
         public string GetCurrentTaskTargetName()
         {

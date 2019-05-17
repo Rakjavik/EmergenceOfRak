@@ -47,7 +47,7 @@ namespace rak.world
         private static int MAXPOP = 100;
         private void InitializeDebug(Tribe tribe)
         {
-            MAXPOP = 150;
+            MAXPOP = 1;
             //dayLength = 360;
         }
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 50;
@@ -110,12 +110,6 @@ namespace rak.world
                 if (creature.HasAgent())
                     agents.Add(creature.GetCreatureAgent());
             }
-            Unity.Entities.World world = Unity.Entities.World.Active;
-            thingToAdd.ThingEntity = GameObjectConversionUtility.ConvertGameObjectHierarchy(thingToAdd.gameObject, world);
-            NativeArray<Entity> entities = new NativeArray<Entity>(1,Allocator.Temp);
-            world.EntityManager.Instantiate(thingToAdd.ThingEntity, entities);
-            entities.Dispose();
-            thingToAdd.AddECSComponents();
         }
         public static NativeArray<BlittableThing> GetBlittableThings()
         {
@@ -323,17 +317,8 @@ namespace rak.world
             GameObject thingObject = RAKUtilities.getThingPrefab(nameOfPrefab);
             GameObject newThing = UnityEngine.Object.Instantiate(thingObject);
             newThing.transform.SetParent(thingContainer.transform);
-            newThing.GetComponent<Thing>().initialize("fruit");
-            if (!generatePos)
-            {
-                newThing.transform.position = position;
-            }
-            else
-            {
-                Vector3 random = UnityEngine.Random.insideUnitSphere;
-                random.y = 15;
-                newThing.transform.position = random;
-            }
+            newThing.GetComponent<Thing>().initialize(nameOfPrefab);
+            newThing.transform.position = position;
             AddThingToAllThings(newThing.GetComponent<Thing>());
             return newThing;
         }

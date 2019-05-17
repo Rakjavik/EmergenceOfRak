@@ -183,14 +183,15 @@ namespace rak.creatures
             float4 currentRot = new float4(rotation.x, rotation.y, rotation.z, rotation.w);
             byte visibleByte = 0;
             if (visible) visibleByte = 1;
+            Position pos = new Position { Value = creature.transform.position };
+            manager.SetComponentData(creature.ThingEntity, pos);
             AgentVariables agentData = new AgentVariables
             {
                 RelativeVelocity = relativeVel,
-                Position = creature.transform.position,
                 Velocity = rigidbody.velocity,
                 Rotation = currentRot,
                 AngularVelocity = rigidbody.angularVelocity,
-                Visible = visibleByte
+                Visible = visibleByte,
             };
             manager.SetComponentData(creature.ThingEntity, agentData);
             // If In View update everything normally //
@@ -222,7 +223,7 @@ namespace rak.creatures
                             y = terrainY + engine.sustainHeight,
                             z = newPosition.z
                         };
-                        agentData.Position = creature.transform.position;
+                        pos.Value = creature.transform.position;
                     }
                     manager.SetComponentData(creature.ThingEntity, agentData);
                     // Update these parts when not visible //

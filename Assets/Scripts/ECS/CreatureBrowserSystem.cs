@@ -23,6 +23,9 @@ namespace rak.ecs.ThingComponents
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            if (CreatureBrowserMono.SelectedCreature == null)
+                return inputDeps;
+
             Entity selectedCreature = CreatureBrowserMono.SelectedCreature.ThingEntity;
 
             CreatureBrowserJob job = new CreatureBrowserJob

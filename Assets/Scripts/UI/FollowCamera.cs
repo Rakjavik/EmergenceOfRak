@@ -44,6 +44,8 @@ namespace rak.UI
             }
             if (_target == null)
             {
+                if (CreatureBrowserMono.SelectedCreature == null)
+                    return;
                 _target = CreatureBrowserMono.SelectedCreature.transform;
                 transform.position = _target.position + cameraOffset;
             }

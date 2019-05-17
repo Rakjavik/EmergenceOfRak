@@ -31,11 +31,11 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        struct TractorBeamJob : IJobForEach<TractorBeam, Target,CreatureAI,AgentVariables>
+        struct TractorBeamJob : IJobForEach<TractorBeam, Target,CreatureAI,AgentVariables,Position>
         {
             public float delta;
 
-            public void Execute(ref TractorBeam tb, ref Target target,ref CreatureAI ai,ref AgentVariables av)
+            public void Execute(ref TractorBeam tb, ref Target target,ref CreatureAI ai,ref AgentVariables av, ref Position pos)
             {
                 if (ai.CurrentAction == ActionStep.Actions.Add)
                 {
@@ -60,8 +60,8 @@ namespace rak.ecs.ThingComponents
                     }
                     if (tb.Locked == 1)
                     {
-                        tb.DistanceFromTarget = Vector3.Distance(target.targetPosition, av.Position);
-                        tb.NewTargetPosition = Vector3.MoveTowards(tb.NewTargetPosition, av.Position,
+                        tb.DistanceFromTarget = Vector3.Distance(target.targetPosition, pos.Value);
+                        tb.NewTargetPosition = Vector3.MoveTowards(tb.NewTargetPosition, pos.Value,
                             tb.BeamStrength * delta);
                     }
                 }

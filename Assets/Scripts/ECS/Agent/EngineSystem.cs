@@ -43,16 +43,20 @@ namespace rak.ecs.ThingComponents
             EngineJob job = new EngineJob
             {
                 currentTime = Time.time,
-                delta = Time.deltaTime
+                delta = Time.deltaTime,
+                origins = GetComponentDataFromEntity<Position>(true),
         };
             return job.Schedule(this, inputDeps);
         }
 
         //[BurstCompile]
-        struct EngineJob : IJobForEach<Engine,CreatureAI,Agent,AgentVariables,EngineConstantForce,Target>
+        struct EngineJob : IJobForEachWithEntity<Engine,CreatureAI,Agent,AgentVariables,EngineConstantForce,Target>
         {
             public float currentTime;
             public float delta;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Position> origins;
 
             private void setState(MovementState requestedState, Direction direction, ref Engine engine, ref EngineConstantForce ecf)
             {
@@ -140,7 +144,7 @@ namespace rak.ecs.ThingComponents
                 }
             }
 
-            public void Execute(ref Engine engine, ref CreatureAI ai,ref Agent agent,
+            public void Execute(Entity entity,int index, ref Engine engine, ref CreatureAI ai,ref Agent agent,
                 ref AgentVariables av,ref EngineConstantForce ecf,ref Target target)
             {
                 ActionStep.Actions currentAction = ai.CurrentAction;
@@ -238,7 +242,7 @@ namespace rak.ecs.ThingComponents
                 {
                     if(currentAction == ActionStep.Actions.MoveTo)
                     {
-                        engine.NonPhysicsPositionUpdate = Vector3.MoveTowards(av.Position, target.targetPosition,
+                        engine.NonPhysicsPositionUpdate = Vector3.MoveTowards(origins[entity].Value, target.targetPosition,
                             engine.VelWhenMovingWithoutPhysics * delta);
                     }
                 }

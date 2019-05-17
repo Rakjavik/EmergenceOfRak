@@ -57,7 +57,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory,AgentVariables>
+        struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory,AgentVariables,Position>
         {
             public float Delta;
             [NativeDisableParallelForRestriction]
@@ -68,7 +68,7 @@ namespace rak.ecs.ThingComponents
             public BufferFromEntity<ActionStepBufferPrevious> previousBuffers;
 
             public void Execute(Entity entity, int index, ref CreatureAI cai, ref Target target, ref Observe obs, 
-                ref ShortTermMemory stm, ref AgentVariables av)
+                ref ShortTermMemory stm, ref AgentVariables av, ref Position pos)
             {
                 if (cai.CurrentStepStatus == Tasks.TASK_STATUS.Complete)
                 {
@@ -100,7 +100,7 @@ namespace rak.ecs.ThingComponents
                 else if(cai.CurrentAction == ActionStep.Actions.Locate)
                 {
                     DynamicBuffer<ActionStepBufferCurrent> currentBuffer = currentBuffers[entity];
-                    locate(ref entity, ref target, ref stm, ref obs, ref cai,ref av, currentBuffer.Length);
+                    locate(ref entity, ref target, ref stm, ref obs, ref cai,ref av,ref pos, currentBuffer.Length);
                 }
                 //  MOVETO  //
                 else if (cai.CurrentAction == ActionStep.Actions.MoveTo)
@@ -206,7 +206,7 @@ namespace rak.ecs.ThingComponents
             }
 
             private void locate(ref Entity entity,ref Target target,ref ShortTermMemory stm, ref Observe obs, ref CreatureAI cai,
-                ref AgentVariables av, int currentStepLength)
+                ref AgentVariables av, ref Position pos, int currentStepLength)
             {
                 DynamicBuffer<CreatureMemoryBuf> memoryBuffer = memoryBuffers[entity];
                 int memoryLength = memoryBuffer.Length;
@@ -223,7 +223,7 @@ namespace rak.ecs.ThingComponents
                             // TOO BIG //
                             if (memoryBuffer[count].memory.SubjectMass > 2)
                                 continue;
-                            float distance = Vector3.Distance(memoryBuffer[count].memory.Position, av.Position);
+                            float distance = Vector3.Distance(memoryBuffer[count].memory.Position, pos.Value);
                             if(distance < closestDistance)
                             {
                                 closestDistance = distance;
