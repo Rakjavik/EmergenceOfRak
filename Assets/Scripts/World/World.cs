@@ -1,5 +1,6 @@
 ﻿using rak.creatures;
 using rak.ecs.ThingComponents;
+using rak.ecs.world;
 using rak.UI;
 using System.Collections.Generic;
 using System.IO;
@@ -77,8 +78,6 @@ namespace rak.world
             hexGrid = HexGrid.generate(this);
             currentCell = debugTribe.FindHome(this, true);
             masterTerrain.Initialize(this, currentCell);
-            
-            em = Unity.Entities.World.Active.EntityManager;
         }
 
         // ENTRY METHOD //
@@ -142,11 +141,22 @@ namespace rak.world
             }
             else
                 mainMenu.Initialize(RootMenu.WorldBrowser);
-            em = Unity.Entities.World.Active.EntityManager;
+            
         }
         private void completeInitialize()
         {
             CurrentArea = currentCell.MakeArea(this, ActiveTribe);
+
+            em = Unity.Entities.World.Active.EntityManager;
+            Entity sun = em.CreateEntity();
+            em.AddComponentData(sun, new Sun
+            {
+                AreaLocalTime = 0,
+                DayLength = 240,
+                ElapsedHours = 0,
+                Xrotation = 0,
+            });
+            Area.SunEntity = sun;
             MenuController menuController = new MenuController(creatureBrowserPrefab, worldBrowserPrefab, debugMenuPrefab);
             FollowCamera = followCamera;
             menuController.Initialize(RootMenu.CreatureBrowser);

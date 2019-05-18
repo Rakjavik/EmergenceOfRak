@@ -140,17 +140,6 @@ namespace rak.creatures
         {
             return species.memory.GetKnownConsumeableProducers();
         }
-        public void RequestObservationUpdate()
-        {
-            //StartCoroutine(observeSurroundings());
-            Observe observeComponent = em.GetComponentData<Observe>(ThingEntity);
-            // Need to refresh observations //
-            if (observeComponent.ObservationAvailable == 0)
-            {
-                observeComponent.RequestObservation = 1;
-            }
-            em.SetComponentData(ThingEntity, observeComponent);
-        }
 
         public void SetInView(bool inView)
         {

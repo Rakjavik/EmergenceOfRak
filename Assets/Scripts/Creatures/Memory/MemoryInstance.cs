@@ -36,13 +36,10 @@ namespace rak.creatures.memory
         }
         public void RefreshEdible(ConsumptionType creatureConsumeType)
         {
-            Debug.Log("Consumption type - " + creatureConsumeType);
             if (creatureConsumeType == ConsumptionType.HERBIVORE)
             {
-                Debug.Log("subject type - " + SubjectType);
                 if (SubjectType == Thing.Base_Types.PLANT)
                 {
-                    Debug.Log("Edible");
                     Edible = 1;
                     return;
                 }

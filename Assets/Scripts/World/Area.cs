@@ -8,6 +8,7 @@ using UnityEngine.AI;
 using Unity.Entities;
 using rak.ecs.ThingComponents;
 using Unity.Mathematics;
+using rak.ecs.world;
 
 namespace rak.world
 {
@@ -25,6 +26,8 @@ namespace rak.world
                 }
             }
         }
+        public static Entity SunEntity;
+        private static EntityManager em;
         private static List<Thing> allThings;
         private static List<CreatureAgent> agents;
         private static Dictionary<Entity, Thing> thingMasterList;
@@ -65,7 +68,6 @@ namespace rak.world
         public static float MaximumHeight = 200;
         private static bool initialized = false;
         private static Camera mainCamera;
-        public static float AreaLocalTime { get; private set; }
         public static int NumberOfVisibleThings { get; private set; }
 
         public static Thing GetThingByEntity(Entity entity)
@@ -75,29 +77,21 @@ namespace rak.world
             return null;
         }
 
-        public static string GetFriendlyLocalTime()
+        /*public static string GetFriendlyLocalTime()
         {
             float timeInDay = AreaLocalTime % dayLength;
             string time = ((int)(timeInDay * .1f)).ToString();
             return "HH:" + time;
-        }
+        }*/
         public static World.Time_Of_Day GetTimeOfDay()
         {
-            float timeInDay = AreaLocalTime % dayLength;
-            float timePerPeriod = dayLength / 4;
-            if (timeInDay < timePerPeriod) return World.Time_Of_Day.SunRise;
-            else if (timeInDay < timePerPeriod * 2) return World.Time_Of_Day.Midday;
-            else if (timeInDay < timePerPeriod * 3) return World.Time_Of_Day.SunSet;
-            else return World.Time_Of_Day.Night;
+            Sun sun = em.GetComponentData<Sun>(SunEntity);
+            return sun.TimeOfDay;
         }
         public static string GetElapsedNumberOfHours()
         {
-            int elapsedDays = (int)(Time.time / dayLength);
-            float timeInDay = AreaLocalTime % dayLength;
-            int hourInDay = (int)(timeInDay * .1f);
-
-            int elapsedHours = hourInDay + (int)(elapsedDays * dayLength*.1f);
-            return elapsedHours.ToString();
+            Sun sun = em.GetComponentData<Sun>(SunEntity);
+            return sun.ElapsedHours.ToString();
         }
         
         public static void AddThingToAllThings(Thing thingToAdd)
@@ -177,7 +171,6 @@ namespace rak.world
         private List<Site> sitesPresent;
         private GameObject[] walls;
         private Transform sun;
-        private float sinceLastSunUpdated = 0;
         
         public Area(HexCell cell,World world)
         {
@@ -186,10 +179,10 @@ namespace rak.world
             this.cell = cell;
             this.world = world;
             sun = world.transform;
-            AreaLocalTime = 0;
             areaSize = Vector3.zero; // Initialize in method
             walls = new GameObject[4];
             debug = World.ISDEBUGSCENE;
+            em = Unity.Entities.World.Active.EntityManager;
         }
         
         public void Initialize(Tribe tribe)
@@ -393,8 +386,7 @@ namespace rak.world
         }
         public void FixedUpdate(float delta)
         {
-            EntityManager manager = Unity.Entities.World.Active.EntityManager;
-            updateEntityRaycasting(manager);
+            updateEntityRaycasting(em);
         }
         public void update(float delta)
         {
@@ -581,7 +573,6 @@ namespace rak.world
         private void masterUpdate(float delta)
         {
             EntityManager em = Unity.Entities.World.Active.EntityManager;
-            sinceLastSunUpdated += delta;
             timeSinceLastCreatureDistanceSightCheck += delta;
             // DO THESE EVERY UPDATE //
             NumberOfVisibleThings = 0;
@@ -593,13 +584,8 @@ namespace rak.world
                 if (agents[count].Active)
                     agents[count].Update(delta, visible);
             }
-            AreaLocalTime += delta;
-            if (sinceLastSunUpdated > updateSunEvery)
-            {
-                float timeOfDay = (AreaLocalTime) % dayLength;
-                sun.rotation = Quaternion.Euler(new Vector3((timeOfDay / dayLength) * 360, 0, 0));
-                sinceLastSunUpdated = 0;
-            }
+            Sun sunECS = em.GetComponentData<Sun>(SunEntity);
+            sun.rotation = Quaternion.Euler(new Vector3(sunECS.Xrotation, 0, 0));
 
             foreach (Tribe tribe in tribesPresent)
             {
@@ -658,6 +644,7 @@ namespace rak.world
                 allThings.Remove(singleThing);
                 singleThing.Deactivate();
                 singleThing.transform.SetParent(disabledContainer.transform);
+                em.DestroyEntity(singleThing.ThingEntity);
             }
             _removeTheseThings = new List<Thing>();
 

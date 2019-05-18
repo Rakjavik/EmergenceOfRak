@@ -28,7 +28,6 @@ namespace rak.ecs.ThingComponents
                 memoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>(false),
                 observeBuffers = GetBufferFromEntity<ObserveBuffer>(true)
             };
-            inputDeps.Complete();
             return job.Schedule(this, inputDeps);
         }
 
@@ -37,7 +36,6 @@ namespace rak.ecs.ThingComponents
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<CreatureMemoryBuf> memoryBuffers;
 
-            [NativeDisableParallelForRestriction]
             [ReadOnly]
             public BufferFromEntity<ObserveBuffer> observeBuffers;
 

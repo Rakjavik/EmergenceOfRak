@@ -37,11 +37,14 @@ namespace rak.ecs.ThingComponents
 
     public class CreatureAISystem : JobComponentSystem
     {
+        EndSimulationEntityCommandBufferSystem EndSimulationEntityCommandBufferSystem;
+
         protected override void OnCreate()
         {
-            RequireForUpdate(GetEntityQuery(new EntityQueryDesc[] { new EntityQueryDesc {
+            /*RequireForUpdate(GetEntityQuery(new EntityQueryDesc[] { new EntityQueryDesc {
                 Any = new ComponentType[]{typeof(ShortTermMemory)}
-            } }));
+            } }));*/
+            EndSimulationEntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
             Enabled = true;
         }
 
@@ -53,6 +56,7 @@ namespace rak.ecs.ThingComponents
                 memoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>(),
                 currentBuffers = GetBufferFromEntity<ActionStepBufferCurrent>(),
                 previousBuffers = GetBufferFromEntity<ActionStepBufferPrevious>(),
+                commandBuffer = EndSimulationEntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             };
             return job.Schedule(this, inputDeps);
         }
@@ -60,12 +64,15 @@ namespace rak.ecs.ThingComponents
         struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory,AgentVariables,Position>
         {
             public float Delta;
+
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<CreatureMemoryBuf> memoryBuffers;
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<ActionStepBufferCurrent> currentBuffers;
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<ActionStepBufferPrevious> previousBuffers;
+
+            public EntityCommandBuffer.Concurrent commandBuffer;
 
             public void Execute(Entity entity, int index, ref CreatureAI cai, ref Target target, ref Observe obs, 
                 ref ShortTermMemory stm, ref AgentVariables av, ref Position pos)
@@ -105,7 +112,7 @@ namespace rak.ecs.ThingComponents
                 //  MOVETO  //
                 else if (cai.CurrentAction == ActionStep.Actions.MoveTo)
                 {
-                    moveTo(ref target, ref cai);
+                    moveTo(ref target, ref cai,ref obs);
                 }
                 // ADD  //
                 else if (cai.CurrentAction == ActionStep.Actions.Add)
@@ -115,7 +122,7 @@ namespace rak.ecs.ThingComponents
                 //  EAT  //
                 else if (cai.CurrentAction == ActionStep.Actions.Eat)
                 {
-                    eat(ref cai, ref target, ref stm, ref entity);
+                    eat(ref cai, ref target, ref stm, ref entity,index);
                 }
             }
 
@@ -171,8 +178,9 @@ namespace rak.ecs.ThingComponents
                 }
             }
 
-            private void moveTo(ref Target target, ref CreatureAI cai)
+            private void moveTo(ref Target target, ref CreatureAI cai, ref Observe obs)
             {
+                obs.RequestObservation = 1;
                 if (target.distance < 10 || target.targetPosition.Equals(float3.zero))
                 {
                     cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
@@ -187,7 +195,7 @@ namespace rak.ecs.ThingComponents
                 }
             }
 
-            private void eat(ref CreatureAI cai,ref Target target,ref ShortTermMemory stm,ref Entity entity)
+            private void eat(ref CreatureAI cai,ref Target target,ref ShortTermMemory stm,ref Entity entity,int index)
             {
                 cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
                 cai.DestroyedThingInPosession = target.targetEntity;
@@ -203,6 +211,7 @@ namespace rak.ecs.ThingComponents
                         buffer[count] = new CreatureMemoryBuf { memory = newMemory };
                     }
                 }
+                //commandBuffer.DestroyEntity(index, cai.DestroyedThingInPosession);
             }
 
             private void locate(ref Entity entity,ref Target target,ref ShortTermMemory stm, ref Observe obs, ref CreatureAI cai,

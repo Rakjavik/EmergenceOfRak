@@ -31,9 +31,14 @@ namespace rak.ecs.ThingComponents
     public class ObserveSystem : JobComponentSystem
     {
         [ReadOnly]
+        [DeallocateOnJobCompletion]
         private NativeArray<Position> positions;
         [ReadOnly]
+        [DeallocateOnJobCompletion]
         private NativeArray<Entity> entities;
+
+        [DeallocateOnJobCompletion]
+        private EntityQuery query;
 
         protected override void OnCreate()
         {
@@ -44,7 +49,7 @@ namespace rak.ecs.ThingComponents
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             
-            EntityQuery query = EntityManager.CreateEntityQuery(new ComponentType[] { typeof(Observable),typeof(Position) });
+            query = EntityManager.CreateEntityQuery(new ComponentType[] { typeof(Observable),typeof(Position) });
             positions = query.ToComponentDataArray<Position>(Allocator.TempJob);
             entities = query.ToEntityArray(Allocator.TempJob);
             ObserveJob job = new ObserveJob
@@ -63,8 +68,7 @@ namespace rak.ecs.ThingComponents
 
         struct ObserveJob : IJobForEachWithEntity<Observe,AgentVariables,CreatureAI>
         {
-            //[ReadOnly]
-            [NativeDisableParallelForRestriction]
+            [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<Position> positions;
 
