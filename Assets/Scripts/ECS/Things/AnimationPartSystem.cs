@@ -44,14 +44,14 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        struct AnimationPartJob : IJobForEachWithEntity<AnimationComponentGroup,AgentVariables,EngineConstantForce,AntiGravityShield>
+        struct AnimationPartJob : IJobForEachWithEntity<AnimationComponentGroup,Velocity,EngineConstantForce,AntiGravityShield>
         {
             public float Delta;
 
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<AnimationBuffer> animationParts;
 
-            public void Execute(Entity entity, int index, ref AnimationComponentGroup ac, ref AgentVariables av, ref EngineConstantForce ecf, 
+            public void Execute(Entity entity, int index, ref AnimationComponentGroup ac, ref Velocity vel, ref EngineConstantForce ecf, 
                 ref AntiGravityShield shield)
             {
                 DynamicBuffer<AnimationBuffer> buffer = animationParts[entity];
@@ -67,7 +67,7 @@ namespace rak.ecs.ThingComponents
                         else if (single.PartMovesWith == PartMovesWith.ConstantForceZ)
                             relativeMult = ecf.CurrentForce.z;
                         else if (single.PartMovesWith == PartMovesWith.Velocity)
-                            relativeMult = (av.Velocity.x + av.Velocity.y + av.Velocity.z);
+                            relativeMult = (vel.NormalVelocity.x + vel.NormalVelocity.y + vel.NormalVelocity.z);
                         else if (single.PartMovesWith == PartMovesWith.IsKinematic)
                             relativeMult = shield.Activated;
                         else if (single.PartMovesWith == PartMovesWith.TargetPosition)

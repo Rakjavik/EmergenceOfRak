@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
-using UnityEngine.AI;
 using Unity.Entities;
 using rak.ecs.ThingComponents;
 using Unity.Mathematics;
@@ -45,12 +44,10 @@ namespace rak.world
         }
 
         private static readonly int MAX_CONCURRENT_THINGS = 10000;
-        private static readonly int MAKE_CREATURES_INVISIBLE_IF_THIS_FAR_FROM_CAMERA = 12800;
-        private static readonly int MAX_VISIBLE_CREATURES = 100;
         private static int MAXPOP = 100;
         private void InitializeDebug(Tribe tribe)
         {
-            MAXPOP = 1;
+            MAXPOP = 0;
             //dayLength = 360;
         }
         public static readonly int KEEP_CREATURES_VISIBLE_FOR_SECONDS_AFTER_OUT_OF_VIEW = 50;
@@ -60,9 +57,6 @@ namespace rak.world
         public static int AllThingsCacheEntriesFilled { get; private set; }
         public static int ObservableThingsEntriesFilled { get; private set; }
         private static List<Thing> _removeTheseThings = new List<Thing>();
-        private static float updateSunEvery = .1f;
-        private static float timeSinceUpdatedThings = 0;
-        private static float updateThingsEvery = 1f;
         private static float timeSinceLastCreatureDistanceSightCheck = 0;
         public static float MinimumHeight = -50;
         public static float MaximumHeight = 200;
@@ -400,22 +394,24 @@ namespace rak.world
             List<RaycastCommand> raycastCommands = new List<RaycastCommand>();
             Dictionary<int, Entity> creatureIndexMap = new Dictionary<int, Entity>();
             Dictionary<int, CreatureUtilities.RayCastDirection> indexDirectionMap = new Dictionary<int, CreatureUtilities.RayCastDirection>();
-            int allThingsLength = allThings.Count;
-            for (int count = 0; count < allThingsLength; count++)
+            //int allThingsLength = allThings.Count;
+            EntityQuery query = manager.CreateEntityQuery(new ComponentType[] { typeof(IsCreature) });
+            NativeArray<Entity> creatures = query.ToEntityArray(Allocator.TempJob);
+            int creaturesLength = creatures.Length;
+            for (int count = 0; count < creaturesLength; count++)
             {
-                if (!(allThings[count] is Creature))
-                    continue;
-                Entity entity = allThings[count].ThingEntity;
+                Entity entity = creatures[count];
                 Agent agentData = manager.GetComponentData<Agent>(entity);
+                RelativeDirections rd = manager.GetComponentData<RelativeDirections>(entity);
+                Position pos = manager.GetComponentData<Position>(entity);
                 if (agentData.RequestRaycastUpdateDirectionLeft == 1)
                 {
-                    Transform transform = allThings[count].transform;
-                    float3 rayDirection = -transform.right;
+                    float3 rayDirection = -rd.Right;
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
                         distance = 50,
-                        from = transform.position,
+                        from = pos.Value,
                         maxHits = 1
                     };
                     raycastCommands.Add(command);
@@ -425,13 +421,12 @@ namespace rak.world
                 }
                 if (agentData.RequestRaycastUpdateDirectionRight == 1)
                 {
-                    Transform transform = allThings[count].transform;
-                    float3 rayDirection = transform.right;
+                    float3 rayDirection = rd.Right;
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
                         distance = 50,
-                        from = transform.position,
+                        from = pos.Value,
                         maxHits = 1
                     };
                     raycastCommands.Add(command);
@@ -441,13 +436,12 @@ namespace rak.world
                 }
                 if (agentData.RequestRaycastUpdateDirectionDown == 1)
                 {
-                    Transform transform = allThings[count].transform;
                     float3 rayDirection = Vector3.down;
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
                         distance = 50,
-                        from = transform.position,
+                        from = pos.Value,
                         maxHits = 1
                     };
                     raycastCommands.Add(command);
@@ -457,13 +451,12 @@ namespace rak.world
                 }
                 if (agentData.RequestRaycastUpdateDirectionForward == 1)
                 {
-                    Transform transform = allThings[count].transform;
-                    float3 rayDirection = transform.forward;
+                    float3 rayDirection = rd.Forward;
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
                         distance = 20,
-                        from = transform.position,
+                        from = pos.Value,
                         maxHits = 1
                     };
                     raycastCommands.Add(command);
@@ -473,13 +466,13 @@ namespace rak.world
                 }
                 if (agentData.RequestRayCastUpdateDirectionVel == 1)
                 {
-                    Creature creature = (Creature)allThings[count];
-                    float3 rayDirection = creature.GetCreatureAgentBody().velocity.normalized;
+                    Velocity vel = manager.GetComponentData<Velocity>(entity);
+                    float3 rayDirection = Vector3.Normalize(vel.NormalVelocity);
                     RaycastCommand command = new RaycastCommand
                     {
                         direction = rayDirection,
                         distance = 50,
-                        from = creature.transform.position,
+                        from = pos.Value,
                         maxHits = 1
                     };
                     raycastCommands.Add(command);
@@ -488,6 +481,7 @@ namespace rak.world
                     //Debug.LogWarning("Requesting Forward update");
                 }
             }
+            creatures.Dispose();
             int rayCastCommandSize = raycastCommands.Count;
             if (rayCastCommandSize > 0)
             {
@@ -572,7 +566,6 @@ namespace rak.world
         
         private void masterUpdate(float delta)
         {
-            EntityManager em = Unity.Entities.World.Active.EntityManager;
             timeSinceLastCreatureDistanceSightCheck += delta;
             // DO THESE EVERY UPDATE //
             NumberOfVisibleThings = 0;
@@ -584,15 +577,14 @@ namespace rak.world
                 if (agents[count].Active)
                     agents[count].Update(delta, visible);
             }
-            Sun sunECS = em.GetComponentData<Sun>(SunEntity);
-            sun.rotation = Quaternion.Euler(new Vector3(sunECS.Xrotation, 0, 0));
 
             foreach (Tribe tribe in tribesPresent)
             {
                 tribe.Update();
             }
+            
             // THING UPDATES //
-            lengthOfArray = allThings.Count;
+            /*lengthOfArray = allThings.Count;
             for (int count = 0;count < lengthOfArray; count++)
             {
                 Vector3 cameraPosition = mainCamera.transform.position;
@@ -602,7 +594,7 @@ namespace rak.world
                 {
                     Creature creature = (Creature)thing;
                     creature.ManualCreatureUpdate(delta);
-                    if (creature.GetCurrentState() == Creature.CREATURE_STATE.DEAD)
+                    if (creature.GetCurrentState() == Creature.CreatureState.DEAD)
                     {
                         _removeTheseThings.Add(creature);
                     }
@@ -654,6 +646,7 @@ namespace rak.world
                 updateAllBlittableThingsCache();
                 timeSinceUpdatedThings = 0;
             }
+            */
         }
     }
 }

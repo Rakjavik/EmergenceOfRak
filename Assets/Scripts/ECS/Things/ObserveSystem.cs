@@ -66,7 +66,7 @@ namespace rak.ecs.ThingComponents
             return handle;
         }
 
-        struct ObserveJob : IJobForEachWithEntity<Observe,AgentVariables,CreatureAI>
+        struct ObserveJob : IJobForEachWithEntity<Observe,Visible,CreatureAI>
         {
             [ReadOnly]
             [DeallocateOnJobCompletion]
@@ -90,7 +90,7 @@ namespace rak.ecs.ThingComponents
             public float TimeStamp;
             public int ObservableThingsLength;
 
-            public void Execute(Entity entity, int index, ref Observe ob,ref AgentVariables av, ref CreatureAI ai)
+            public void Execute(Entity entity, int index, ref Observe ob,ref Visible av, ref CreatureAI ai)
             {
                 // Only run if observation was requested, and we won't already have an observation waiting to be read //
                 if (ob.RequestObservation == 1 && ob.ObservationAvailable == 0)
@@ -122,7 +122,8 @@ namespace rak.ecs.ThingComponents
                         }
                     }
                     ob.memoryBuffer = buffer;
-                    ob.ObservationAvailable = 1;
+                    if(ObservableThingsLength > 0)
+                        ob.ObservationAvailable = 1;
                     ob.RequestObservation = 0;
                 }
             }

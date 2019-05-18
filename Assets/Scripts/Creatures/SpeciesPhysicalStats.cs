@@ -62,7 +62,7 @@ namespace rak.creatures
                 //creature.SetStateToDead(Creature.CREATURE_DEATH_CAUSE.Hunger);
                 return;
             }
-            if (creature.GetCurrentState() == Creature.CREATURE_STATE.SLEEP)
+            if (creature.GetCurrentState() == Creature.CreatureState.SLEEP)
             {
                 needs.DecreaseNeed(Needs.NEEDTYPE.SLEEP, Time.deltaTime*2);
             }

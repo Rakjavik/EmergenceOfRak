@@ -39,7 +39,7 @@ public partial class RAKTerrainMaster
                 0, // Bush02
                 0, // Bush03
                 0, // Bush04
-                20, // Fruit Tree
+                1, // Fruit Tree
                 0, // Tree01
                 0, // Tree02
                 0, // Tree03

@@ -145,18 +145,8 @@ namespace rak.world
         }
         private void completeInitialize()
         {
-            CurrentArea = currentCell.MakeArea(this, ActiveTribe);
-
             em = Unity.Entities.World.Active.EntityManager;
-            Entity sun = em.CreateEntity();
-            em.AddComponentData(sun, new Sun
-            {
-                AreaLocalTime = 0,
-                DayLength = 240,
-                ElapsedHours = 0,
-                Xrotation = 0,
-            });
-            Area.SunEntity = sun;
+            CurrentArea = currentCell.MakeArea(this, ActiveTribe);
             MenuController menuController = new MenuController(creatureBrowserPrefab, worldBrowserPrefab, debugMenuPrefab);
             FollowCamera = followCamera;
             menuController.Initialize(RootMenu.CreatureBrowser);
@@ -200,7 +190,7 @@ namespace rak.world
         }
         public void UpdateMainMenu(HexCell cellInfo)
         {
-            mainMenu.SetCurrentMenuFocus(cellInfo);
+            //mainMenu.SetCurrentMenuFocus(cellInfo);
             mainMenu.RefreshCurrentMenuMainText();
         }
         

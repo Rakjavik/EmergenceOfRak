@@ -265,7 +265,7 @@ namespace rak
             // DEACTIVATE SELF //
             else if (Action == Actions.Sleep)
             {
-                if (performer.GetCurrentState() != Creature.CREATURE_STATE.SLEEP)
+                if (performer.GetCurrentState() != Creature.CreatureState.SLEEP)
                     performer.GetCreatureAgent().Sleep();
                 if (!performer.StillNeedsSleep())
                     Status = Tasks.TASK_STATUS.Complete;

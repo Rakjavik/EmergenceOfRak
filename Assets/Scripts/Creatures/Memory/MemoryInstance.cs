@@ -75,10 +75,13 @@ namespace rak.creatures.memory
                 return true;
             return false;
         }
-        public static MemoryInstance GetNewEmptyMemory()
-        {
-            return new MemoryInstance(Verb.NA, Entity.Null, false,0,Thing.Base_Types.NA,
-                ConsumptionType.CARNIVORE,float3.zero,0);
+        public static MemoryInstance Empty { get
+            {
+                {
+                    return new MemoryInstance(Verb.NA, Entity.Null, false, 0, Thing.Base_Types.NA,
+                        ConsumptionType.CARNIVORE, float3.zero, 0);
+                }
+            }
         }
         public void ReplaceMemory(Verb verb, Entity subject, bool invertVerb)
         {

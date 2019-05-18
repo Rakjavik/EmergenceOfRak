@@ -125,7 +125,7 @@ namespace rak.creatures
         }
         public void Sleep()
         {
-            creature.ChangeState(Creature.CREATURE_STATE.SLEEP);
+            creature.ChangeState(Creature.CreatureState.SLEEP);
         }
         #endregion MISC METHODS
 
@@ -176,8 +176,8 @@ namespace rak.creatures
             lastUpdate += delta;
             EntityManager manager = Unity.Entities.World.Active.EntityManager;
 
-            AgentVariables agentVariables = manager.
-                GetComponentData<AgentVariables>(creature.ThingEntity);
+            Visible agentVariables = manager.
+                GetComponentData<Visible>(creature.ThingEntity);
             float3 relativeVel = creature.transform.InverseTransformDirection(rigidbody.velocity);
             Quaternion rotation = creature.transform.rotation;
             float4 currentRot = new float4(rotation.x, rotation.y, rotation.z, rotation.w);
@@ -185,15 +185,18 @@ namespace rak.creatures
             if (visible) visibleByte = 1;
             Position pos = new Position { Value = creature.transform.position };
             manager.SetComponentData(creature.ThingEntity, pos);
-            AgentVariables agentData = new AgentVariables
+            Visible agentData = new Visible
             {
-                RelativeVelocity = relativeVel,
-                Velocity = rigidbody.velocity,
-                Rotation = currentRot,
-                AngularVelocity = rigidbody.angularVelocity,
-                Visible = visibleByte,
+                Value = visibleByte,
             };
             manager.SetComponentData(creature.ThingEntity, agentData);
+            manager.SetComponentData(creature.ThingEntity, new Rotation { Value = currentRot });
+            manager.SetComponentData(creature.ThingEntity, new Velocity
+            {
+                RelativeVelocity = relativeVel,
+                NormalVelocity = rigidbody.velocity,
+                AngularVelocity = rigidbody.angularVelocity,
+            });
             // If In View update everything normally //
             if (visible)
             {

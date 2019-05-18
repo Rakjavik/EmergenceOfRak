@@ -27,25 +27,32 @@ namespace rak.ecs.ThingComponents
             AntiGravityShieldJob job = new AntiGravityShieldJob
             {
                 delta = Time.deltaTime,
-                origins = GetComponentDataFromEntity<Position>(true)
+                origins = GetComponentDataFromEntity<Position>(true),
+                rotations = GetComponentDataFromEntity<Rotation>(true),
+                visibles = GetComponentDataFromEntity<Visible>(true),
             };
             JobHandle handle = job.Schedule(this, inputDeps);
             return handle;
         }
 
         struct AntiGravityShieldJob : IJobForEachWithEntity
-            <AntiGravityShield,AgentVariables,Agent,Target,CreatureAI,Engine>
+            <AntiGravityShield,Velocity,Agent,Target,CreatureAI,Engine>
         {
             public float delta;
 
             [ReadOnly]
             public ComponentDataFromEntity<Position> origins;
+            [ReadOnly]
+            public ComponentDataFromEntity<Rotation> rotations;
+            [ReadOnly]
+            public ComponentDataFromEntity<Visible> visibles;
 
             public void Execute
-                (Entity entity, int index, ref AntiGravityShield shield, ref AgentVariables agentVar,ref Agent agent,
+                (Entity entity, int index, ref AntiGravityShield shield, ref Velocity vel,ref Agent agent,
                 ref Target target,ref CreatureAI ai, ref Engine engine)
             {
-                if (agentVar.Visible == 0)
+                // If not visible, make sure we're deactivated //
+                if (visibles[entity].Value == 0)
                 {
                     shield.Activated = 0;
                     return;
@@ -65,14 +72,14 @@ namespace rak.ecs.ThingComponents
                             //Debug.LogWarning("Activate Stuck");
                         }
                         // Angular Velocity //
-                        else if (agentVar.GetAngularVelocityMag() > 2)
+                        else if (vel.GetAngularVelocityMag() > 2)
                         {
                             activate = true;
                             //Debug.LogWarning("Activate AngularVel - " + agentVar.AngularVelocity.ToString());
                         }
                         else
                         {
-                            float velMag = Mathf.Abs(agentVar.RelativeVelocity.x + agentVar.RelativeVelocity.y + agentVar.RelativeVelocity.z);
+                            float velMag = Mathf.Abs(vel.RelativeVelocity.x + vel.RelativeVelocity.y + vel.RelativeVelocity.z);
                             float beforeCollision = agent.DistanceFromVel / velMag;
                             
                             // Check for imminent collision //
@@ -87,7 +94,8 @@ namespace rak.ecs.ThingComponents
                             // Check if going in wrong direction //
                             else if (velMag > shield.EngageIfWrongDirectionAndMovingFasterThan)
                             {
-                                float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target, 1,origins[entity].Value);
+                                float3 turnNeeded = getAmountOfTurnNeeded(ref vel, ref target, 1,
+                                    origins[entity].Value,rotations[entity].Value);
                                 if ((turnNeeded.x > 2f && turnNeeded.x < 358) && engine.AvoidingObstacles == 0)
                                 {
                                     activate = true;
@@ -110,7 +118,8 @@ namespace rak.ecs.ThingComponents
                         if(ai.CurrentAction == ActionStep.Actions.MoveTo)
                         {
                             // Make sure we are pointing in the right direction before deactivating //
-                            float3 turnNeeded = getAmountOfTurnNeeded(ref agentVar, ref target,0,origins[entity].Value);
+                            float3 turnNeeded = getAmountOfTurnNeeded(ref vel, ref target,0,
+                                origins[entity].Value,rotations[entity].Value);
                             float turnNeededMag = Mathf.Abs(turnNeeded.x + turnNeeded.y + turnNeeded.z);
                             if (turnNeededMag < 1f || turnNeededMag > 359 || engine.AvoidingObstacles == 1)
                             {
@@ -140,19 +149,19 @@ namespace rak.ecs.ThingComponents
                     }
                 }
             }
-            private float3 getAmountOfTurnNeeded(ref AgentVariables agentVar,ref Target target,byte velocity
-                ,float3 origin)
+            private float3 getAmountOfTurnNeeded(ref Velocity vel,ref Target target,
+                byte velocity,float3 origin,quaternion rotation)
             {
                 Quaternion start;
                 // Start rotation does not use velocity //
                 if (velocity == 0) {
-                    start = new Quaternion(agentVar.Rotation.x, agentVar.Rotation.y,
-                          agentVar.Rotation.z, agentVar.Rotation.w);
+                    start = new Quaternion(rotation.value.x, rotation.value.y,
+                          rotation.value.z, rotation.value.w);
                 }
                 // Use velocity for start rotation //
                 else
                 {
-                    float3 normalized = Vector3.Normalize(agentVar.Velocity);
+                    float3 normalized = Vector3.Normalize(vel.NormalVelocity);
                     start = Quaternion.LookRotation(normalized, Vector3.up);
                 }
                 float3 neededDirection = Vector3.Normalize(target.targetPosition - origin);

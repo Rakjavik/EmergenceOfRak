@@ -22,7 +22,7 @@ namespace rak.creatures.memory
             shortTermMemory = new MemoryInstance[SHORT_TERM_MEMORY_SIZE];
             for (int count = 0; count < shortTermMemory.Length; count++)
             {
-                shortTermMemory[count] = MemoryInstance.GetNewEmptyMemory();
+                shortTermMemory[count] = MemoryInstance.Empty;
             }
             currentMemoryIndex = 0;
         }
@@ -287,7 +287,7 @@ namespace rak.creatures.memory
                     return longTermMemory[count];
                 }
             }
-            return MemoryInstance.GetNewEmptyMemory();
+            return MemoryInstance.Empty;
         }
         private MemoryInstance isRecentMemory(Verb verb, BlittableThing subject, bool invertVerb)
         {
@@ -301,7 +301,7 @@ namespace rak.creatures.memory
                     }
                 }
             }
-            return MemoryInstance.GetNewEmptyMemory();
+            return MemoryInstance.Empty;
         }
         private void CopyShortTermToLongTimeAndReset()
         {

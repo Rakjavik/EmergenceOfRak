@@ -1,5 +1,6 @@
 ﻿using rak.creatures;
 using rak.ecs.ThingComponents;
+using rak.ecs.world;
 using rak.world;
 using System.Collections.Generic;
 using System.Text;
@@ -26,7 +27,7 @@ namespace rak.UI
             "Hunger -- {hungerRelative}-{hunger}\n" +
             "Sleep -- {sleepRelative}-{sleep}\n";
 
-        public static Creature SelectedCreature;
+        public static Entity SelectedCreature;
 
         public TMP_Dropdown creatureDropDown;
         public TMP_Text detailText;
@@ -34,36 +35,37 @@ namespace rak.UI
         public TMP_Text[] memoryText;
         private bool initialized = false;
         private CreatureBrowserWindow currentWindow;
-        private static Creature selectedCreature;
-        private Creature[] creatureMap;
+        private static Entity selectedCreature;
+        private Entity[] creatureMap;
         private float timeSinceLastUpdate = 0;
         private float updateEvery = .5f;
         public Entity BrowserEntity;
+        private EntityManager em;
 
         public void Initialize(CreatureBrowserWindow startingWindow)
         {
+            em = Unity.Entities.World.Active.EntityManager;
             creatureMap = null;
             if(startingWindow == CreatureBrowserWindow.Creature_Detail_List)
             {
-                InitializeCreatureList(Area.GetAllCreatures().ToArray());
+                NativeArray<Entity> creatures = em.CreateEntityQuery(typeof(IsCreature)).
+                    ToEntityArray(Allocator.TempJob);
+                InitializeCreatureList(ref creatures);
+                creatures.Dispose();
             }
         }
-        private void InitializeCreatureList(Creature[] allThingsInArea)
+        private void InitializeCreatureList(ref NativeArray<Entity> creatures)
         {
             if (initialized) Debug.LogWarning("Initialize called on CreatureBrowser when already initialized");
             creatureDropDown.ClearOptions();
-            List<Creature> tempMap = new List<Creature>();
             List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
-            for (int count = 0; count < allThingsInArea.Length; count++)
+            int creatureLength = creatures.Length;
+            for (int count = 0; count < creatureLength; count++)
             {
-                if (allThingsInArea[count].match(Thing.Base_Types.CREATURE))
-                {
-                    TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(allThingsInArea[count].thingName);
-                    options.Add(option);
-                    tempMap.Add(allThingsInArea[count]);
-                }
+                TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(creatures[count].ToString());
+                options.Add(option);
             }
-            creatureMap = tempMap.ToArray();
+            creatureMap = creatures.ToArray();
             creatureDropDown.AddOptions(options);
             currentWindow = CreatureBrowserWindow.Creature_Detail_List;
             OnDropDownChange();
@@ -81,11 +83,11 @@ namespace rak.UI
 
         public void Initialize()
         {
-            EntityManager manager = Unity.Entities.World.Active.EntityManager;
-            BrowserEntity = manager.CreateEntity();
-            manager.AddComponentData(BrowserEntity, new CreatureBrowser
+            em = Unity.Entities.World.Active.EntityManager;
+            BrowserEntity = em.CreateEntity();
+            em.AddComponentData(BrowserEntity, new CreatureBrowser
             {
-                MemoryBuffer = manager.AddBuffer<CreatureMemoryBuf>(BrowserEntity)
+                MemoryBuffer = em.AddBuffer<CreatureMemoryBuf>(BrowserEntity)
             });
             Initialize(CreatureBrowserWindow.Creature_Detail_List);
         }
@@ -93,35 +95,25 @@ namespace rak.UI
         {
             int maxRows = 25;
             int maxColumns = memoryText.Length;
-            if(selectedCreature != null && selectedCreature.IsInitialized())
+            if(!selectedCreature.Equals(Entity.Null))
             {
-                EntityManager manager = Unity.Entities.World.Active.EntityManager;
-                DynamicBuffer<CreatureMemoryBuf> memBufferWrapper = manager.GetBuffer<CreatureMemoryBuf>(BrowserEntity);
-                NativeArray<CreatureMemoryBuf> memBuffers = memBufferWrapper.AsNativeArray();
+                DynamicBuffer<CreatureMemoryBuf> memBuffer = em.GetBuffer<CreatureMemoryBuf>(selectedCreature);
+                int memoryLength = memBuffer.Length;
                 int count = 0;
                 for (int column = 0; column < maxColumns; column++)
                 {
                     StringBuilder columnText = new StringBuilder();
                     for (int row = 0; row < maxRows; row++)
                     {
-                        if (count == memBuffers.Length)
+                        if (count == memoryLength)
                             break;
-                        if (!memBuffers[count].memory.Subject.Equals(Entity.Null))
+                        if (!memBuffer[count].memory.Subject.Equals(Entity.Null))
                         {
-                            if (Area.GetThingByEntity(memBuffers[count].memory.Subject) != null)
-                            {
-                                if (memBuffers[count].memory.GetInvertVerb())
-                                    columnText.Append("!");
-                                columnText.Append(memBuffers[count].memory.Verb.ToString() + "-" +
-                                    Area.GetThingByEntity(memBuffers[count].memory.Subject).thingName + "\n");
-                                //+ " " + memBuffers[count].memory.Iterations + "\n");
-                            }
-                            else
-                            {
-                                //columnText.Append("Destroyed\n");
-                                columnText.Append("Entity - " + memBuffers[count].memory.Subject + "\n");
-                            }
-
+                            if (memBuffer[count].memory.GetInvertVerb())
+                                columnText.Append("!");
+                            columnText.Append(memBuffer[count].memory.Verb.ToString() + "-" +
+                                memBuffer[count].memory.Subject.ToString() + "\n");
+                            //+ " " + memBuffers[count].memory.Iterations + "\n");
                         }
                         else
                         {
@@ -138,37 +130,40 @@ namespace rak.UI
         }
         public void RefreshMainText()
         {
-            if(selectedCreature != null && selectedCreature.IsInitialized())
+            CreatureState state = em.GetComponentData<CreatureState>(selectedCreature);
+            CreatureAI ai = em.GetComponentData<CreatureAI>(selectedCreature);
+            Target target = em.GetComponentData<Target>(selectedCreature);
+            NativeArray<Entity> areaArray = em.CreateEntityQuery(typeof(rak.ecs.area.Area)).ToEntityArray(Allocator.TempJob);
+            if(areaArray.Length == 0)
             {
-                string text = DETAILTEXT.Replace("{name}",selectedCreature.thingName);
-                text = text.Replace("{state}", selectedCreature.GetCurrentState().ToString());
-                text = text.Replace("{task}", selectedCreature.GetCurrentTask().ToString());
-                text = text.Replace("{taskTarget}", selectedCreature.GetCurrentTaskTargetName());
-                text = text.Replace("{currentAction}", selectedCreature.GetCurrentAction().ToString());
-                text = text.Replace("{hunger}", selectedCreature.GetNeedAmount(creatures.Needs.NEEDTYPE.HUNGER).ToString());
-                text = text.Replace("{hungerRelative}", selectedCreature.
-                    GetRelativeNeedAmount(creatures.Needs.NEEDTYPE.HUNGER).ToString());
-                text = text.Replace("{sleep}", ((int)selectedCreature.GetNeedAmount(creatures.Needs.NEEDTYPE.SLEEP)).ToString());
-                text = text.Replace("{sleepRelative}", ((int)selectedCreature.
-                    GetRelativeNeedAmount(creatures.Needs.NEEDTYPE.SLEEP)).ToString());
-                detailText.text = text;
+                areaArray.Dispose();
+                return;
             }
-            int cc = world.World.CurrentArea.ActiveCreatureCount;
-            int tc = world.World.CurrentArea.ActiveThingCount;
-            clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + Area.GetTimeOfDay()+
-                " Elapsed-" + Area.GetElapsedNumberOfHours() + "\n";
-            clockText.text += "Visible-" + Area.NumberOfVisibleThings + " Deaths Flight-" + world.World.CurrentArea.DeathsByFlight + 
-                " Hunger-" + world.World.CurrentArea.DeathsByHunger;
-
+            ecs.area.Area area = em.GetComponentData<ecs.area.Area>(areaArray[0]);
+            Sun sun = em.GetComponentData<Sun>(areaArray[0]);
+            ecs.ThingComponents.Needs needs = em.GetComponentData<ecs.ThingComponents.Needs>(selectedCreature);
+            string text = DETAILTEXT.Replace("{name}",selectedCreature.ToString());
+                text = text.Replace("{state}", state.Value.ToString());
+                text = text.Replace("{task}", ai.CurrentTask.ToString());
+                text = text.Replace("{taskTarget}", target.targetEntity.ToString());
+                text = text.Replace("{currentAction}", ai.CurrentAction.ToString());
+                text = text.Replace("{hunger}", needs.Hunger.ToString());
+                text = text.Replace("{sleep}", needs.Sleep.ToString());
+                detailText.text = text;
+            int cc = area.NumberOfCreatures;
+            int tc = 0;
+            clockText.text = "Creatures-" + cc + " Things-" + tc + " Time-" + sun.AreaLocalTime +
+                " Elapsed-" + sun.ElapsedHours + "\n";
             // TODO this is ghetto //
             RefreshMemoryText();
+            areaArray.Dispose();
         }
 
-        public void SetFocusObject(object focus)
+        public void SetFocusObject(Entity focus)
         {
-            selectedCreature = (Creature)focus;
+            selectedCreature = focus;
             SelectedCreature = selectedCreature;
-            FollowCamera.SetFollowTarget(SelectedCreature.transform);
+            FollowCamera.SetFollowTarget(SelectedCreature);
         }
         public void Deactivate()
         {
@@ -177,19 +172,9 @@ namespace rak.UI
         }
         public void OnDropDownChange()
         {
+            if (creatureMap.Length == 0) return;
             SetFocusObject(creatureMap[creatureDropDown.value]);
-            List<Creature> livingCreatures = new List<Creature>();
-            for(int count = 0; count < creatureMap.Length; count++)
-            {
-                if (creatureMap[count].GetCurrentState() != Creature.CREATURE_STATE.DEAD)
-                    livingCreatures.Add(creatureMap[count]);
-                    
-            }
-            if (livingCreatures.Count > 0)
-            {
-                creatureMap = livingCreatures.ToArray();
-                RefreshMainText();
-            }
+            RefreshMainText();
         }
         private void Update()
         {

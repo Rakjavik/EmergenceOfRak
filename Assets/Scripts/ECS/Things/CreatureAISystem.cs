@@ -61,7 +61,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory,AgentVariables,Position>
+        struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory,Visible,Position>
         {
             public float Delta;
 
@@ -75,7 +75,7 @@ namespace rak.ecs.ThingComponents
             public EntityCommandBuffer.Concurrent commandBuffer;
 
             public void Execute(Entity entity, int index, ref CreatureAI cai, ref Target target, ref Observe obs, 
-                ref ShortTermMemory stm, ref AgentVariables av, ref Position pos)
+                ref ShortTermMemory stm, ref Visible av, ref Position pos)
             {
                 if (cai.CurrentStepStatus == Tasks.TASK_STATUS.Complete)
                 {
@@ -215,7 +215,7 @@ namespace rak.ecs.ThingComponents
             }
 
             private void locate(ref Entity entity,ref Target target,ref ShortTermMemory stm, ref Observe obs, ref CreatureAI cai,
-                ref AgentVariables av, ref Position pos, int currentStepLength)
+                ref Visible av, ref Position pos, int currentStepLength)
             {
                 DynamicBuffer<CreatureMemoryBuf> memoryBuffer = memoryBuffers[entity];
                 int memoryLength = memoryBuffer.Length;

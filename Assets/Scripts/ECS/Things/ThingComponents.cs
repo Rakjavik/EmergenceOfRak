@@ -6,6 +6,14 @@ using rak.creatures;
 
 namespace rak.ecs.ThingComponents
 {
+    public struct IsCreature : IComponentData { }
+
+    public struct CreatureState : IComponentData
+    {
+        public Creature.CreatureState Value;
+    }
+
+
     public struct Enabled : IComponentData
     {
         public int Value;
@@ -20,24 +28,36 @@ namespace rak.ecs.ThingComponents
     {
         public float3 Value;
     }
-    
-    // USED FOR MONO TO WRITE TO ECS VARIABLES FOR HYBRID //
-    public struct AgentVariables : IComponentData
+    public struct Rotation : IComponentData
+    {
+        public quaternion Value;
+    }
+
+    public struct Velocity : IComponentData
     {
         public float3 RelativeVelocity;
-        public float3 Velocity;
-        public float4 Rotation;
+        public float3 NormalVelocity;
         public float3 AngularVelocity;
-        public byte Visible;
 
         public float GetVelocityMagnitude()
         {
-            return Mathf.Abs(Velocity.x) + Mathf.Abs(Velocity.y) + Mathf.Abs(Velocity.z);
+            return Mathf.Abs(NormalVelocity.x) + Mathf.Abs(NormalVelocity.y) + Mathf.Abs(NormalVelocity.z);
         }
         public float GetAngularVelocityMag()
         {
             return Mathf.Abs(AngularVelocity.x) + Mathf.Abs(AngularVelocity.y) + Mathf.Abs(AngularVelocity.z);
         }
+    }
+
+    public struct RelativeDirections : IComponentData
+    {
+        public float3 Forward;
+        public float3 Right;
+    }
+    
+    public struct Visible : IComponentData
+    {
+        public byte Value;
     }
 
     [InternalBufferCapacity(100)]

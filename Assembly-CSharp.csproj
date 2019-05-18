@@ -118,6 +118,14 @@
     <Compile Include="Assets\Scripts\Creatures\Agent\LightArmPart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\Part.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\PartMovementVariables.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateConstantForceFromECS.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateECSRelativeDirections.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateECSTransform.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateECSVelocity.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateKinematicFromECS.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateMeshRendererWithKinematic.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateRotationFromEngine.cs" />
+    <Compile Include="Assets\Scripts\Creatures\Agent\RAKUpdateRotationFromSun.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\ThingAgent.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\ThingAnimationPart.cs" />
     <Compile Include="Assets\Scripts\Creatures\Agent\TractorBeamAnimationPart.cs" />
@@ -128,6 +136,7 @@
     <Compile Include="Assets\Scripts\Creatures\CreatureConstants.cs" />
     <Compile Include="Assets\Scripts\Creatures\CreatureTaskInstance.cs" />
     <Compile Include="Assets\Scripts\Creatures\FruitTree.cs" />
+    <Compile Include="Assets\Scripts\Creatures\FruitTreeECS.cs" />
     <Compile Include="Assets\Scripts\Creatures\Inventory.cs" />
     <Compile Include="Assets\Scripts\Creatures\Memory\BlittableThing.cs" />
     <Compile Include="Assets\Scripts\Creatures\Memory\Memory.cs" />
@@ -159,7 +168,7 @@
     <Compile Include="Assets\Scripts\ECS\Things\ProducesSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ShortTermMemorySystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Things\ThingComponents.cs" />
-    <Compile Include="Assets\Scripts\ECS\World\AreaComponents.cs" />
+    <Compile Include="Assets\Scripts\ECS\World\Area.cs" />
     <Compile Include="Assets\Scripts\ECS\World\GridSector.cs" />
     <Compile Include="Assets\Scripts\ECS\World\Sun.cs" />
     <Compile Include="Assets\Scripts\HexCoordinates.cs" />
@@ -482,8 +491,14 @@
     <Reference Include="Unity.Mathematics">
       <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Mathematics.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Properties">
+      <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Properties.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Entities">
       <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Entities.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Properties.Reflection">
+      <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Properties.Reflection.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Transforms">
       <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Transforms.dll</HintPath>
@@ -517,12 +532,6 @@
     </Reference>
     <Reference Include="com.unity.multiplayer-hlapi.Runtime">
       <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/com.unity.multiplayer-hlapi.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Properties">
-      <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Properties.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Properties.Reflection">
-      <HintPath>E:/Unity Projects/The Emergence of Rak/Library/ScriptAssemblies/Unity.Properties.Reflection.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AIModule">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2019.1.0f2/Editor/Data/Managed/UnityEngine/UnityEngine.AIModule.dll</HintPath>

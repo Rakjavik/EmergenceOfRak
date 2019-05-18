@@ -30,13 +30,13 @@ namespace rak.ecs.ThingComponents
         }
 
         [BurstCompile]
-        struct EngineSoundJob : IJobForEach<AgentVariables, EngineSound>
+        struct EngineSoundJob : IJobForEach<Velocity, EngineSound>
         {
             public float delta;
 
-            public void Execute(ref AgentVariables av, ref EngineSound es)
+            public void Execute(ref Velocity vel, ref EngineSound es)
             {
-                es.TargetLevel = av.GetVelocityMagnitude() / 10;
+                es.TargetLevel = vel.GetVelocityMagnitude() / 10;
                 if (es.CurrentLevel < es.TargetLevel)
                 {
                     es.CurrentLevel += es.ChangeSpeed * delta;

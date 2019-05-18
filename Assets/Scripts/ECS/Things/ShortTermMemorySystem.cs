@@ -10,15 +10,13 @@ namespace rak.ecs.ThingComponents
         public DynamicBuffer<CreatureMemoryBuf> memoryBuffer;
         public int CurrentMemoryIndex;
         public int MaxShortTermMemories;
+        public byte Allocated;
     }
 
     public class ShortTermMemorySystem : JobComponentSystem
     {
         protected override void OnCreate()
         {
-            RequireForUpdate(GetEntityQuery(new EntityQueryDesc[] { new EntityQueryDesc {
-                Any = new ComponentType[]{typeof(Observe)}
-            } }));
             Enabled = true;
         }
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -42,16 +40,26 @@ namespace rak.ecs.ThingComponents
             public void Execute(Entity creatureEntity, int index, ref ShortTermMemory stm, ref Observe observe,
                 ref CreatureAI ai)
             {
+                DynamicBuffer<CreatureMemoryBuf> creatureMemory = memoryBuffers[creatureEntity];
+
+                if (stm.Allocated == 0)
+                {
+                    for(int count = 0; count < stm.MaxShortTermMemories; count++)
+                    {
+                        creatureMemory.Add(new CreatureMemoryBuf { memory = MemoryInstance.Empty });
+                    }
+                    stm.Allocated = 1;
+                }
                 if(observe.ObservationAvailable == 1)
                 {
-                    DynamicBuffer<CreatureMemoryBuf> creatureMemory = memoryBuffers[creatureEntity];
                     DynamicBuffer<ObserveBuffer> observeMemory = observeBuffers[creatureEntity];
-                    if (!observeMemory.IsCreated) 
-                    {
-                        return;
-                    }
                     int creatureBufferSize = creatureMemory.Length;
                     int observeBufferSize = observeMemory.Length;
+                    if (observeBufferSize == 0) 
+                    {
+                        observe.ObservationAvailable = 0;
+                        return;
+                    }
                     NativeArray<CreatureMemoryBuf> creatureMemArray = creatureMemory.AsNativeArray();
                     for(int count = 0; count < observeBufferSize; count++)
                     {

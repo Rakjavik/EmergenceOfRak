@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace rak
 {
+
+
     public class FruitTree : Thing
     {
         public float spawnsThingEvery = 10;

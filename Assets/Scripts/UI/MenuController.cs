@@ -8,7 +8,7 @@ namespace rak.UI
     {
         void Initialize();
         void RefreshMainText();
-        void SetFocusObject(System.Object focus);
+        void SetFocusObject(Unity.Entities.Entity focus);
         void Deactivate();
         void ChangeToPreviousMenu();
     }
@@ -43,7 +43,7 @@ namespace rak.UI
         {
             availableMenus[currentMenu].RefreshMainText();
         }
-        public void SetCurrentMenuFocus(System.Object focus)
+        public void SetCurrentMenuFocus(Unity.Entities.Entity focus)
         {
             availableMenus[currentMenu].SetFocusObject(focus);
         }

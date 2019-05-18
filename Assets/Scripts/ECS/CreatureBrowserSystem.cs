@@ -23,10 +23,13 @@ namespace rak.ecs.ThingComponents
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            Entity selectedCreature;
             if (CreatureBrowserMono.SelectedCreature == null)
+            {
                 return inputDeps;
-
-            Entity selectedCreature = CreatureBrowserMono.SelectedCreature.ThingEntity;
+            }
+            else
+                selectedCreature = CreatureBrowserMono.SelectedCreature;
 
             CreatureBrowserJob job = new CreatureBrowserJob
             {

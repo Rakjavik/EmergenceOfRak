@@ -3,6 +3,7 @@ using System.Collections;
 using rak.UI;
 using TMPro;
 using rak;
+using Unity.Entities;
 
 public class DebugMenu : MonoBehaviour, Menu
 {
@@ -10,7 +11,7 @@ public class DebugMenu : MonoBehaviour, Menu
     private static string _debugText;
     private float updateEvery = 1f;
     private float sinceLastUpdate = 0;
-    private static Thing thingInFocus;
+    private static Entity thingInFocus;
     private const int maxStringLength = 1000;
     private const int removeThisManyWhenMaxed = 100;
     public static string DebugText { get
@@ -40,7 +41,7 @@ public class DebugMenu : MonoBehaviour, Menu
         }
     }
 
-    public static void AppendDebugLine(string line,Thing subject)
+    public static void AppendDebugLine(string line,Entity subject)
     {
         if(thingInFocus == subject)
         {
@@ -66,7 +67,7 @@ public class DebugMenu : MonoBehaviour, Menu
     {
         gameObject.SetActive(true);
         _debugText = "";
-        SetFocusObject(null);
+        SetFocusObject(Entity.Null);
         RefreshMainText();
     }
 
@@ -75,16 +76,14 @@ public class DebugMenu : MonoBehaviour, Menu
         MainText.text = DebugText;
     }
 
-    public void SetFocusObject(object focus)
+    public void SetFocusObject(Entity focus)
     {
         if (MenuController.previousMenu == (int)RootMenu.CreatureBrowser)
             thingInFocus = CreatureBrowserMono.SelectedCreature;
         else
         {
-            thingInFocus = (Thing)focus;
+            thingInFocus = focus;
         }
-        if(thingInFocus.GetComponent<Camera>() != null)
-            setCanvasCamera(thingInFocus.GetComponent<Camera>());
     }
 
     private void setCanvasCamera(Camera creatureCam)

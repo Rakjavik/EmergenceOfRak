@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,11 +15,11 @@ namespace rak.UI
     {
         private Text text;
         private WorldBrowserWindow currentWindow;
-        private World world;
+        private world.World world;
         private Text loadButtonText;
         public static HexCell selectedCell { get; private set; }
 
-        public void Initialize(World world)
+        public void Initialize(world.World world)
         {
             text = transform.GetChild(1).GetComponentInChildren<Text>();
             loadButtonText = GetComponentInChildren<Button>().GetComponentInChildren<Text>();
@@ -99,14 +100,14 @@ namespace rak.UI
         }
         public void Initialize()
         {
-            Initialize(World.GetWorld());
+            Initialize(rak.world.World.GetWorld());
             gameObject.SetActive(true);
         }
 
-        public void SetFocusObject(System.Object focus)
+        public void SetFocusObject(Entity focus)
         {
-            Debug.Log("Focus set for world browser - " + (HexCell)focus);
-            selectedCell = (HexCell)focus;
+            //Debug.Log("Focus set for world browser - " + (HexCell)focus);
+            //selectedCell = (HexCell)focus;
         }
         public void Deactivate()
         {

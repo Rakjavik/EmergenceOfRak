@@ -66,7 +66,7 @@ namespace rak
                 {
                     UpdateDistanceEvery = .25f, // How often to add a new entry to distance traveled
                 });
-                world.EntityManager.AddComponentData(ThingEntity, new AgentVariables
+                world.EntityManager.AddComponentData(ThingEntity, new Visible
                 {
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new CreatureAI
@@ -144,7 +144,7 @@ namespace rak
                 int bufferCapacity = thisCreaturesBuffer.Capacity;
                 for(int count = 0; count < bufferCapacity; count++)
                 {
-                    thisCreaturesBuffer.Add(new CreatureMemoryBuf { memory = MemoryInstance.GetNewEmptyMemory() });
+                    thisCreaturesBuffer.Add(new CreatureMemoryBuf { memory = MemoryInstance.Empty });
                 }
                 world.EntityManager.AddComponentData(ThingEntity, new ecs.ThingComponents.Needs { });
                 world.EntityManager.AddComponentData(ThingEntity, new Position { Value = transform.position });
@@ -153,6 +153,7 @@ namespace rak
                     BaseType = Base_Types.CREATURE,
                     Mass = 5
                 });
+                world.EntityManager.AddComponentData(ThingEntity, new IsCreature { });
             }
             else if (thingType == Thing_Types.Fruit)
             {

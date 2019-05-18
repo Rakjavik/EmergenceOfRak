@@ -52,14 +52,14 @@ namespace rak.ecs.ThingComponents
         }
         
         //[BurstCompile]
-        struct AgentJob : IJobForEach<Agent,AgentVariables,CreatureAI,Position>
+        struct AgentJob : IJobForEach<Agent,Visible,CreatureAI,Position>
         {
             public float currentTime;
 
-            public void Execute(ref Agent agent, ref AgentVariables av,ref CreatureAI ai,ref Position pos)
+            public void Execute(ref Agent agent, ref Visible av,ref CreatureAI ai,ref Position pos)
             {
                 // VISIBLE TO CAMERA //
-                if (av.Visible == 1)
+                if (av.Value == 1)
                 {
                     if (currentTime - agent.DistanceLastUpdated >= agent.UpdateDistanceEvery)
                     {

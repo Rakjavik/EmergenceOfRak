@@ -31,11 +31,11 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        struct TractorBeamJob : IJobForEach<TractorBeam, Target,CreatureAI,AgentVariables,Position>
+        struct TractorBeamJob : IJobForEach<TractorBeam, Target,CreatureAI,Visible,Position>
         {
             public float delta;
 
-            public void Execute(ref TractorBeam tb, ref Target target,ref CreatureAI ai,ref AgentVariables av, ref Position pos)
+            public void Execute(ref TractorBeam tb, ref Target target,ref CreatureAI ai,ref Visible av, ref Position pos)
             {
                 if (ai.CurrentAction == ActionStep.Actions.Add)
                 {

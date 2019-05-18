@@ -11,7 +11,7 @@ namespace rak.creatures
 
     public class Creature : Thing
     {
-        public enum CREATURE_STATE { IDLE, MOVE, WAIT, DEAD, SLEEP }
+        public enum CreatureState { IDLE, MOVE, WAIT, DEAD, SLEEP }
         public enum CREATURE_DEATH_CAUSE { FlightCollision, Hunger, NA }
 
         public static readonly int CLOSE_OBJECT_CACHE_SIZE = 100;
@@ -24,7 +24,7 @@ namespace rak.creatures
         public BASE_SPECIES baseSpecies;
         public CREATURE_DEATH_CAUSE CauseOfDeath { get
             {
-                if (currentState == CREATURE_STATE.DEAD)
+                if (currentState == CreatureState.DEAD)
                     return causeOfDeath;
                 return CREATURE_DEATH_CAUSE.NA;
             } }
@@ -33,7 +33,7 @@ namespace rak.creatures
         public bool Visible { get; private set; }
         public bool InView { get; private set; }
 
-        private CREATURE_STATE currentState;
+        private CreatureState currentState;
         private CREATURE_DEATH_CAUSE causeOfDeath = CREATURE_DEATH_CAUSE.NA;
         private float lastUpdated = 0;
         private float observeEvery = 5f;
@@ -102,7 +102,7 @@ namespace rak.creatures
             creaturePhysicalStats = CreatureConstants.PhysicalStatsInitialize(species.getBaseSpecies(), this);
             agent = new CreatureAgent(this);
             audioSource = GetComponent<AudioSource>();
-            currentState = CREATURE_STATE.IDLE;
+            currentState = CreatureState.IDLE;
             creaturePhysicalStats.Initialize(species.getBaseSpecies());
             agent.Initialize(species.getBaseSpecies());
             miscVariables = MiscVariables.GetCreatureMiscVariables(this);
@@ -206,10 +206,10 @@ namespace rak.creatures
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (currentState == CREATURE_STATE.DEAD) return;
+            if (currentState == CreatureState.DEAD) return;
             if (agent.GetRigidBody().velocity.magnitude > 20*2)
             {
-                if (currentState != CREATURE_STATE.DEAD)
+                if (currentState != CreatureState.DEAD)
                 {
                     SetStateToDead(CREATURE_DEATH_CAUSE.FlightCollision);
                 }
@@ -236,8 +236,6 @@ namespace rak.creatures
         }
         public bool AddThingToInventory(Thing thing)
         {
-            if (!DEBUGSCENE)
-                DebugMenu.AppendDebugLine(thingName + " has picked up " + thing.thingName, this);
             return inventory.addThing(thing);
         }
         public bool RemoveFromInventory(Thing thing)
@@ -300,7 +298,7 @@ namespace rak.creatures
 
         public void DeactivateAllParts()
         {
-            if (currentState == CREATURE_STATE.DEAD)
+            if (currentState == CreatureState.DEAD)
             {
                 agent.DeactivateAllParts();
             }
@@ -433,7 +431,7 @@ namespace rak.creatures
             }
             return "None";
         }
-        public CREATURE_STATE GetCurrentState() { return currentState; }
+        public CreatureState GetCurrentState() { return currentState; }
 
         public void SetStateToDead(CREATURE_DEATH_CAUSE causeOfDeath)
         {
@@ -441,15 +439,15 @@ namespace rak.creatures
             //ChangeState(CREATURE_STATE.DEAD);
             Debug.Log("Avoided death by " + causeOfDeath);
         }
-        public void ChangeState(CREATURE_STATE requestedState)
+        public void ChangeState(CreatureState requestedState)
         {
             if (requestedState != currentState)
             {
                 // Request to go to Sleep //
-                if (requestedState == CREATURE_STATE.SLEEP)
+                if (requestedState == CreatureState.SLEEP)
                     agent.DisableAgent();
                 // If we need to wake up from sleep //
-                else if (currentState == CREATURE_STATE.SLEEP)
+                else if (currentState == CreatureState.SLEEP)
                 {
                     agent.EnableAgent();
                     Debug.LogWarning("ReEnabling Agent from sleep");

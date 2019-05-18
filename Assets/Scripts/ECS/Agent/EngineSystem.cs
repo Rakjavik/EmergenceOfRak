@@ -45,18 +45,21 @@ namespace rak.ecs.ThingComponents
                 currentTime = Time.time,
                 delta = Time.deltaTime,
                 origins = GetComponentDataFromEntity<Position>(true),
+                visibles = GetComponentDataFromEntity<Visible>(true),
         };
             return job.Schedule(this, inputDeps);
         }
 
         //[BurstCompile]
-        struct EngineJob : IJobForEachWithEntity<Engine,CreatureAI,Agent,AgentVariables,EngineConstantForce,Target>
+        struct EngineJob : IJobForEachWithEntity<Engine,CreatureAI,Agent,Velocity,EngineConstantForce,Target>
         {
             public float currentTime;
             public float delta;
 
             [ReadOnly]
             public ComponentDataFromEntity<Position> origins;
+            [ReadOnly]
+            public ComponentDataFromEntity<Visible> visibles;
 
             private void setState(MovementState requestedState, Direction direction, ref Engine engine, ref EngineConstantForce ecf)
             {
@@ -145,11 +148,11 @@ namespace rak.ecs.ThingComponents
             }
 
             public void Execute(Entity entity,int index, ref Engine engine, ref CreatureAI ai,ref Agent agent,
-                ref AgentVariables av,ref EngineConstantForce ecf,ref Target target)
+                ref Velocity vel,ref EngineConstantForce ecf,ref Target target)
             {
                 ActionStep.Actions currentAction = ai.CurrentAction;
                 // VISIBLE TO CAMERA //
-                if (av.Visible == 1)
+                if (visibles[entity].Value == 1)
                 {
                     if (currentAction == ActionStep.Actions.MoveTo)
                     {
@@ -164,8 +167,8 @@ namespace rak.ecs.ThingComponents
                             agent.RequestRaycastUpdateDirectionForward = 1;
                             agent.ZLastUpdated = currentTime;
                         }
-                        float velMag = av.RelativeVelocity.x + av.RelativeVelocity.y +
-                            av.RelativeVelocity.z;
+                        float velMag = vel.RelativeVelocity.x + vel.RelativeVelocity.y +
+                            vel.RelativeVelocity.z;
                         if (velMag > 10 && currentTime - agent.VelLastUpdated > .2f)
                         {
                             agent.RequestRayCastUpdateDirectionVel = 1;
@@ -175,7 +178,7 @@ namespace rak.ecs.ThingComponents
                         MovementState stateToSetY = MovementState.IDLE;
                         
                         // Moving down or close to ground, throttle up //
-                        if (av.RelativeVelocity.y < -.5f || agent.DistanceFromGround < engine.sustainHeight)
+                        if (vel.RelativeVelocity.y < -.5f || agent.DistanceFromGround < engine.sustainHeight)
                         {
                             stateToSetY = MovementState.FORWARD;
                         }
@@ -185,7 +188,7 @@ namespace rak.ecs.ThingComponents
 
                         }
                         // Going up a little, maintain //
-                        else if (av.RelativeVelocity.y > .5f)
+                        else if (vel.RelativeVelocity.y > .5f)
                         {
                             stateToSetY = MovementState.IDLE;
                         }

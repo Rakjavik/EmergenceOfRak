@@ -73,8 +73,8 @@ namespace rak.creatures
 
             EngineRotationTurning ert = em.
                 GetComponentData<EngineRotationTurning>(parentCreature.ThingEntity);
-            Quaternion newRotation = new Quaternion(ert.RotationUpdate.x, ert.RotationUpdate.y,
-                ert.RotationUpdate.z, ert.RotationUpdate.w);
+            Quaternion newRotation = new Quaternion(ert.RotationUpdate.value.x, ert.RotationUpdate.value.y,
+                ert.RotationUpdate.value.z, ert.RotationUpdate.value.w);
             if (newRotation.eulerAngles != Vector3.zero)
                 parentCreature.transform.rotation = newRotation;
         }

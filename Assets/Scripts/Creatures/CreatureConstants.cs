@@ -5,14 +5,14 @@ namespace rak.creatures
 {
     public abstract class CreatureConstants
     {
-        public static bool CreatureIsIncapacitatedState(Creature.CREATURE_STATE state)
+        public static bool CreatureIsIncapacitatedState(Creature.CreatureState state)
         {
             bool _inCapacitated;
-            if (state == Creature.CREATURE_STATE.DEAD) _inCapacitated = true;
-            else if (state == Creature.CREATURE_STATE.IDLE) _inCapacitated = false;
-            else if (state == Creature.CREATURE_STATE.MOVE) _inCapacitated = false;
-            else if (state == Creature.CREATURE_STATE.SLEEP) _inCapacitated = true;
-            else if (state == Creature.CREATURE_STATE.WAIT) _inCapacitated = false;
+            if (state == Creature.CreatureState.DEAD) _inCapacitated = true;
+            else if (state == Creature.CreatureState.IDLE) _inCapacitated = false;
+            else if (state == Creature.CreatureState.MOVE) _inCapacitated = false;
+            else if (state == Creature.CreatureState.SLEEP) _inCapacitated = true;
+            else if (state == Creature.CreatureState.WAIT) _inCapacitated = false;
             else _inCapacitated = true;
             return _inCapacitated;
         }
