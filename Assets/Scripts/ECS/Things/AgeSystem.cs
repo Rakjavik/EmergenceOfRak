@@ -18,7 +18,7 @@ namespace rak.ecs.ThingComponents
         protected override void OnCreate()
         {
             base.OnCreate();
-            //Enabled = false;
+            Enabled = true;
         }
 
         // JOB //

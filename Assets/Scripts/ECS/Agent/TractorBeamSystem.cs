@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Burst;
 
 namespace rak.ecs.ThingComponents
 {
@@ -10,8 +11,11 @@ namespace rak.ecs.ThingComponents
     {
         public float BeamStrength;
         public byte Locked;
+        public byte RequestLockFromMono;
+        public byte RequestUnLockFromMono;
         public float3 NewTargetPosition;
         public float DistanceFromTarget;
+        public float UnlockAtDistance;
     }
 
     public class TractorBeamSystem : JobComponentSystem
@@ -31,6 +35,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
+        [BurstCompile]
         struct TractorBeamJob : IJobForEach<TractorBeam, Target,CreatureAI,Visible,Position>
         {
             public float delta;
@@ -48,8 +53,11 @@ namespace rak.ecs.ThingComponents
                         // Need to lock //
                         if (tb.Locked == 0)
                         {
-                            tb.Locked = 1;
-                            target.NeedTargetPositionRefresh = 1;
+                            if (Vector3.Distance(target.targetPosition, pos.Value) > tb.UnlockAtDistance)
+                            {
+                                if (target.LockedToMono == 1)
+                                    tb.RequestLockFromMono = 1;
+                            }
                         }
                     }
                     // Target invalid //
@@ -58,15 +66,19 @@ namespace rak.ecs.ThingComponents
                         if (tb.Locked == 1)
                             tb.Locked = 0;
                     }
+                    // Locked on valid target //
                     if (tb.Locked == 1)
                     {
                         tb.DistanceFromTarget = Vector3.Distance(target.targetPosition, pos.Value);
                         tb.NewTargetPosition = Vector3.MoveTowards(tb.NewTargetPosition, pos.Value,
                             tb.BeamStrength * delta);
+                        if(tb.DistanceFromTarget <= tb.UnlockAtDistance)
+                        {
+                            tb.NewTargetPosition = pos.Value;
+                            tb.RequestUnLockFromMono = 1;
+                        }
                     }
                 }
-                else
-                    tb.NewTargetPosition = float3.zero;
             }
         }
     }

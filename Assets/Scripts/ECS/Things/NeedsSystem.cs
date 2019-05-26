@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Burst;
+using Unity.Entities;
 using Unity.Jobs;
 
 namespace rak.ecs.ThingComponents
@@ -24,6 +25,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
+        [BurstCompile]
         struct NeedsJob : IJobForEach<Needs>
         {
             public float Delta;

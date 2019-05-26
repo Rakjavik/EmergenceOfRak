@@ -1,10 +1,13 @@
 ﻿using rak.creatures.memory;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 namespace rak.ecs.ThingComponents
 {
+    
+
     public struct ShortTermMemory : IComponentData
     {
         public DynamicBuffer<CreatureMemoryBuf> memoryBuffer;
@@ -15,8 +18,11 @@ namespace rak.ecs.ThingComponents
 
     public class ShortTermMemorySystem : JobComponentSystem
     {
+        EndSimulationEntityCommandBufferSystem EndSimulationEntityCommandBufferSystem;
+
         protected override void OnCreate()
         {
+            EndSimulationEntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
             Enabled = true;
         }
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -24,13 +30,18 @@ namespace rak.ecs.ThingComponents
             ShortTermMemoryJob job = new ShortTermMemoryJob
             {
                 memoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>(false),
-                observeBuffers = GetBufferFromEntity<ObserveBuffer>(true)
+                observeBuffers = GetBufferFromEntity<ObserveBuffer>(true),
+                commandBuffer = EndSimulationEntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             };
-            return job.Schedule(this, inputDeps);
+            JobHandle handle = job.Schedule(this, inputDeps);
+            EndSimulationEntityCommandBufferSystem.AddJobHandleForProducer(handle);
+            return handle;
         }
 
         struct ShortTermMemoryJob : IJobForEachWithEntity<ShortTermMemory, Observe,CreatureAI>
         {
+            public EntityCommandBuffer.Concurrent commandBuffer;
+            
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<CreatureMemoryBuf> memoryBuffers;
 
@@ -58,6 +69,7 @@ namespace rak.ecs.ThingComponents
                     if (observeBufferSize == 0) 
                     {
                         observe.ObservationAvailable = 0;
+                        commandBuffer.RemoveComponent(index, creatureEntity, typeof(PerformObservation));
                         return;
                     }
                     NativeArray<CreatureMemoryBuf> creatureMemArray = creatureMemory.AsNativeArray();
@@ -80,6 +92,7 @@ namespace rak.ecs.ThingComponents
                     }
                     stm.memoryBuffer = creatureMemory;
                     observe.ObservationAvailable = 0;
+                    commandBuffer.RemoveComponent(index, creatureEntity, typeof(PerformObservation));
                 }
             }
 
@@ -87,8 +100,8 @@ namespace rak.ecs.ThingComponents
             {
                 for (int count = 0; count < memories.Length; count++)
                 {
-                    if (memories[count].memory.Verb.Equals(findThis.Verb) && 
-                        memories[count].memory.Subject.Equals(findThis.Subject) &&
+                    if (memories[count].memory.Verb == findThis.Verb && 
+                        memories[count].memory.Subject == findThis.Subject &&
                         memories[count].memory.InvertVerb == findThis.InvertVerb)
                     {
                         return 1;

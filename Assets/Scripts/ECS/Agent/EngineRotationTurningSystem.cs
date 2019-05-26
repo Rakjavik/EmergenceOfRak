@@ -2,6 +2,7 @@
 using Unity.Entities;
 using UnityEngine;
 using Unity.Jobs;
+using Unity.Burst;
 
 namespace rak.ecs.ThingComponents
 {
@@ -28,6 +29,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
+        [BurstCompile]
         struct EngineRotationTurningJob : IJobForEach<EngineRotationTurning, Rotation,Target,Agent,Position>
         {
             public float delta;

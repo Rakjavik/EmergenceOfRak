@@ -32,7 +32,7 @@ namespace rak.creatures
                     targetBody = this.target.RequestRigidBodyAccess(parentCreature);
                     targetBody.isKinematic = true;
                 }
-                if (ecsTarget.NeedTargetPositionRefresh == 1)
+                /*if (ecsTarget.NeedTargetPositionRefresh == 1)
                 {
                     // If locked on target, update ECS with transform info //
                     ecsTarget.targetPosition = target.transform.position;
@@ -40,13 +40,12 @@ namespace rak.creatures
                     em.SetComponentData(parentCreature.ThingEntity, ecsTarget);
                 }
                 else
+                {*/
+                if (action == ActionStep.Actions.Add)
                 {
-                    if (action == ActionStep.Actions.Add)
-                    {
-                        targetBody.position = tb.NewTargetPosition;
-                        ecsTarget.targetPosition = tb.NewTargetPosition;
-                        em.SetComponentData(parentCreature.ThingEntity, ecsTarget);
-                    }
+                    targetBody.position = tb.NewTargetPosition;
+                    ecsTarget.targetPosition = tb.NewTargetPosition;
+                    em.SetComponentData(parentCreature.ThingEntity, ecsTarget);
                 }
             }
             else

@@ -30,7 +30,8 @@ namespace rak.ecs.ThingComponents
             }
             else
                 selectedCreature = CreatureBrowserMono.SelectedCreature;
-
+            if (selectedCreature.Equals(Entity.Null))
+                return inputDeps;
             CreatureBrowserJob job = new CreatureBrowserJob
             {
                 MemoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>(),

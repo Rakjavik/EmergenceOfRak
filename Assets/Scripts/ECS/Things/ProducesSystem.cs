@@ -2,6 +2,7 @@
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Collections;
+using Unity.Burst;
 
 namespace rak.ecs.ThingComponents
 {
@@ -30,6 +31,7 @@ namespace rak.ecs.ThingComponents
             return handle;
         }
 
+        [BurstCompile]
         struct ProducesJob : IJobForEachWithEntity<Produces>
         {
             public float delta;

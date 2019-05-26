@@ -54,15 +54,15 @@ namespace rak.ecs.ThingComponents
         public float3 Forward;
         public float3 Right;
     }
-    
-    public struct Visible : IComponentData
-    {
-        public byte Value;
-    }
 
     [InternalBufferCapacity(100)]
     public struct CreatureMemoryBuf : IBufferElementData
     {
         public MemoryInstance memory;
+    }
+
+    public struct Claimed : IComponentData
+    {
+        public byte Value;
     }
 }

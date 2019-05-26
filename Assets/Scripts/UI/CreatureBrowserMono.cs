@@ -130,6 +130,14 @@ namespace rak.UI
         }
         public void RefreshMainText()
         {
+            if (selectedCreature.Equals(Entity.Null))
+            {
+                NativeArray<Entity> creatures = em.CreateEntityQuery(typeof(IsCreature)).
+                    ToEntityArray(Allocator.TempJob);
+                InitializeCreatureList(ref creatures);
+                creatures.Dispose();
+                return;
+            }
             CreatureState state = em.GetComponentData<CreatureState>(selectedCreature);
             CreatureAI ai = em.GetComponentData<CreatureAI>(selectedCreature);
             Target target = em.GetComponentData<Target>(selectedCreature);

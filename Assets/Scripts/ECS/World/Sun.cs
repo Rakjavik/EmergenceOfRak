@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Burst;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace rak.ecs.world
             };
             return job.Schedule(this, inputDeps);
         }
-
+        [BurstCompile]
         public struct SunJob : IJobForEach<Sun>
         {
             public float delta;

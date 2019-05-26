@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Burst;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -39,7 +40,7 @@ namespace rak.ecs.ThingComponents
         protected override void OnCreate()
         {
             base.OnCreate();
-            //Enabled = false;
+            Enabled = true;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -51,7 +52,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this,inputDeps);
         }
         
-        //[BurstCompile]
+        [BurstCompile]
         struct AgentJob : IJobForEach<Agent,Visible,CreatureAI,Position>
         {
             public float currentTime;
@@ -76,12 +77,6 @@ namespace rak.ecs.ThingComponents
                         agent.CurrentDistanceIndex = currentIndex;
                         agent.PreviousPositionMeasured = currentPosition;
                     }
-                }
-                // NOT VISIBLE TO CAMERA //
-                else
-                {
-                    ActionStep.Actions currentAction = ai.CurrentAction;
-                    
                 }
             }
         }

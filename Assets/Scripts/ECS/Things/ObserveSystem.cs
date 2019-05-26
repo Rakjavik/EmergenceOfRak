@@ -5,9 +5,12 @@ using Unity.Collections;
 using rak.creatures.memory;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Burst;
 
 namespace rak.ecs.ThingComponents
 {
+    public struct PerformObservation : IComponentData { }
+
     public struct Observe : IComponentData
     {
         public float ObserveDistance;
@@ -65,8 +68,8 @@ namespace rak.ecs.ThingComponents
             JobHandle handle = job.Schedule(this, inputDeps);
             return handle;
         }
-
-        struct ObserveJob : IJobForEachWithEntity<Observe,Visible,CreatureAI>
+        [BurstCompile]
+        struct ObserveJob : IJobForEachWithEntity<Observe,Visible,CreatureAI,PerformObservation>
         {
             [ReadOnly]
             [DeallocateOnJobCompletion]
@@ -90,7 +93,8 @@ namespace rak.ecs.ThingComponents
             public float TimeStamp;
             public int ObservableThingsLength;
 
-            public void Execute(Entity entity, int index, ref Observe ob,ref Visible av, ref CreatureAI ai)
+            public void Execute(Entity entity, int index, ref Observe ob,ref Visible av, ref CreatureAI ai,
+               [ReadOnly] ref PerformObservation po)
             {
                 // Only run if observation was requested, and we won't already have an observation waiting to be read //
                 if (ob.RequestObservation == 1 && ob.ObservationAvailable == 0)

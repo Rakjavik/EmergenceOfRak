@@ -1,5 +1,6 @@
 ﻿using rak.creatures;
 using rak.creatures.memory;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -41,9 +42,6 @@ namespace rak.ecs.ThingComponents
 
         protected override void OnCreate()
         {
-            /*RequireForUpdate(GetEntityQuery(new EntityQueryDesc[] { new EntityQueryDesc {
-                Any = new ComponentType[]{typeof(ShortTermMemory)}
-            } }));*/
             EndSimulationEntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
             Enabled = true;
         }
@@ -57,8 +55,11 @@ namespace rak.ecs.ThingComponents
                 currentBuffers = GetBufferFromEntity<ActionStepBufferCurrent>(),
                 previousBuffers = GetBufferFromEntity<ActionStepBufferPrevious>(),
                 commandBuffer = EndSimulationEntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+                tractorBeams = GetComponentDataFromEntity<TractorBeam>(),
             };
-            return job.Schedule(this, inputDeps);
+            JobHandle handle = job.Schedule(this, inputDeps);
+            EndSimulationEntityCommandBufferSystem.AddJobHandleForProducer(handle);
+            return handle;
         }
 
         struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory,Visible,Position>
@@ -71,6 +72,8 @@ namespace rak.ecs.ThingComponents
             public BufferFromEntity<ActionStepBufferCurrent> currentBuffers;
             [NativeDisableParallelForRestriction]
             public BufferFromEntity<ActionStepBufferPrevious> previousBuffers;
+            [ReadOnly]
+            public ComponentDataFromEntity<TractorBeam> tractorBeams;
 
             public EntityCommandBuffer.Concurrent commandBuffer;
 
@@ -107,11 +110,13 @@ namespace rak.ecs.ThingComponents
                 else if(cai.CurrentAction == ActionStep.Actions.Locate)
                 {
                     DynamicBuffer<ActionStepBufferCurrent> currentBuffer = currentBuffers[entity];
-                    locate(ref entity, ref target, ref stm, ref obs, ref cai,ref av,ref pos, currentBuffer.Length);
+                    locate(ref entity, ref target, ref stm, ref obs, ref cai,ref av,ref pos, currentBuffer.Length,
+                        index);
                 }
                 //  MOVETO  //
                 else if (cai.CurrentAction == ActionStep.Actions.MoveTo)
                 {
+                    commandBuffer.AddComponent(index, entity, new PerformObservation { });
                     moveTo(ref target, ref cai,ref obs);
                 }
                 // ADD  //
@@ -180,6 +185,7 @@ namespace rak.ecs.ThingComponents
 
             private void moveTo(ref Target target, ref CreatureAI cai, ref Observe obs)
             {
+                // Constant Observation DEBUG //
                 obs.RequestObservation = 1;
                 if (target.distance < 10 || target.targetPosition.Equals(float3.zero))
                 {
@@ -189,8 +195,9 @@ namespace rak.ecs.ThingComponents
 
             private void add(ref Target target,ref CreatureAI cai)
             {
-                if(target.distance < 1)
+                if(target.distance < .5f)
                 {
+                    target.RequestMonoTargetUnlock = 1;
                     cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
                 }
             }
@@ -211,11 +218,16 @@ namespace rak.ecs.ThingComponents
                         buffer[count] = new CreatureMemoryBuf { memory = newMemory };
                     }
                 }
-                //commandBuffer.DestroyEntity(index, cai.DestroyedThingInPosession);
+                commandBuffer.DestroyEntity(index, cai.DestroyedThingInPosession);
+                target = new Target
+                {
+                    targetPosition = float3.zero,
+                    targetEntity = Entity.Null
+                };
             }
 
             private void locate(ref Entity entity,ref Target target,ref ShortTermMemory stm, ref Observe obs, ref CreatureAI cai,
-                ref Visible av, ref Position pos, int currentStepLength)
+                ref Visible av, ref Position pos, int currentStepLength,int index)
             {
                 DynamicBuffer<CreatureMemoryBuf> memoryBuffer = memoryBuffers[entity];
                 int memoryLength = memoryBuffer.Length;
@@ -243,8 +255,9 @@ namespace rak.ecs.ThingComponents
                     if (closestIndex != -1)
                     {
                         targetFound = true;
-                        target.targetEntity = stm.memoryBuffer[closestIndex].memory.Subject;
-                        target.targetPosition = stm.memoryBuffer[closestIndex].memory.Position;
+                        target.targetEntity = memoryBuffer[closestIndex].memory.Subject;
+                        target.targetPosition = memoryBuffer[closestIndex].memory.Position;
+                        target.RequestTargetFromMono = 1;
                         cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
                     }
                 }
@@ -252,7 +265,10 @@ namespace rak.ecs.ThingComponents
                 if (!targetFound)
                 {
                     if (obs.ObservationAvailable == 0)
+                    {
                         obs.RequestObservation = 1;
+                        commandBuffer.AddComponent(index, entity, new PerformObservation { });
+                    }
                     target.targetEntity = Entity.Null;
                     Unity.Mathematics.Random random = new Unity.Mathematics.Random();
                     random.InitState((uint)(Delta * 500));

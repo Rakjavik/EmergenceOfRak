@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
-using System.Collections;
 using Unity.Entities;
 using rak.ecs.ThingComponents;
 
 namespace rak.creatures
 {
-    public class RAKUpdateECSTransform : MonoBehaviour
+    public class RAKUpdatePositionWithECSTractorBeam : MonoBehaviour
     {
         private EntityManager em;
         private Entity entity;
@@ -20,12 +19,12 @@ namespace rak.creatures
         }
 
         // Update is called once per frame
-        void FixedUpdate()
+        void Update()
         {
             if (initialized)
             {
-                em.SetComponentData(entity, new Position { Value = transform.position });
-                em.SetComponentData(entity, new Rotation { Value = transform.rotation });
+                TractorBeam tb = em.GetComponentData<TractorBeam>(entity);
+                transform.position = tb.NewTargetPosition;
             }
         }
     }

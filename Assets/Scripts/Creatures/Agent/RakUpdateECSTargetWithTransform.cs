@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
-using System.Collections;
 using Unity.Entities;
 using rak.ecs.ThingComponents;
 
 namespace rak.creatures
 {
-    public class RAKUpdateECSTransform : MonoBehaviour
+    public class RakUpdateECSTargetWithTransform : MonoBehaviour
     {
         private EntityManager em;
         private Entity entity;
@@ -24,8 +23,9 @@ namespace rak.creatures
         {
             if (initialized)
             {
-                em.SetComponentData(entity, new Position { Value = transform.position });
-                em.SetComponentData(entity, new Rotation { Value = transform.rotation });
+                Target target = em.GetComponentData<Target>(entity);
+                target.targetPosition = transform.position;
+                em.SetComponentData(entity, target);
             }
         }
     }

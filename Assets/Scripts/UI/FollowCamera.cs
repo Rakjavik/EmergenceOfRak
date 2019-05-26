@@ -1,4 +1,5 @@
-﻿using rak.ecs.ThingComponents;
+﻿using rak.ecs.area;
+using rak.ecs.ThingComponents;
 using rak.world;
 using System.Collections;
 using System.Collections.Generic;
@@ -57,18 +58,18 @@ namespace rak.UI
             else
             {
                 if (_stopCameraMovement) return;
-                Position pos = em.GetComponentData<Position>(_target);
+                /*Position pos = em.GetComponentData<Position>(_target);
                 Vector3 position = new Vector3
                 {
                     x = pos.Value.x,
                     y = pos.Value.y,
                     z = pos.Value.z
-                };
-
+                };*/
+                Vector3 position = AreaSystem.GetEntityGO(_target).transform.position;
                 transform.position = Vector3.Lerp(transform.position, position+cameraOffset, Time.deltaTime*speed);
-                transform.LookAt(pos.Value);
+                transform.LookAt(position);
                 Vector3 positionForward;
-                float currentDistance = Vector3.Distance(transform.position, pos.Value);
+                float currentDistance = Vector3.Distance(transform.position, position);
                 // Too small of a difference to alter //
                 float precision = .1f;
                 if (Mathf.Abs(currentDistance - targetZoomDistance) < precision)

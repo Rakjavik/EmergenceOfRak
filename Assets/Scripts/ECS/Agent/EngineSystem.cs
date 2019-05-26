@@ -50,7 +50,6 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        //[BurstCompile]
         struct EngineJob : IJobForEachWithEntity<Engine,CreatureAI,Agent,Velocity,EngineConstantForce,Target>
         {
             public float currentTime;

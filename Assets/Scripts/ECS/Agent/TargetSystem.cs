@@ -11,7 +11,9 @@ namespace rak.ecs.ThingComponents
         public Entity targetEntity;
         public float3 targetPosition;
         public float distance;
-        public byte NeedTargetPositionRefresh;
+        public byte RequestTargetFromMono;
+        public byte RequestMonoTargetUnlock;
+        public byte LockedToMono;
     }
 
     public class TargetSystem : JobComponentSystem
@@ -27,7 +29,7 @@ namespace rak.ecs.ThingComponents
             return job.Schedule(this, inputDeps);
         }
 
-        //[BurstCompile]
+        [BurstCompile]
         struct TargetJob : IJobForEach<Target, Position>
         {
             public void Execute(ref Target target, ref Position pos)
