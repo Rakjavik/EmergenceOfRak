@@ -6,6 +6,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using Random = Unity.Mathematics.Random;
 
 namespace rak.ecs.ThingComponents
 {
@@ -56,6 +57,7 @@ namespace rak.ecs.ThingComponents
                 previousBuffers = GetBufferFromEntity<ActionStepBufferPrevious>(),
                 commandBuffer = EndSimulationEntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 tractorBeams = GetComponentDataFromEntity<TractorBeam>(),
+                random = new Random((uint)UnityEngine.Random.Range(1, 100000)),
             };
             JobHandle handle = job.Schedule(this, inputDeps);
             EndSimulationEntityCommandBufferSystem.AddJobHandleForProducer(handle);
@@ -77,9 +79,13 @@ namespace rak.ecs.ThingComponents
 
             public EntityCommandBuffer.Concurrent commandBuffer;
 
+            public Random random;
+
             public void Execute(Entity entity, int index, ref CreatureAI cai, ref Target target, ref Observe obs, 
                 ref ShortTermMemory stm, ref Visible av, ref Position pos)
             {
+
+                // STEP COMPLETE //
                 if (cai.CurrentStepStatus == Tasks.TASK_STATUS.Complete)
                 {
                     cai.CurrentStepNum++;
@@ -97,7 +103,15 @@ namespace rak.ecs.ThingComponents
                         cai.CurrentStepStatus = Tasks.TASK_STATUS.Started;
                     }
                 }
-
+                // STEP FAILED //
+                else if (cai.CurrentStepStatus == Tasks.TASK_STATUS.Failed)
+                {
+                    cai.CurrentAction = ActionStep.Actions.None;
+                    if(cai.FailReason == ActionStep.FailReason.TargetNoLongerAvailable)
+                    {
+                        rememberTargetAsUnavailable(entity, ref target);
+                    }
+                }
                 if (cai.CurrentAction == ActionStep.Actions.None)
                 {
                     getNewTask(ref entity);
@@ -202,23 +216,31 @@ namespace rak.ecs.ThingComponents
                 }
             }
 
+            private void rememberTargetAsUnavailable(Entity entity, ref Target target)
+            {
+                Debug.Log("Remembering target as unavailable - " + entity);
+                DynamicBuffer<CreatureMemoryBuf> buffer = memoryBuffers[entity];
+                int bufferLength = buffer.Length;
+                for (int count = 0; count < bufferLength; count++)
+                {
+                    if (buffer[count].memory.InvertVerb == 0 && buffer[count].memory.Verb == Verb.SAW
+                        && buffer[count].memory.Subject.Equals(target.targetEntity))
+                    {
+                        MemoryInstance modified = buffer[count].memory;
+                        modified.InvertVerb = 1;
+                        buffer[count] = new CreatureMemoryBuf { memory = modified };
+                        //MemoryInstance newMemory = buffer[count].memory;
+                        //newMemory.InvertVerb = 1;
+                        //buffer[count] = new CreatureMemoryBuf { memory = newMemory };
+                    }
+                }
+            }
             private void eat(ref CreatureAI cai,ref Target target,ref ShortTermMemory stm,ref Entity entity,int index)
             {
                 cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
                 cai.DestroyedThingInPosession = target.targetEntity;
-                DynamicBuffer<CreatureMemoryBuf> buffer = memoryBuffers[entity];
-                int bufferLength = buffer.Length;
-                for(int count = 0; count < bufferLength; count++)
-                {
-                    if(buffer[count].memory.InvertVerb == 0 && buffer[count].memory.Verb == Verb.SAW 
-                        && buffer[count].memory.Subject.Equals(target.targetEntity))
-                    {
-                        MemoryInstance newMemory = buffer[count].memory;
-                        newMemory.InvertVerb = 1;
-                        buffer[count] = new CreatureMemoryBuf { memory = newMemory };
-                    }
-                }
-                commandBuffer.DestroyEntity(index, cai.DestroyedThingInPosession);
+                Debug.Log("Requesting destroy of " + target.targetEntity);
+                rememberTargetAsUnavailable(entity,ref target);
                 target = new Target
                 {
                     targetPosition = float3.zero,
@@ -270,8 +292,6 @@ namespace rak.ecs.ThingComponents
                         commandBuffer.AddComponent(index, entity, new PerformObservation { });
                     }
                     target.targetEntity = Entity.Null;
-                    Unity.Mathematics.Random random = new Unity.Mathematics.Random();
-                    random.InitState((uint)(Delta * 500));
                     random.NextInt();
                     int randomPosX = random.NextInt(512);
                     int randomPosZ = random.NextInt(512);

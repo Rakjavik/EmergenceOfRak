@@ -53,7 +53,7 @@ namespace rak.ecs.ThingComponents
                 ref Target target,ref CreatureAI ai, ref Engine engine)
             {
                 // If not visible, make sure we're deactivated //
-                if (visibles[entity].Value == 0)
+                if (visibles[entity].RequestVisible == 0)
                 {
                     shield.Activated = 0;
                     return;

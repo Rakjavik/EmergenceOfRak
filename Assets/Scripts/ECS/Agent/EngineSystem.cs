@@ -151,7 +151,7 @@ namespace rak.ecs.ThingComponents
             {
                 ActionStep.Actions currentAction = ai.CurrentAction;
                 // VISIBLE TO CAMERA //
-                if (visibles[entity].Value == 1)
+                if (visibles[entity].RequestVisible == 1)
                 {
                     if (currentAction == ActionStep.Actions.MoveTo)
                     {

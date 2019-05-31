@@ -60,7 +60,7 @@ namespace rak.ecs.ThingComponents
             public void Execute(ref Agent agent, ref Visible av,ref CreatureAI ai,ref Position pos)
             {
                 // VISIBLE TO CAMERA //
-                if (av.Value == 1)
+                if (av.RequestVisible == 1)
                 {
                     if (currentTime - agent.DistanceLastUpdated >= agent.UpdateDistanceEvery)
                     {

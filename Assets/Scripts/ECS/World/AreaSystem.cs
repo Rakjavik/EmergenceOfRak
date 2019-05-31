@@ -112,7 +112,7 @@ namespace rak.ecs.area
                 Entity entity = creatures[count];
                 float3 origin = em.GetComponentData<Position>(entity).Value;
                 float3 destination = em.GetComponentData<Target>(entity).targetPosition;
-                Debug.DrawLine(origin, destination, Color.cyan, .5f);
+                Debug.DrawLine(origin, destination, Color.cyan, .2f);
 
                 Target target = em.GetComponentData<Target>(entity);
                 TractorBeam tb = em.GetComponentData<TractorBeam>(entity);
@@ -123,6 +123,7 @@ namespace rak.ecs.area
                 {
                     Destroy(ecsMap[cai.DestroyedThingInPosession].gameObject);
                     ecsMap.Remove(cai.DestroyedThingInPosession);
+                    em.DestroyEntity(cai.DestroyedThingInPosession);
                     cai.DestroyedThingInPosession = Entity.Null;
                     em.SetComponentData(entity, cai);
                 }
@@ -130,13 +131,22 @@ namespace rak.ecs.area
                 // TRACTOR BEAM UPDATES //
                 if (tb.RequestLockFromMono == 1)
                 {
-                    GameObject targetGO = ecsMap[target.targetEntity];
-                    RAKUpdatePositionWithECSTractorBeam utwt = targetGO.AddComponent<RAKUpdatePositionWithECSTractorBeam>();
-                    Destroy(targetGO.GetComponent<RAKUpdateECSTransform>());
-                    utwt.Initialize(creatures[count]);
-                    tb.Locked = 1;
-                    tb.RequestLockFromMono = 0;
-                    em.SetComponentData(creatures[count], tb);
+                    GameObject targetGO = null;
+                    ecsMap.TryGetValue(target.targetEntity, out targetGO);
+                    if (targetGO != null)
+                    {
+                        RAKUpdatePositionWithECSTractorBeam utwt = targetGO.AddComponent<RAKUpdatePositionWithECSTractorBeam>();
+                        Destroy(targetGO.GetComponent<RAKUpdateECSTransform>());
+                        utwt.Initialize(creatures[count]);
+                        tb.Locked = 1;
+                        tb.RequestLockFromMono = 0;
+                        em.SetComponentData(creatures[count], tb);
+                    }
+                    else
+                    {
+                        // Target no longer available //
+                        targetNotValid(creatures[count]);
+                    }
                 }
                 else if (tb.RequestUnLockFromMono == 1)
                 {
@@ -150,30 +160,48 @@ namespace rak.ecs.area
                 // TARGET UPDATES //
                 if(target.RequestTargetFromMono == 1)
                 {
-                    GameObject monoObject = ecsMap[target.targetEntity];
-                    RakUpdateECSTargetWithTransform targetFromMono = monoObject.AddComponent<RakUpdateECSTargetWithTransform>();
-                    targetFromMono.Initialize(creatures[count]);
-                    target.RequestTargetFromMono = 0;
-                    target.LockedToMono = 1;
-                    em.SetComponentData(creatures[count], target);
+                    GameObject monoObject = null;
+                    ecsMap.TryGetValue(target.targetEntity, out monoObject);
+                    if (monoObject != null)
+                    {
+                        RakUpdateECSTargetWithTransform targetFromMono = monoObject.AddComponent<RakUpdateECSTargetWithTransform>();
+                        targetFromMono.Initialize(creatures[count]);
+                        target.RequestTargetFromMono = 0;
+                        target.LockedToMono = 1;
+                        em.SetComponentData(creatures[count], target);
+                    }
+                    else
+                    {
+                        Debug.Log("Lock request for invalid target - " + target.targetEntity);
+                        targetNotValid(creatures[count]);
+                    }
                 }
                 else if (target.RequestMonoTargetUnlock == 1)
                 {
-                    GameObject monoObject = ecsMap[target.targetEntity];
-                    Destroy(monoObject.GetComponent<RakUpdateECSTargetWithTransform>());
-                    target.RequestMonoTargetUnlock = 0;
-                    target.LockedToMono = 0;
-                    em.SetComponentData(creatures[count], target);
+                    GameObject monoObject = null;
+                    ecsMap.TryGetValue(target.targetEntity, out monoObject);
+                    if (monoObject != null)
+                    {
+                        Destroy(monoObject.GetComponent<RakUpdateECSTargetWithTransform>());
+                        target.RequestMonoTargetUnlock = 0;
+                        target.LockedToMono = 0;
+                        em.SetComponentData(creatures[count], target);
+                    }
                 }
                 // VISIBILITY UPDATES //
                 Visible vis = em.GetComponentData<Visible>(entity);
                 Rigidbody rb = ecsMap[entity].GetComponent<Rigidbody>();
-                if (vis.Value == 0 && !rb.isKinematic)
+                if (vis.RequestVisible == 0 && vis.IsVisible == 1)
                 {
                     rb.isKinematic = true;
                     em.AddComponentData(entity, new NonPhysicsMovement
                     {
                         Speed = 150,
+                    });
+                    em.SetComponentData(entity, new Visible
+                    {
+                        IsVisible = 0,
+                        RequestVisible = 0
                     });
                     GameObject creatureGO = ecsMap[entity];
                     creatureGO.AddComponent<RAKUpdatePositionWithECSPosition>().Initialize(entity);
@@ -181,15 +209,19 @@ namespace rak.ecs.area
                     Destroy(creatureGO.GetComponent<RAKUpdateECSTransform>());
                     Debug.Log("Invisible");
                 }
-                else if (vis.Value == 1 && rb.isKinematic)
+                else if (vis.RequestVisible == 1 && vis.IsVisible == 0)
                 {
                     rb.isKinematic = false;
                     em.RemoveComponent<NonPhysicsMovement>(entity);
+                    em.SetComponentData(entity, new Visible
+                    {
+                        IsVisible = 1,
+                        RequestVisible = 1
+                    });
                     GameObject creatureGO = ecsMap[entity];
                     Destroy(creatureGO.GetComponent<RAKUpdatePositionWithECSPosition>());
                     creatureGO.AddComponent<RAKUpdateECSTransform>().Initialize(entity);
                     creatureGO.AddComponent<RAKUpdateKinematicFromECS>().Initialize(entity);
-                    
                     Debug.Log("Visible");
                 }
             }
@@ -211,6 +243,20 @@ namespace rak.ecs.area
                 }
             }
             producers.Dispose();
+        }
+
+        private void targetNotValid(Entity entity)
+        {
+            Debug.Log("Target no longer available");
+            em.SetComponentData(entity, new Target
+            {
+                targetEntity = Entity.Null,
+                targetPosition = float3.zero
+            });
+            CreatureAI ai = em.GetComponentData<CreatureAI>(entity);
+            ai.CurrentStepStatus = Tasks.TASK_STATUS.Failed;
+            ai.FailReason = ActionStep.FailReason.TargetNoLongerAvailable;
+            em.SetComponentData(entity, ai);
         }
 
         private void createFruit(float3 producerPos)
@@ -275,7 +321,8 @@ namespace rak.ecs.area
             });
             em.AddComponentData(newGnat, new Visible
             {
-                Value = 1
+                RequestVisible = 1,
+                IsVisible = 1
             });
             em.AddComponentData(newGnat, new CreatureAI
             {

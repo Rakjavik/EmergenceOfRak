@@ -9,7 +9,8 @@ namespace rak.ecs.ThingComponents
 
     public struct Visible : IComponentData
     {
-        public byte Value;
+        public byte RequestVisible;
+        public byte IsVisible;
     }
 
     public class VisibilitySystem : JobComponentSystem
@@ -41,9 +42,9 @@ namespace rak.ecs.ThingComponents
             {
                 float distance = Vector3.Distance(pos.Value, cameraPos);
                 if (distance >= disableWhenThisFar)
-                    vis.Value = 0;
+                    vis.RequestVisible = 0;
                 else
-                    vis.Value = 1;
+                    vis.RequestVisible = 1;
                     
             }
         }

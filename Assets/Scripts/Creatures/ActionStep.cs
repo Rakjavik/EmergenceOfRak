@@ -13,7 +13,7 @@ namespace rak
         {
             NA, NoKnownFoodProducer, InfinityDistance, MoveToWithNoDestination,
             FailureAddingToInventory, ExceededTimeLimit, CouldntGetToTarget,
-            NoKnownFood
+            NoKnownFood, TargetNoLongerAvailable
         }
 
         public Actions Action;

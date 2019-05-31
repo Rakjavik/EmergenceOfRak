@@ -187,7 +187,7 @@ namespace rak.creatures
             manager.SetComponentData(creature.ThingEntity, pos);
             Visible agentData = new Visible
             {
-                Value = visibleByte,
+                RequestVisible = visibleByte,
             };
             manager.SetComponentData(creature.ThingEntity, agentData);
             manager.SetComponentData(creature.ThingEntity, new Rotation { Value = currentRot });

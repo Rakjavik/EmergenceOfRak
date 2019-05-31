@@ -16,6 +16,7 @@ namespace rak.ecs.ThingComponents
         public float3 NewTargetPosition;
         public float DistanceFromTarget;
         public float UnlockAtDistance;
+        public float MaxRange;
     }
 
     public class TractorBeamSystem : JobComponentSystem
@@ -70,6 +71,12 @@ namespace rak.ecs.ThingComponents
                     if (tb.Locked == 1)
                     {
                         tb.DistanceFromTarget = Vector3.Distance(target.targetPosition, pos.Value);
+                        // Out of range //
+                        if(tb.DistanceFromTarget > tb.MaxRange)
+                        {
+                            tb.RequestLockFromMono = 1;
+                            return;
+                        }
                         tb.NewTargetPosition = Vector3.MoveTowards(tb.NewTargetPosition, pos.Value,
                             tb.BeamStrength * delta);
                         if(tb.DistanceFromTarget <= tb.UnlockAtDistance)
