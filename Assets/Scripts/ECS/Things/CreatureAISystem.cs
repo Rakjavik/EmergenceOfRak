@@ -24,7 +24,7 @@ namespace rak.ecs.ThingComponents
         public DynamicBuffer<ActionStepBufferCurrent> CurrentSteps;
         public DynamicBuffer<ActionStepBufferPrevious> PreviousSteps;
         public int CurrentStepNum;
-        public Entity DestroyedThingInPosession;
+        public int DestroyedThingInPosessionIndex;
     }
     [InternalBufferCapacity(10)]
     public struct ActionStepBufferCurrent : IBufferElementData
@@ -43,7 +43,6 @@ namespace rak.ecs.ThingComponents
 
         protected override void OnCreate()
         {
-            EndSimulationEntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
             Enabled = true;
         }
 
@@ -55,15 +54,13 @@ namespace rak.ecs.ThingComponents
                 memoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>(),
                 currentBuffers = GetBufferFromEntity<ActionStepBufferCurrent>(),
                 previousBuffers = GetBufferFromEntity<ActionStepBufferPrevious>(),
-                commandBuffer = EndSimulationEntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 tractorBeams = GetComponentDataFromEntity<TractorBeam>(),
                 random = new Random((uint)UnityEngine.Random.Range(1, 100000)),
             };
             JobHandle handle = job.Schedule(this, inputDeps);
-            EndSimulationEntityCommandBufferSystem.AddJobHandleForProducer(handle);
             return handle;
         }
-
+        [BurstCompile]
         struct CreatureAIJob : IJobForEachWithEntity<CreatureAI, Target,Observe,ShortTermMemory,Visible,Position>
         {
             public float Delta;
@@ -76,8 +73,6 @@ namespace rak.ecs.ThingComponents
             public BufferFromEntity<ActionStepBufferPrevious> previousBuffers;
             [ReadOnly]
             public ComponentDataFromEntity<TractorBeam> tractorBeams;
-
-            public EntityCommandBuffer.Concurrent commandBuffer;
 
             public Random random;
 
@@ -130,7 +125,8 @@ namespace rak.ecs.ThingComponents
                 //  MOVETO  //
                 else if (cai.CurrentAction == ActionStep.Actions.MoveTo)
                 {
-                    commandBuffer.AddComponent(index, entity, new PerformObservation { });
+                    obs.RequestObservation = 1;
+                    //commandBuffer.AddComponent(index, entity, new PerformObservation { });
                     moveTo(ref target, ref cai,ref obs);
                 }
                 // ADD  //
@@ -169,7 +165,7 @@ namespace rak.ecs.ThingComponents
             {
                 if(task == Tasks.CreatureTasks.EAT)
                 {
-                    ActionStep[] steps = new ActionStep[4];
+                    NativeArray<ActionStep> steps = new NativeArray<ActionStep>(4,Allocator.Temp);
                     steps[0] = new ActionStep
                     {
                         Action = ActionStep.Actions.Locate,
@@ -194,6 +190,7 @@ namespace rak.ecs.ThingComponents
                     {
                         buffer.Add(new ActionStepBufferCurrent { ActionStep = steps[count] });
                     }
+                    //steps.Dispose();
                 }
             }
 
@@ -218,7 +215,7 @@ namespace rak.ecs.ThingComponents
 
             private void rememberTargetAsUnavailable(Entity entity, ref Target target)
             {
-                Debug.Log("Remembering target as unavailable - " + entity);
+                //Debug.Log("Remembering target as unavailable - " + entity);
                 DynamicBuffer<CreatureMemoryBuf> buffer = memoryBuffers[entity];
                 int bufferLength = buffer.Length;
                 for (int count = 0; count < bufferLength; count++)
@@ -238,8 +235,8 @@ namespace rak.ecs.ThingComponents
             private void eat(ref CreatureAI cai,ref Target target,ref ShortTermMemory stm,ref Entity entity,int index)
             {
                 cai.CurrentStepStatus = Tasks.TASK_STATUS.Complete;
-                cai.DestroyedThingInPosession = target.targetEntity;
-                Debug.Log("Requesting destroy of " + target.targetEntity);
+                cai.DestroyedThingInPosessionIndex = target.targetEntity.Index;
+                //Debug.Log("Requesting destroy of " + target.targetEntity);
                 rememberTargetAsUnavailable(entity,ref target);
                 target = new Target
                 {
@@ -289,7 +286,7 @@ namespace rak.ecs.ThingComponents
                     if (obs.ObservationAvailable == 0)
                     {
                         obs.RequestObservation = 1;
-                        commandBuffer.AddComponent(index, entity, new PerformObservation { });
+                        //commandBuffer.AddComponent(index, entity, new PerformObservation { });
                     }
                     target.targetEntity = Entity.Null;
                     random.NextInt();

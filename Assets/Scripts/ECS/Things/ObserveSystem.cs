@@ -6,11 +6,10 @@ using rak.creatures.memory;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Burst;
+using System.Diagnostics;
 
 namespace rak.ecs.ThingComponents
 {
-    public struct PerformObservation : IComponentData { }
-
     public struct Observe : IComponentData
     {
         public float ObserveDistance;
@@ -43,6 +42,7 @@ namespace rak.ecs.ThingComponents
         [DeallocateOnJobCompletion]
         private EntityQuery query;
 
+
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -51,14 +51,13 @@ namespace rak.ecs.ThingComponents
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            
             query = EntityManager.CreateEntityQuery(new ComponentType[] { typeof(Observable),typeof(Position) });
             positions = query.ToComponentDataArray<Position>(Allocator.TempJob);
             entities = query.ToEntityArray(Allocator.TempJob);
             ObserveJob job = new ObserveJob
             {
                 TimeStamp = Time.time,
-                observeBuffers = GetBufferFromEntity<ObserveBuffer>(false),
+                creatureMemBuffers = GetBufferFromEntity<CreatureMemoryBuf>(false),
                 positions = positions,
                 entities = entities,
                 origins = GetComponentDataFromEntity<Position>(true),
@@ -69,7 +68,7 @@ namespace rak.ecs.ThingComponents
             return handle;
         }
         [BurstCompile]
-        struct ObserveJob : IJobForEachWithEntity<Observe,Visible,CreatureAI,PerformObservation>
+        struct ObserveJob : IJobForEachWithEntity<Observe,Visible,CreatureAI,ShortTermMemory>
         {
             [ReadOnly]
             [DeallocateOnJobCompletion]
@@ -87,22 +86,31 @@ namespace rak.ecs.ThingComponents
 
 
             [NativeDisableParallelForRestriction]
-            public BufferFromEntity<ObserveBuffer> observeBuffers;
-            
+            public BufferFromEntity<CreatureMemoryBuf> creatureMemBuffers;
 
             public float TimeStamp;
             public int ObservableThingsLength;
 
             public void Execute(Entity entity, int index, ref Observe ob,ref Visible av, ref CreatureAI ai,
-               [ReadOnly] ref PerformObservation po)
+               ref ShortTermMemory stm)
             {
                 // Only run if observation was requested, and we won't already have an observation waiting to be read //
-                if (ob.RequestObservation == 1 && ob.ObservationAvailable == 0)
+                if (ob.RequestObservation == 1)
                 {
+                    if (stm.Allocated == 0)
+                    {
+                        DynamicBuffer<CreatureMemoryBuf> creatureMemory = creatureMemBuffers[entity];
+                        for (int count = 0; count < stm.MaxShortTermMemories; count++)
+                        {
+                            creatureMemory.Add(new CreatureMemoryBuf { memory = MemoryInstance.Empty });
+                        }
+                        stm.Allocated = 1;
+                    }
                     // Start from a clean slate //
-                    DynamicBuffer<ObserveBuffer> buffer = observeBuffers[entity];
-                    buffer.Clear();
-
+                    //DynamicBuffer<ObserveBuffer> buffer = observeBuffers[entity];
+                    //buffer.Clear();
+                    NativeArray<MemoryInstance> withinDistance = new NativeArray<MemoryInstance>(ObservableThingsLength, Allocator.Temp);
+                    int withinDistanceCount = 0;
                     for (int count = 0; count < ObservableThingsLength; count++)
                     {
                         float distance = Vector3.Distance(origins[entity].Value, positions[count].Value);
@@ -119,17 +127,51 @@ namespace rak.ecs.ThingComponents
                                 SubjectMass = observables[entities[count]].Mass,
                             };
                             memory.RefreshEdible(ai.ConsumptionType);
-                            buffer.Add(new ObserveBuffer
+                            withinDistance[withinDistanceCount] = memory;
+                            withinDistanceCount++;
+                            /*buffer.Add(new ObserveBuffer
                             {
                                 memory = memory
-                            });
+                            });*/
                         }
                     }
-                    ob.memoryBuffer = buffer;
+                    DynamicBuffer<CreatureMemoryBuf> ctmBuffer = creatureMemBuffers[entity];
+                    NativeArray<CreatureMemoryBuf> ctmBufferArray = ctmBuffer.ToNativeArray(Allocator.Temp);
+                    for (int count = 0; count < withinDistanceCount; count++)
+                    { 
+                        MemoryInstance searchForThis = withinDistance[count];
+                        byte result = searchTheseMemoriesFor(ref ctmBufferArray, ref searchForThis);
+                        // Memory not present //
+                        if(result == 0)
+                        {
+                            searchForThis.RefreshEdible(ai.ConsumptionType);
+                            ctmBuffer[stm.CurrentMemoryIndex] = new CreatureMemoryBuf
+                            {
+                                memory = searchForThis
+                            };
+                            stm.CurrentMemoryIndex++;
+                        }
+                    }
+
+                    /*ob.memoryBuffer = buffer;
                     if(ObservableThingsLength > 0)
-                        ob.ObservationAvailable = 1;
+                        ob.ObservationAvailable = 1;*/
                     ob.RequestObservation = 0;
                 }
+            }
+
+            private byte searchTheseMemoriesFor(ref NativeArray<CreatureMemoryBuf> memories, ref MemoryInstance findThis)
+            {
+                for (int count = 0; count < memories.Length; count++)
+                {
+                    if (memories[count].memory.Verb == findThis.Verb &&
+                        memories[count].memory.Subject == findThis.Subject &&
+                        memories[count].memory.InvertVerb == findThis.InvertVerb)
+                    {
+                        return 1;
+                    }
+                }
+                return 0;
             }
         }
     }

@@ -303,7 +303,7 @@ public partial class RAKTerrainMaster : MonoBehaviour
             float heightOffset = terrainObject.heightOffset;
             MeshFilter meshFilter = terrainObject.GetComponent<MeshFilter>();
             float detailHeight,detailWidthX, detailWidthZ;
-            if (meshFilter == null)
+            if (meshFilter == null || meshFilter.sharedMesh == null)
             {
                 detailHeight = 1;
                 detailWidthX = 1;
@@ -311,9 +311,11 @@ public partial class RAKTerrainMaster : MonoBehaviour
             }
             else
             {
-                detailHeight = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.y * prefab.transform.localScale.y;
-                detailWidthX = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.x * prefab.transform.localScale.x;
-                detailWidthZ = prefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.z * prefab.transform.localScale.z;
+                Vector3 size = meshFilter.sharedMesh.bounds.size;
+                Vector3 scale = meshFilter.transform.localScale;
+                detailHeight = size.y * scale.y;
+                detailWidthX = size.x * scale.x;
+                detailWidthZ = size.z * scale.z;
             }
             // Sometimes we need to force a width if the bottom of the object is skinny (trees) //
             if (terrainObject.sizeOverride != Vector3.zero)

@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
-using DigitalRuby.RainMaker;
 
 [Serializable]
 public class RAKTerrain : MonoBehaviour
@@ -228,9 +227,6 @@ public class RAKTerrain : MonoBehaviour
     }
     private void createPlayerRainWithIntensity(float intensity,RAKPlayer player)
     {
-        RainScript rain = Instantiate(terrainMaster.getPlayerRainPrefab(), player.transform).GetComponent<RainScript>();
-        rain.FollowCamera = player.GetComponent<Camera>();
-        rain.RainIntensity = intensity;
     }
     public GridSector[] GetGridElements()
     {

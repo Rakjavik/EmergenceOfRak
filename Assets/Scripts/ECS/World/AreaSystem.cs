@@ -20,7 +20,7 @@ namespace rak.ecs.area
 
     public class AreaSystem : MonoBehaviour
     {
-        public static int NUMBEROFCREATURES = 2;
+        public static int NUMBEROFCREATURES = 200;
         public Entity AreaEntity { get; private set; }
         private bool initialized = false;
         private EntityManager em;
@@ -119,13 +119,24 @@ namespace rak.ecs.area
                 CreatureAI cai = em.GetComponentData<CreatureAI>(entity);
 
                 // AI UPDATES //
-                if (!cai.DestroyedThingInPosession.Equals(Entity.Null))
+                if (cai.DestroyedThingInPosessionIndex != -1)
                 {
-                    Destroy(ecsMap[cai.DestroyedThingInPosession].gameObject);
-                    ecsMap.Remove(cai.DestroyedThingInPosession);
-                    em.DestroyEntity(cai.DestroyedThingInPosession);
-                    cai.DestroyedThingInPosession = Entity.Null;
+                    NativeArray<Entity> entities = em.GetAllEntities(Allocator.Temp);
+                    if (entities.Length <= cai.DestroyedThingInPosessionIndex)
+                    {
+                        Debug.LogWarning("Destroy index out of range - " + cai.DestroyedThingInPosessionIndex);
+                    }
+                    else
+                    {
+                        Entity entityToDestroy = entities[cai.DestroyedThingInPosessionIndex];
+                        Debug.Log("Destroying entity - " + entityToDestroy);
+                        Destroy(ecsMap[entityToDestroy].gameObject);
+                        ecsMap.Remove(entityToDestroy);
+                        em.DestroyEntity(entityToDestroy);
+                    }
+                    cai.DestroyedThingInPosessionIndex = -1;
                     em.SetComponentData(entity, cai);
+                    entities.Dispose();
                 }
 
                 // TRACTOR BEAM UPDATES //
@@ -247,7 +258,7 @@ namespace rak.ecs.area
 
         private void targetNotValid(Entity entity)
         {
-            Debug.Log("Target no longer available");
+            //Debug.Log("Target no longer available");
             em.SetComponentData(entity, new Target
             {
                 targetEntity = Entity.Null,
@@ -329,6 +340,7 @@ namespace rak.ecs.area
                 CurrentAction = ActionStep.Actions.None,
                 PreviousSteps = em.AddBuffer<ActionStepBufferPrevious>(newGnat),
                 CurrentSteps = em.AddBuffer<ActionStepBufferCurrent>(newGnat),
+                DestroyedThingInPosessionIndex = -1,
             });
             em.AddComponentData(newGnat, new Target { });
             em.AddComponentData(newGnat, new Observe

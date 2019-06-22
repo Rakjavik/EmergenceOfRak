@@ -1,4 +1,5 @@
 ﻿using rak.creatures.memory;
+using System.Diagnostics;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -16,17 +17,19 @@ namespace rak.ecs.ThingComponents
         public byte Allocated;
     }
 
-    public class ShortTermMemorySystem : JobComponentSystem
+    /*public class ShortTermMemorySystem : JobComponentSystem
     {
         EndSimulationEntityCommandBufferSystem EndSimulationEntityCommandBufferSystem;
 
         protected override void OnCreate()
         {
             EndSimulationEntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
-            Enabled = true;
+            Enabled = false;
         }
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             ShortTermMemoryJob job = new ShortTermMemoryJob
             {
                 memoryBuffers = GetBufferFromEntity<CreatureMemoryBuf>(false),
@@ -35,6 +38,10 @@ namespace rak.ecs.ThingComponents
             };
             JobHandle handle = job.Schedule(this, inputDeps);
             EndSimulationEntityCommandBufferSystem.AddJobHandleForProducer(handle);
+            handle.Complete();
+            long elapsed = sw.ElapsedMilliseconds;
+            if (elapsed > 0)
+                UnityEngine.Debug.Log("STM - " + elapsed);
             return handle;
         }
 
@@ -110,5 +117,5 @@ namespace rak.ecs.ThingComponents
                 return 0;
             }
         }
-    }
+    }*/
 }
