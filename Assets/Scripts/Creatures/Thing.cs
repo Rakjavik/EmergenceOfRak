@@ -132,7 +132,6 @@ namespace rak
                 world.EntityManager.AddComponentData(ThingEntity, new Observe
                 {
                     ObserveDistance = 100, // Distance from creature before creature can see it
-                    memoryBuffer = world.EntityManager.AddBuffer<ObserveBuffer>(ThingEntity)
                 });
                 world.EntityManager.AddComponentData(ThingEntity, new ShortTermMemory
                 {

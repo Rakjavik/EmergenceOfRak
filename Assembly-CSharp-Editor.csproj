@@ -819,13 +819,13 @@
       <Project>{DCA54175-417E-C262-2D85-695137709A28}</Project>
       <Name>SteamVR_Actions</Name>
     </ProjectReference>
-    <ProjectReference Include="NavMeshComponentsEditor.csproj">
-      <Project>{B829F446-17FC-B708-A942-5B8CE0BBE294}</Project>
-      <Name>NavMeshComponentsEditor</Name>
-    </ProjectReference>
     <ProjectReference Include="NavMeshComponents.csproj">
       <Project>{21A1E87E-7B1B-B1B4-D68D-220ABF8F9C1D}</Project>
       <Name>NavMeshComponents</Name>
+    </ProjectReference>
+    <ProjectReference Include="NavMeshComponentsEditor.csproj">
+      <Project>{B829F446-17FC-B708-A942-5B8CE0BBE294}</Project>
+      <Name>NavMeshComponentsEditor</Name>
     </ProjectReference>
     <ProjectReference Include="SteamVR_Input_Editor.csproj">
       <Project>{B924B307-85EB-C686-0C1A-D70469A89EB8}</Project>

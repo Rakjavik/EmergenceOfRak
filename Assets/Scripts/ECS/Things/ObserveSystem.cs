@@ -15,7 +15,6 @@ namespace rak.ecs.ThingComponents
         public float ObserveDistance;
         public byte RequestObservation;
         public byte ObservationAvailable;
-        public DynamicBuffer<ObserveBuffer> memoryBuffer;
         public int NumberOfObservations;
     }
     public struct Observable : IComponentData
@@ -150,6 +149,10 @@ namespace rak.ecs.ThingComponents
                                 memory = searchForThis
                             };
                             stm.CurrentMemoryIndex++;
+                            if(stm.CurrentMemoryIndex >= stm.MaxShortTermMemories)
+                            {
+                                stm.CurrentMemoryIndex = 0;
+                            }
                         }
                     }
 
